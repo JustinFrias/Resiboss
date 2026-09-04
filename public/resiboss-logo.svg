@@ -1,0 +1,29 @@
+<svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b1120" />
+      <stop offset="1" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="cyan-grad" x1="11" y1="10" x2="32" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00f2fe" />
+      <stop offset="1" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Clean Flat Squircle -->
+  <rect x="1" y="1" width="42" height="42" rx="12" fill="url(#bg-grad)" stroke="#00f2fe" stroke-opacity="0.35" stroke-width="1.5" />
+
+  <!-- Flat Vector Monogram 'R' (Receipt Spine + Loop + Diagonal Cut) -->
+  <!-- Vertical Document Spine -->
+  <rect x="11" y="10.5" width="4.5" height="23" rx="2.25" fill="url(#cyan-grad)" />
+
+  <!-- Upper Loop -->
+  <path d="M14 10.5H23.5C27.6421 10.5 31 13.8579 31 18C31 22.1421 27.6421 25.5 23.5 25.5H14" stroke="url(#cyan-grad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Minimal Receipt Notch Lines -->
+  <line x1="19.5" y1="16" x2="25.5" y2="16" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+  <line x1="19.5" y1="20" x2="23.5" y2="20" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Dynamic Diagonal Kick -->
+  <path d="M20.5 23L29.5 33.5" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
