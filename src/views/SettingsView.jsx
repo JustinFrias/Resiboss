@@ -235,6 +235,7 @@ export const SettingsView = () => {
 
       {/* 2. Top Summary Metric Cards (3 Horizontal Cards with Liquid Glass & 3D Tilt) */}
       <div
+        className="settings-metrics-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
@@ -403,6 +404,7 @@ export const SettingsView = () => {
       <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
         {/* Navigation Tabs Bar */}
         <div
+          className="settings-tabs-bar"
           style={{
             display: 'flex',
             alignItems: 'center',

@@ -160,7 +160,7 @@ export const TopBar = ({ onOpenMobile }) => {
 
   return (
     <header
-      className="glass-panel"
+      className="glass-panel topbar-header"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -198,7 +198,7 @@ export const TopBar = ({ onOpenMobile }) => {
           <Menu size={18} />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}>
+        <div className="topbar-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}>
           <span style={{ color: 'var(--text-muted)' }}>{t.appName || 'Resiboss'}</span>
           <span style={{ color: 'var(--text-muted)' }}>/</span>
           <span style={{ color: 'var(--cyan-glow)', fontWeight: 700 }}>{getBreadcrumb()}</span>
@@ -210,6 +210,7 @@ export const TopBar = ({ onOpenMobile }) => {
         {/* Modern Interactive Search Bar */}
         <div
           ref={searchContainerRef}
+          className="topbar-search-container"
           style={{
             position: 'relative',
             width: '100%',
@@ -217,6 +218,7 @@ export const TopBar = ({ onOpenMobile }) => {
           }}
         >
           <div
+            className="topbar-search-box"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -266,6 +268,7 @@ export const TopBar = ({ onOpenMobile }) => {
               </button>
             ) : (
               <span
+                className="topbar-kbd"
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 600,

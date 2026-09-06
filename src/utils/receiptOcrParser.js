@@ -142,11 +142,76 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
 
     onProgress(92, 'Analyzing itemized breakdown, taxes, and vendor...');
 
-    const fullText = result.data.text || '';
+    const fullText = (result.data.text || '').trim();
     const rawLines = fullText
       .split('\n')
       .map((l) => l.trim())
       .filter((l) => l.length > 0);
+
+    // =========================================================================
+    // RECEIPT VALIDATION CHECK
+    // Ensure the image actually represents a valid receipt, bill, or invoice
+    // =========================================================================
+    const cleanWords = fullText
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length >= 2);
+
+    const receiptKeywords = [
+      'total', 'subtotal', 'sub-total', 'amount', 'vat', 'tax', 'tin', 'receipt', 'invoice',
+      'sales invoice', 'official receipt', 'cash receipt', 'or#', 'si#', 'cash', 'change',
+      'tendered', 'balance', 'due', 'payment', 'card', 'visa', 'mastercard', 'qty', 'price',
+      'items', 'transaction', 'trans', 'kiosk', 'terminal', 'store', 'branch', 'bir', 'order',
+      'dine in', 'take out', 'drive thru', 'discount', 'net of vat', 'vatable', 'vat-exempt',
+      'zero rated', 'input tax', 'merchant', 'peso', 'pesos', 'php'
+    ];
+
+    const matchedKeywords = receiptKeywords.filter((kw) => {
+      if (kw.length <= 3) {
+        const reg = new RegExp(`\\b${kw.replace('#', '')}\\b`, 'i');
+        return reg.test(fullText);
+      }
+      return fullText.toLowerCase().includes(kw);
+    });
+
+    const priceRegex = /(?:[\$₱P€£]|php)?\s*\b\d+[.,]\d{2}\b/gi;
+    const foundPrices = fullText.match(priceRegex) || [];
+
+    const hasKnownBrand = knownBrands.some((b) => b.match.test(fullText));
+    const hasStrongKeywords = matchedKeywords.some((kw) =>
+      ['total', 'subtotal', 'vat', 'tax', 'tin', 'invoice', 'receipt', 'official receipt', 'sales invoice', 'or#', 'si#'].includes(kw)
+    );
+    const hasPrices = foundPrices.length >= 1;
+    const hasMultiplePrices = foundPrices.length >= 2;
+
+    let isValidReceipt = false;
+    let invalidReason = '';
+
+    if (cleanWords.length < 3) {
+      isValidReceipt = false;
+      invalidReason = 'Walang nakitang text sa larawan. Karaniwang litrato (tao, mukha, tanawin, o bagay) at hindi resibo ang na-scan.';
+    } else if (hasKnownBrand) {
+      isValidReceipt = true;
+    } else if (hasStrongKeywords && hasPrices) {
+      isValidReceipt = true;
+    } else if (matchedKeywords.length >= 2 && (hasPrices || cleanWords.length >= 8)) {
+      isValidReceipt = true;
+    } else if (hasMultiplePrices && matchedKeywords.length >= 1) {
+      isValidReceipt = true;
+    } else {
+      isValidReceipt = false;
+      invalidReason = 'Hindi na-detect bilang resibo o invoice. Walang nakitang presyo, tindahan, o total amount sa in-upload na litrato.';
+    }
+
+    if (!isValidReceipt) {
+      return {
+        isValid: false,
+        errorReason: invalidReason,
+        rawOcrText: fullText,
+        confidence: Math.round(result.data.confidence || 0),
+      };
+    }
 
     // 1. Precise Merchant Detection
     let detectedMerchant = '';
@@ -437,6 +502,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     onProgress(100, 'AI Optical Extraction Finished!');
 
     return {
+      isValid: true,
       merchant: detectedMerchant,
       tin: detectedTin,
       date: detectedDate,
@@ -455,25 +521,10 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
   } catch (error) {
     console.error('OCR Extraction error:', error);
     return {
-      merchant: 'BURGER KING® - #BK-94',
-      tin: 'TXN-5034',
-      date: '2025-06-28',
-      time: '04:51 PM',
-      category: 'Food',
-      paymentMethod: 'VISA Card ****9808',
-      subtotal: 1.49,
-      vat: 0.10,
-      total: 1.59,
-      items: [{ name: '4 Pc. Jalapeno Cheddar Bites', qty: 1, price: 1.49, total: 1.49 }],
-      currency: 'USD',
-      confidence: 99.8,
-      rawOcrText: 'BURGER KING®\n#BK-94\n06/28/2025 4:51:17 PM\n1 4 Pc. Jalapeno Cheddar Bites $1.49\nSubtotal $1.49\nTax $0.10\nTotal $1.59\nVISA ****9808',
-      detectedBoxes: [
-        { label: 'MERCHANT', top: 10, left: 16, width: 68, height: 12 },
-        { label: 'TIN / DATE', top: 26, left: 18, width: 64, height: 10 },
-        { label: 'LINE ITEMS', top: 38, left: 12, width: 76, height: 26 },
-        { label: 'TOTAL DUE', top: 68, left: 16, width: 68, height: 18 },
-      ],
+      isValid: false,
+      errorReason: 'Hindi ma-proseso ang larawan. Pakisubukang kumuha ng mas malinaw na litrato ng resibo.',
+      rawOcrText: '',
+      confidence: 0,
     };
   }
 };

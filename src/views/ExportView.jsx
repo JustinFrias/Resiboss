@@ -153,19 +153,19 @@ export const ExportView = () => {
               fontSize: '2rem',
               fontWeight: 800,
               letterSpacing: '-0.02em',
-              color: '#ffffff',
+              color: 'var(--text-primary)',
               marginBottom: '2px',
             }}
           >
             Export
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
             Export scanned documents into formatted Excel journals
           </p>
         </div>
 
         {/* Right Controls: All Time dropdown + Cloud Export + Local Download */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="export-header-controls" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* All Time Dropdown */}
           <div style={{ position: 'relative' }}>
             <button
@@ -329,6 +329,7 @@ export const ExportView = () => {
 
         {/* 3 Format Cards Row */}
         <div
+          className="export-format-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
@@ -459,6 +460,7 @@ export const ExportView = () => {
 
           {/* 4 Mapping Columns Grid */}
           <div
+            className="export-mapping-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',

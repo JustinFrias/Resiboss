@@ -4,6 +4,7 @@ import { LiquidBackground3D } from './components/LiquidBackground3D';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { ReceiptViewer3D } from './components/ReceiptViewer3D';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 import { DashboardView } from './views/DashboardView';
 import { ScannerView } from './views/ScannerView';
@@ -68,6 +69,9 @@ const MainLayout = () => {
 
         {/* Interactive 3D Receipt Inspection Modal */}
         <ReceiptViewer3D />
+
+        {/* Dedicated Mobile / Android Bottom Navigation Bar */}
+        <MobileBottomNav />
       </div>
     </div>
   );

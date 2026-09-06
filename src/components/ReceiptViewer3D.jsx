@@ -30,6 +30,28 @@ export const ReceiptViewer3D = () => {
     setIsDragging(false);
   };
 
+  // Touch handlers for Android / touchscreen devices
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragStart({ x: touch.clientX - rotation.y * 3, y: touch.clientY - rotation.x * 3 });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || !e.touches || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const newY = (touch.clientX - dragStart.x) / 3;
+    const newX = (touch.clientY - dragStart.y) / 3;
+    const clampedX = Math.max(-45, Math.min(45, newX));
+    setRotation({ x: clampedX, y: newY });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
   const toggleFlip = () => {
     setIsFlipped(!isFlipped);
     setRotation((prev) => ({ ...prev, y: prev.y + 180 }));
@@ -42,6 +64,7 @@ export const ReceiptViewer3D = () => {
 
   return (
     <div
+      className="modal-3d-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -56,9 +79,11 @@ export const ReceiptViewer3D = () => {
       }}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
       <div
-        className="glass-panel"
+        className="glass-panel modal-3d-card"
         style={{
           width: '100%',
           maxWidth: '1100px',
@@ -72,6 +97,7 @@ export const ReceiptViewer3D = () => {
       >
         {/* Left Side: 3D Interactive Physical Receipt Canvas */}
         <div
+          className="modal-3d-canvas-wrap"
           style={{
             background: 'radial-gradient(circle at 50% 50%, rgba(14, 25, 55, 0.8), rgba(5, 8, 20, 0.95))',
             position: 'relative',
@@ -86,6 +112,7 @@ export const ReceiptViewer3D = () => {
             overflow: 'hidden',
           }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           {/* Subtle Grid / Measurement background */}
           <div
@@ -316,6 +343,7 @@ export const ReceiptViewer3D = () => {
 
         {/* Right Side: Detailed Metadata & Inspector Drawer */}
         <div
+          className="modal-3d-details-wrap"
           style={{
             padding: '28px',
             display: 'flex',

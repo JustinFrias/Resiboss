@@ -112,6 +112,29 @@ class SoundController {
       osc.stop(now + 0.03);
     } catch (e) {}
   }
+
+  playWarning() {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      const now = this.ctx.currentTime;
+      osc.frequency.setValueAtTime(360, now);
+      osc.frequency.linearRampToValueAtTime(160, now + 0.24);
+
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } catch (e) {}
+  }
 }
 
 export const soundFx = new SoundController();

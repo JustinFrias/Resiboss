@@ -45,14 +45,14 @@ export const DocumentsView = () => {
   return (
     <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
       {/* Title Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+      <div className="view-title-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <span className="liquid-badge liquid-badge-violet">
               <FolderArchive size={13} /> {t.documents.title}
             </span>
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Official Audit Vault
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -61,7 +61,7 @@ export const DocumentsView = () => {
         </div>
 
         {/* Total Vault Stats */}
-        <div style={{ display: 'flex', gap: '14px' }}>
+        <div className="view-title-stats" style={{ display: 'flex', gap: '14px' }}>
           <div
             className="glass-panel"
             style={{

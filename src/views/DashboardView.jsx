@@ -170,6 +170,7 @@ export const DashboardView = () => {
 
       {/* Middle Grid: Spending Curve & Category Allocation */}
       <div
+        className="dashboard-trend-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: '2fr 1.2fr',
@@ -206,9 +207,9 @@ export const DashboardView = () => {
               </defs>
 
               {/* Grid Lines */}
-              <line x1="0" y1="50" x2="500" y2="50" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
-              <line x1="0" y1="100" x2="500" y2="100" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
-              <line x1="0" y1="150" x2="500" y2="150" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
+              <line x1="0" y1="50" x2="500" y2="50" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="4 4" />
+              <line x1="0" y1="100" x2="500" y2="100" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="4 4" />
+              <line x1="0" y1="150" x2="500" y2="150" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="4 4" />
 
               {/* Filled Area */}
               <path
@@ -269,7 +270,7 @@ export const DashboardView = () => {
                     style={{
                       width: '100%',
                       height: '8px',
-                      background: 'rgba(255, 255, 255, 0.08)',
+                      background: 'var(--track-bg, rgba(255, 255, 255, 0.08))',
                       borderRadius: '999px',
                       overflow: 'hidden',
                     }}
@@ -315,40 +316,19 @@ export const DashboardView = () => {
           {documents.slice(0, 4).map((doc) => (
             <div
               key={doc.id}
-              className="glass-panel-interactive"
+              className="recent-doc-row"
               onClick={() => setInspectingDoc(doc)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 18px',
-                borderRadius: '14px',
-                background: 'rgba(12, 18, 36, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '12px',
-                    background: 'rgba(0, 242, 254, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '1px solid rgba(0, 242, 254, 0.25)',
-                    color: '#00f2fe',
-                  }}
-                >
+                <div className="recent-doc-icon-wrap">
                   <Receipt size={18} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#ffffff' }}>{doc.merchant}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div className="recent-doc-merchant">{doc.merchant}</div>
+                  <div className="recent-doc-meta">
                     <span>{doc.date}</span>
                     <span>•</span>
-                    <span className="liquid-badge liquid-badge-cyan" style={{ padding: '1px 8px', fontSize: '0.68rem' }}>
+                    <span className="liquid-badge liquid-badge-cyan" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
                       {t.categories[doc.category] || doc.category}
                     </span>
                   </div>
@@ -357,10 +337,10 @@ export const DashboardView = () => {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#ffffff' }}>
+                  <div className="recent-doc-amount">
                     {formatCurrency(doc.total)}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#34d399' }}>
+                  <div className="recent-doc-vat">
                     VAT: {formatCurrency(doc.vat)}
                   </div>
                 </div>
@@ -370,8 +350,8 @@ export const DashboardView = () => {
                     e.stopPropagation();
                     setInspectingDoc(doc);
                   }}
-                  className="liquid-btn liquid-btn-secondary"
-                  style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                  className="recent-doc-3d-btn"
+                  title="3D Model Inspector"
                 >
                   <Eye size={13} />
                   <span>3D</span>

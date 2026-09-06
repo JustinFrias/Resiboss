@@ -57,7 +57,7 @@ export const AnalyticView = () => {
             <BarChart3 size={13} /> {t.analytic.title}
           </span>
         </div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
           Predictive Fiscal Analytics
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -119,6 +119,7 @@ export const AnalyticView = () => {
 
       {/* Middle Grid: Monthly Trend Bars & Category Donut Chart */}
       <div
+        className="analytic-trend-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: '1.8fr 1.2fr',
@@ -276,6 +277,7 @@ export const AnalyticView = () => {
 
       {/* Bottom Row: Top Vendors & AI Insights */}
       <div
+        className="analytic-bottom-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: '1.2fr 1fr',

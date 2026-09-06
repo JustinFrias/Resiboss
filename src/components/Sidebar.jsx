@@ -203,66 +203,16 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
                     title={item.label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '46px',
-                      height: '44px',
-                      margin: '0 auto',
-                      borderRadius: '12px',
-                      border: isActive
-                        ? '1px solid rgba(0, 242, 254, 0.45)'
-                        : '1px solid transparent',
-                      background: isActive
-                        ? 'linear-gradient(135deg, rgba(0, 242, 254, 0.22) 0%, rgba(168, 85, 247, 0.12) 100%)'
-                        : 'transparent',
-                      color: isActive ? '#00f2fe' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      transition: 'all 0.22s ease',
-                      boxShadow: isActive ? '0 0 16px rgba(0, 242, 254, 0.22)' : 'none',
-                      position: 'relative',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                        e.currentTarget.style.color = '#ffffff';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
-                      }
-                    }}
+                    className={`sidebar-nav-btn collapsed ${isActive ? 'active' : ''}`}
                   >
                     <Icon
                       size={20}
-                      color={isActive ? '#00f2fe' : '#94a3b8'}
+                      className="sidebar-nav-icon"
                       strokeWidth={isActive ? 2.4 : 2}
                     />
 
                     {item.badge !== undefined && item.badge > 0 && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '4px',
-                          right: '4px',
-                          fontSize: '0.62rem',
-                          background: '#00f2fe',
-                          color: '#030712',
-                          minWidth: '16px',
-                          height: '16px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 800,
-                          fontFamily: 'var(--font-mono)',
-                          padding: '0 3px',
-                          boxShadow: '0 0 8px rgba(0, 242, 254, 0.6)',
-                        }}
-                      >
+                      <span className="sidebar-nav-badge">
                         {item.badge}
                       </span>
                     )}
@@ -274,76 +224,20 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '11px 16px',
-                    borderRadius: '12px',
-                    border: isActive
-                      ? '1px solid rgba(0, 242, 254, 0.45)'
-                      : '1px solid transparent',
-                    background: isActive
-                      ? 'linear-gradient(90deg, rgba(0, 242, 254, 0.18) 0%, rgba(168, 85, 247, 0.08) 100%)'
-                      : 'transparent',
-                    color: isActive ? '#ffffff' : 'var(--text-secondary)',
-                    fontWeight: isActive ? 600 : 500,
-                    fontSize: '0.92rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.22s ease',
-                    textAlign: 'left',
-                    boxShadow: isActive ? '0 0 16px rgba(0, 242, 254, 0.18)' : 'none',
-                    position: 'relative',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.color = '#ffffff';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                    }
-                  }}
+                  className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Left neon indicator bar if active */}
-                    {isActive && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          top: '18%',
-                          bottom: '18%',
-                          width: '3.5px',
-                          borderRadius: '0 4px 4px 0',
-                          background: '#00f2fe',
-                          boxShadow: '0 0 8px #00f2fe',
-                        }}
-                      />
-                    )}
+                    {isActive && <div className="sidebar-active-indicator" />}
                     <Icon
                       size={18}
-                      color={isActive ? '#00f2fe' : '#94a3b8'}
+                      className="sidebar-nav-icon"
                       strokeWidth={isActive ? 2.4 : 2}
                     />
-                    <span>{item.label}</span>
+                    <span style={{ fontSize: '0.92rem' }}>{item.label}</span>
                   </div>
 
                   {item.badge !== undefined && (
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        background: isActive ? '#00f2fe' : 'rgba(0, 242, 254, 0.18)',
-                        color: isActive ? '#030712' : '#00f2fe',
-                        padding: '2px 7px',
-                        borderRadius: '10px',
-                        fontWeight: 700,
-                        fontFamily: 'var(--font-mono)',
-                      }}
-                    >
+                    <span className={`sidebar-nav-badge ${isActive ? 'active' : ''}`}>
                       {item.badge}
                     </span>
                   )}
@@ -421,6 +315,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
+                className="sidebar-select"
                 style={{
                   flex: 1,
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -446,6 +341,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
+                className="sidebar-select"
                 style={{
                   flex: 1,
                   background: 'rgba(255, 255, 255, 0.08)',
