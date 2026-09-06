@@ -41,6 +41,7 @@ export const DocumentsView = () => {
 
   const totalVaultValue = filteredDocs.reduce((acc, d) => acc + (d.total || 0), 0);
   const totalDeductibleVat = filteredDocs.reduce((acc, d) => acc + (d.vat || 0), 0);
+  const approxStorageMB = Math.max(documents.length * 0.2, 0.5).toFixed(1);
 
   return (
     <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
@@ -61,7 +62,33 @@ export const DocumentsView = () => {
         </div>
 
         {/* Total Vault Stats */}
-        <div className="view-title-stats" style={{ display: 'flex', gap: '14px' }}>
+        <div className="view-title-stats" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+          <div
+            className="glass-panel"
+            style={{
+              padding: '12px 18px',
+              border: '1px solid rgba(168, 85, 247, 0.25)',
+              textAlign: 'right',
+            }}
+          >
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total Documents</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#c084fc', fontFamily: 'var(--font-mono)' }}>
+              {documents.length}
+            </div>
+          </div>
+          <div
+            className="glass-panel"
+            style={{
+              padding: '12px 18px',
+              border: '1px solid rgba(0, 242, 254, 0.25)',
+              textAlign: 'right',
+            }}
+          >
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Approx Storage</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
+              {approxStorageMB} MB
+            </div>
+          </div>
           <div
             className="glass-panel"
             style={{

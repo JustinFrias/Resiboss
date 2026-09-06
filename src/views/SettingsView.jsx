@@ -271,174 +271,7 @@ export const SettingsView = () => {
         </div>
       )}
 
-      {/* 2. Top Summary Metric Cards (3 Horizontal Cards with Liquid Glass & 3D Tilt) */}
-      <div
-        className="settings-metrics-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '14px',
-          marginBottom: '16px',
-        }}
-      >
-        {/* Card 1: DOCUMENTS */}
-        <TiltCard>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '14px 18px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                DOCUMENTS
-              </span>
-              <div
-                style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 242, 254, 0.12)',
-                  color: '#00f2fe',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid rgba(0, 242, 254, 0.3)',
-                }}
-              >
-                <FileText size={15} />
-              </div>
-            </div>
-            <div
-              style={{
-                fontSize: '1.6rem',
-                fontWeight: 800,
-                color: '#ffffff',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {documents.length || 5}
-            </div>
-          </div>
-        </TiltCard>
-
-        {/* Card 2: APPROX STORAGE */}
-        <TiltCard>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '14px 18px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                APPROX STORAGE
-              </span>
-              <div
-                style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '8px',
-                  background: 'rgba(168, 85, 247, 0.12)',
-                  color: '#c084fc',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid rgba(168, 85, 247, 0.3)',
-                }}
-              >
-                <HardDrive size={15} />
-              </div>
-            </div>
-            <div
-              style={{
-                fontSize: '1.6rem',
-                fontWeight: 800,
-                color: '#ffffff',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {approxStorageMB} MB
-            </div>
-          </div>
-        </TiltCard>
-
-        {/* Card 3: ACTIVE SESSIONS */}
-        <TiltCard>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '14px 18px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                ACTIVE SESSIONS
-              </span>
-              <div
-                style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '8px',
-                  background: userProfile ? 'rgba(16, 185, 129, 0.12)' : 'rgba(148, 163, 184, 0.12)',
-                  color: userProfile ? '#34d399' : '#94a3b8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: userProfile ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
-                }}
-              >
-                <Laptop size={15} />
-              </div>
-            </div>
-            <div
-              style={{
-                fontSize: '1.6rem',
-                fontWeight: 800,
-                color: userProfile ? '#34d399' : 'var(--text-muted)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {userProfile ? '1 (Online)' : '0 (Guest)'}
-            </div>
-          </div>
-        </TiltCard>
-      </div>
-
-      {/* 3. Main Settings Container (Liquid Glass Panel) */}
+      {/* Main Settings Container (Liquid Glass Panel) */}
       <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
         {/* Navigation Tabs Bar */}
         <div
@@ -986,9 +819,127 @@ export const SettingsView = () => {
                 style={{
                   height: '1px',
                   background: 'linear-gradient(90deg, rgba(0, 242, 254, 0.35), rgba(255, 255, 255, 0.1), transparent)',
-                  marginBottom: '26px',
+                  marginBottom: '22px',
                 }}
               />
+
+              {/* Security & Storage Metrics Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '14px',
+                  marginBottom: '20px',
+                }}
+              >
+                {/* Metric 1: Active Sessions */}
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    background: 'rgba(10, 15, 30, 0.45)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        color: 'var(--text-secondary)',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      ACTIVE SESSIONS
+                    </span>
+                    <div
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '8px',
+                        background: userProfile ? 'rgba(16, 185, 129, 0.12)' : 'rgba(148, 163, 184, 0.12)',
+                        color: userProfile ? '#34d399' : '#94a3b8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: userProfile ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
+                      }}
+                    >
+                      <Laptop size={15} />
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 800,
+                      color: userProfile ? '#34d399' : '#ffffff',
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  >
+                    {userProfile ? '1 (Online)' : '1 (Guest)'}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    Primary browser authenticated session
+                  </div>
+                </div>
+
+                {/* Metric 2: Approx Vault Storage */}
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    background: 'rgba(10, 15, 30, 0.45)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        color: 'var(--text-secondary)',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      VAULT STORAGE
+                    </span>
+                    <div
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '8px',
+                        background: 'rgba(168, 85, 247, 0.12)',
+                        color: '#c084fc',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(168, 85, 247, 0.3)',
+                      }}
+                    >
+                      <HardDrive size={15} />
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 800,
+                      color: '#ffffff',
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  >
+                    {approxStorageMB} MB
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    {documents.length} receipts stored in browser vault
+                  </div>
+                </div>
+              </div>
 
               {/* Active Session Info Card */}
               <div
