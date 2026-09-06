@@ -210,7 +210,7 @@ export const TopBar = ({ onOpenMobile }) => {
         {/* Modern Interactive Search Bar */}
         <div
           ref={searchContainerRef}
-          className="topbar-search-container"
+          className={`topbar-search-container ${isSearchFocused ? 'is-focused' : ''}`}
           style={{
             position: 'relative',
             width: '100%',
@@ -467,6 +467,7 @@ export const TopBar = ({ onOpenMobile }) => {
                 top: 'calc(100% + 10px)',
                 right: 0,
                 width: '320px',
+                maxWidth: 'calc(100vw - 24px)',
                 background: 'var(--bg-surface-elevated)',
                 border: '1px solid var(--glass-border-bright)',
                 borderRadius: '16px',

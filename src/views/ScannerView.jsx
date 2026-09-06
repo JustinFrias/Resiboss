@@ -275,6 +275,30 @@ export const ScannerView = () => {
     setIsPanning(false);
   };
 
+  // Touch Drag / Pan Handlers for Mobile & Android devices
+  const handleTouchStart = (e) => {
+    if (zoomLevel > 1 && e.touches && e.touches.length === 1) {
+      setIsPanning(true);
+      const touch = e.touches[0];
+      setStartPan({ x: touch.clientX - panOffset.x, y: touch.clientY - panOffset.y });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (isPanning && zoomLevel > 1 && e.touches && e.touches.length === 1) {
+      if (e.cancelable) e.preventDefault();
+      const touch = e.touches[0];
+      setPanOffset({
+        x: touch.clientX - startPan.x,
+        y: touch.clientY - startPan.y,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+  };
+
   const handleDoubleClick = () => {
     if (zoomLevel > 1) {
       handleResetZoom();
@@ -754,6 +778,10 @@ export const ScannerView = () => {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
               onDoubleClick={handleDoubleClick}
               style={{
                 position: 'relative',
@@ -768,6 +796,7 @@ export const ScannerView = () => {
                 overflow: 'hidden',
                 cursor: zoomLevel > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in',
                 userSelect: 'none',
+                touchAction: zoomLevel > 1 ? 'none' : 'auto',
               }}
             >
               <div style={{ position: 'absolute', top: '16px', left: '16px', width: '28px', height: '28px', borderTop: '3px solid #00f2fe', borderLeft: '3px solid #00f2fe', zIndex: 12, pointerEvents: 'none' }} />
@@ -1146,7 +1175,7 @@ export const ScannerView = () => {
                     </div>
 
                     {/* Date & TIN */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="scanner-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
                           Receipt Date
@@ -1171,7 +1200,7 @@ export const ScannerView = () => {
                     </div>
 
                     {/* Category & Payment Method */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="scanner-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
                           Category
@@ -1391,11 +1420,16 @@ export const ScannerView = () => {
             </div>
 
             <div
+              className="receipt-zoom-viewport"
               onWheel={handleWheelZoom}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
               onDoubleClick={handleDoubleClick}
               style={{
                 position: 'relative',
@@ -1410,6 +1444,7 @@ export const ScannerView = () => {
                 cursor: zoomLevel > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in',
                 userSelect: 'none',
                 border: '1px solid var(--glass-border)',
+                touchAction: zoomLevel > 1 ? 'none' : 'auto',
               }}
             >
               {/* Floating Zoom Controls in Fullscreen */}

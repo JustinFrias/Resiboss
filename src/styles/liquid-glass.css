@@ -1365,6 +1365,11 @@ html, body {
 
   .topbar-search-container {
     max-width: 170px !important;
+    transition: all 0.25s ease;
+  }
+
+  .topbar-search-container.is-focused {
+    max-width: 220px !important;
   }
 
   /* 3D Receipt Inspection Modal for Mobile/Android */
@@ -1375,6 +1380,7 @@ html, body {
   .modal-3d-card {
     grid-template-columns: 1fr !important;
     max-height: 94vh !important;
+    max-height: 94dvh !important;
     overflow-y: auto !important;
     border-radius: 16px !important;
   }
@@ -1383,10 +1389,98 @@ html, body {
     height: 270px !important;
     min-height: 250px !important;
     padding: 16px !important;
+    touch-action: none !important;
   }
 
   .modal-3d-details-wrap {
     padding: 18px 16px !important;
+  }
+
+  /* Documents View Mobile Layout */
+  .documents-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .documents-filter-bar > div:first-child {
+    min-width: 100% !important;
+  }
+
+  .documents-filter-row {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .documents-filter-row select {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .documents-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* Scanner Form Inputs on Mobile */
+  .scanner-form-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* Fullscreen Receipt Zoom & Pan Modal (Global + Mobile) */
+.receipt-zoom-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: pageFade3D 0.25s ease-out forwards;
+}
+
+.receipt-zoom-modal-card {
+  width: 100%;
+  max-width: 1060px;
+  max-height: 92vh;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--glass-border-bright);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(0, 242, 254, 0.15);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .sidebar.collapsed {
+    width: 270px !important;
+    padding: 20px 16px !important;
+  }
+
+  .receipt-zoom-modal-backdrop {
+    padding: 8px !important;
+  }
+
+  .receipt-zoom-modal-card {
+    padding: 14px 12px !important;
+    max-height: 96vh !important;
+    max-height: 96dvh !important;
+    border-radius: 14px !important;
+  }
+
+  .receipt-zoom-viewport {
+    min-height: 340px !important;
+    height: 52vh !important;
+    max-height: 480px !important;
   }
 }
 
@@ -1401,7 +1495,20 @@ html, body {
   }
 
   .topbar-search-container {
-    max-width: 130px !important;
+    max-width: 125px !important;
+  }
+
+  .topbar-search-container.is-focused {
+    position: absolute !important;
+    left: 8px !important;
+    right: 8px !important;
+    max-width: calc(100% - 16px) !important;
+    z-index: 150 !important;
+  }
+
+  .scanner-zoom-btn {
+    min-width: 42px !important;
+    min-height: 42px !important;
   }
 }
 

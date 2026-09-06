@@ -93,7 +93,7 @@ export const DocumentsView = () => {
 
       {/* Filter & Search Bar */}
       <div
-        className="glass-panel"
+        className="glass-panel documents-filter-bar"
         style={{
           padding: '16px 20px',
           marginBottom: '24px',
@@ -104,7 +104,7 @@ export const DocumentsView = () => {
         }}
       >
         {/* Search Input */}
-        <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
           <Search
             size={16}
             color="var(--text-muted)"
@@ -119,40 +119,43 @@ export const DocumentsView = () => {
           />
         </div>
 
-        {/* Category Filter */}
-        <select
-          className="liquid-input"
-          style={{ width: 'auto', minWidth: '160px', cursor: 'pointer' }}
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
-            {t.documents.allCategories}
-          </option>
-          {Object.keys(t.categories).map((cat) => (
-            <option key={cat} value={cat} style={{ background: '#090d1a', color: '#fff' }}>
-              {t.categories[cat]}
+        {/* Category & Status Filter Row on Mobile */}
+        <div className="documents-filter-row" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {/* Category Filter */}
+          <select
+            className="liquid-input"
+            style={{ width: 'auto', minWidth: '130px', cursor: 'pointer' }}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
+              {t.documents.allCategories}
             </option>
-          ))}
-        </select>
+            {Object.keys(t.categories).map((cat) => (
+              <option key={cat} value={cat} style={{ background: '#090d1a', color: '#fff' }}>
+                {t.categories[cat]}
+              </option>
+            ))}
+          </select>
 
-        {/* Status Filter */}
-        <select
-          className="liquid-input"
-          style={{ width: 'auto', minWidth: '140px', cursor: 'pointer' }}
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
-            {t.documents.allStatus}
-          </option>
-          <option value="Verified" style={{ background: '#090d1a', color: '#fff' }}>
-            Verified
-          </option>
-          <option value="Pending" style={{ background: '#090d1a', color: '#fff' }}>
-            Pending
-          </option>
-        </select>
+          {/* Status Filter */}
+          <select
+            className="liquid-input"
+            style={{ width: 'auto', minWidth: '120px', cursor: 'pointer' }}
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
+              {t.documents.allStatus}
+            </option>
+            <option value="Verified" style={{ background: '#090d1a', color: '#fff' }}>
+              Verified
+            </option>
+            <option value="Pending" style={{ background: '#090d1a', color: '#fff' }}>
+              Pending
+            </option>
+          </select>
+        </div>
 
         {/* View Mode Toggle */}
         <div
@@ -213,9 +216,10 @@ export const DocumentsView = () => {
         </div>
       ) : viewMode === 'grid' ? (
         <div
+          className="documents-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
             gap: '20px',
           }}
         >
