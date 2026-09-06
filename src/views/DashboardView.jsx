@@ -252,44 +252,50 @@ export const DashboardView = () => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {categoryEntries.slice(0, 4).map(([cat, val], idx) => {
-              const pct = totalAmount > 0 ? Math.round((val / totalAmount) * 100) : 0;
-              const colors = ['#00f2fe', '#a855f7', '#10b981', '#f59e0b'];
-              const currentColor = colors[idx % colors.length];
+          {categoryEntries.length === 0 ? (
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.86rem', textAlign: 'center', padding: '36px 0' }}>
+              No categorized expenses yet.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {categoryEntries.slice(0, 4).map(([cat, val], idx) => {
+                const pct = totalAmount > 0 ? Math.round((val / totalAmount) * 100) : 0;
+                const colors = ['#00f2fe', '#a855f7', '#10b981', '#f59e0b'];
+                const currentColor = colors[idx % colors.length];
 
-              return (
-                <div key={cat}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 600 }}>{t.categories[cat] || cat}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      {formatCurrency(val)} ({pct}%)
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '8px',
-                      background: 'var(--track-bg, rgba(255, 255, 255, 0.08))',
-                      borderRadius: '999px',
-                      overflow: 'hidden',
-                    }}
-                  >
+                return (
+                  <div key={cat}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 600 }}>{t.categories[cat] || cat}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                        {formatCurrency(val)} ({pct}%)
+                      </span>
+                    </div>
                     <div
                       style={{
-                        width: `${pct}%`,
-                        height: '100%',
-                        background: currentColor,
-                        boxShadow: `0 0 10px ${currentColor}`,
+                        width: '100%',
+                        height: '8px',
+                        background: 'var(--track-bg, rgba(255, 255, 255, 0.08))',
                         borderRadius: '999px',
-                        transition: 'width 0.6s ease',
+                        overflow: 'hidden',
                       }}
-                    />
+                    >
+                      <div
+                        style={{
+                          width: `${pct}%`,
+                          height: '100%',
+                          background: currentColor,
+                          boxShadow: `0 0 10px ${currentColor}`,
+                          borderRadius: '999px',
+                          transition: 'width 0.6s ease',
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -313,52 +319,71 @@ export const DashboardView = () => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {documents.slice(0, 4).map((doc) => (
-            <div
-              key={doc.id}
-              className="recent-doc-row"
-              onClick={() => setInspectingDoc(doc)}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div className="recent-doc-icon-wrap">
-                  <Receipt size={18} />
-                </div>
-                <div>
-                  <div className="recent-doc-merchant">{doc.merchant}</div>
-                  <div className="recent-doc-meta">
-                    <span>{doc.date}</span>
-                    <span>•</span>
-                    <span className="liquid-badge liquid-badge-cyan" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
-                      {t.categories[doc.category] || doc.category}
-                    </span>
-                  </div>
-                </div>
+          {documents.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--text-muted)' }}>
+              <Receipt size={40} color="#00f2fe" style={{ opacity: 0.35, margin: '0 auto 12px auto' }} />
+              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                No receipts recorded yet
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="recent-doc-amount">
-                    {formatCurrency(doc.total)}
-                  </div>
-                  <div className="recent-doc-vat">
-                    VAT: {formatCurrency(doc.vat)}
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setInspectingDoc(doc);
-                  }}
-                  className="recent-doc-3d-btn"
-                  title="3D Model Inspector"
-                >
-                  <Eye size={13} />
-                  <span>3D</span>
-                </button>
-              </div>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 18px auto' }}>
+                Start scanning with your camera or upload receipt images to begin automatic OCR tracking and expense analytics.
+              </p>
+              <button
+                onClick={() => setActiveTab('scanner')}
+                className="liquid-btn liquid-btn-primary"
+                style={{ padding: '8px 22px', fontSize: '0.88rem', margin: '0 auto' }}
+              >
+                Scan First Receipt
+              </button>
             </div>
-          ))}
+          ) : (
+            documents.slice(0, 4).map((doc) => (
+              <div
+                key={doc.id}
+                className="recent-doc-row"
+                onClick={() => setInspectingDoc(doc)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div className="recent-doc-icon-wrap">
+                    <Receipt size={18} />
+                  </div>
+                  <div>
+                    <div className="recent-doc-merchant">{doc.merchant}</div>
+                    <div className="recent-doc-meta">
+                      <span>{doc.date}</span>
+                      <span>•</span>
+                      <span className="liquid-badge liquid-badge-cyan" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
+                        {t.categories[doc.category] || doc.category}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className="recent-doc-amount">
+                      {formatCurrency(doc.total)}
+                    </div>
+                    <div className="recent-doc-vat">
+                      VAT: {formatCurrency(doc.vat)}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspectingDoc(doc);
+                    }}
+                    className="recent-doc-3d-btn"
+                    title="3D Model Inspector"
+                  >
+                    <Eye size={13} />
+                    <span>3D</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

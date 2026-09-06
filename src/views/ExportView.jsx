@@ -366,7 +366,7 @@ export const ExportView = () => {
               </div>
             </div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--cyan-glow)', marginTop: '10px' }}>
-              {documents.length || 2} expense records
+              {documents.length} expense records
             </div>
           </div>
 
@@ -432,7 +432,7 @@ export const ExportView = () => {
               </div>
             </div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--cyan-glow)', marginTop: '10px' }}>
-              {documents.length || 2} submitted records
+              {documents.length} submitted records
             </div>
           </div>
         </div>

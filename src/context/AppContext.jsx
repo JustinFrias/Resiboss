@@ -18,13 +18,25 @@ const currencyRates = {
   GBP: { symbol: '£', rate: 0.014, locale: 'en-GB' },
 };
 
+const DEMO_RECEIPT_IDS = new Set([
+  'REC-2026-001',
+  'REC-2026-002',
+  'REC-2026-003',
+  'REC-2026-004',
+  'REC-2026-005',
+]);
+
 export const AppProvider = ({ children }) => {
   const [documents, setDocuments] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : initialReceipts;
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      // Automatically purge any previous demo receipts
+      return parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id));
     } catch (e) {
-      return initialReceipts;
+      return [];
     }
   });
 

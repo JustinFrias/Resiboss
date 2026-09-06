@@ -16,7 +16,6 @@ import {
   Sparkles,
   Volume2,
   Trash2,
-  RotateCcw,
   Plus,
   Save,
   Globe,
@@ -42,7 +41,6 @@ export const SettingsView = () => {
     setCurrency,
     settings,
     setSettings,
-    resetDemoData,
     clearAllData,
     t,
   } = useApp();
@@ -983,28 +981,14 @@ export const SettingsView = () => {
                 </span>
               </div>
 
-              {/* Data Vault Reset and Wipe */}
+              {/* Data Vault Wipe */}
               <div
                 style={{
                   borderTop: '1px solid var(--glass-border)',
                   paddingTop: '20px',
                   display: 'flex',
-                  gap: '12px',
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetDemoData();
-                    soundFx.playSuccessChime();
-                    alert('Demo receipts restored!');
-                  }}
-                  className="liquid-btn liquid-btn-secondary"
-                  style={{ flex: 1 }}
-                >
-                  <RotateCcw size={16} /> Reset Demo Data
-                </button>
-
                 <button
                   type="button"
                   onClick={() => {
@@ -1015,7 +999,7 @@ export const SettingsView = () => {
                     }
                   }}
                   className="liquid-btn liquid-btn-secondary"
-                  style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                  style={{ width: '100%', justifyContent: 'center', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
                 >
                   <Trash2 size={16} /> Clear Vault Storage
                 </button>
