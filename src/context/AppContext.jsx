@@ -3,6 +3,7 @@ import { initialReceipts } from '../utils/initialData';
 import { translations } from '../utils/i18n';
 import { soundFx } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const AppContext = createContext();
 
@@ -51,22 +52,21 @@ export const AppProvider = ({ children }) => {
     }
   });
 
+  // Real Supabase User State (null when user is NOT signed in)
+  const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(() => {
     try {
       const saved = localStorage.getItem('resiboss_user_profile_v1');
-      return saved ? JSON.parse(saved) : {
-        firstName: 'Justinfrias951',
-        lastName: 'User',
-        email: 'justinfrias951@gmail.com',
-        photo: '/user_avatar.png',
-      };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Only keep if it is a real authenticated session
+        if (parsed && parsed.isAuthSession) {
+          return parsed;
+        }
+      }
+      return null;
     } catch (e) {
-      return {
-        firstName: 'Justinfrias951',
-        lastName: 'User',
-        email: 'justinfrias951@gmail.com',
-        photo: '/user_avatar.png',
-      };
+      return null;
     }
   });
 
@@ -158,30 +158,106 @@ export const AppProvider = ({ children }) => {
     setNotifications([]);
   };
 
+  // Listen for Supabase Authentication State (Google OAuth)
+  useEffect(() => {
+    if (!supabase) return;
+
+    // Check existing active session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        const meta = session.user.user_metadata || {};
+        const profile = {
+          id: session.user.id,
+          firstName: meta.given_name || meta.full_name?.split(' ')[0] || session.user.email?.split('@')[0] || 'User',
+          lastName: meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
+          email: session.user.email,
+          photo: meta.avatar_url || meta.picture || null,
+          isAuthSession: true,
+        };
+        setUserProfile(profile);
+        try {
+          localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+        } catch (e) {}
+      } else {
+        setCurrentUser(null);
+        setUserProfile(null);
+        try {
+          localStorage.removeItem('resiboss_user_profile_v1');
+        } catch (e) {}
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        const meta = session.user.user_metadata || {};
+        const profile = {
+          id: session.user.id,
+          firstName: meta.given_name || meta.full_name?.split(' ')[0] || session.user.email?.split('@')[0] || 'User',
+          lastName: meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
+          email: session.user.email,
+          photo: meta.avatar_url || meta.picture || null,
+          isAuthSession: true,
+        };
+        setUserProfile(profile);
+        try {
+          localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+        } catch (e) {}
+      } else {
+        setCurrentUser(null);
+        setUserProfile(null);
+        try {
+          localStorage.removeItem('resiboss_user_profile_v1');
+        } catch (e) {}
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  const signInWithGoogle = async () => {
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  const signOut = async () => {
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Sign out error:', e);
+      }
+    }
+    setCurrentUser(null);
+    setUserProfile(null);
+    try {
+      localStorage.removeItem('resiboss_user_profile_v1');
+    } catch (e) {}
+  };
+
   const updateUserProfile = (updatedProfile) => {
     setUserProfile((prev) => {
-      const merged = { ...prev, ...updatedProfile };
+      const merged = { ...prev, ...updatedProfile, isAuthSession: true };
       try {
         localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(merged));
       } catch (err) {
         console.warn('LocalStorage quota warning for profile:', err);
-        try {
-          const safeMerged = {
-            ...merged,
-            photo: merged.photo && merged.photo.length > 50000 ? '/user_avatar.png' : merged.photo,
-          };
-          localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(safeMerged));
-        } catch (e2) {}
       }
       return merged;
     });
   };
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(userProfile));
-    } catch (e) {}
-  }, [userProfile]);
 
   useEffect(() => {
     soundFx.enabled = settings.soundEnabled;
@@ -282,9 +358,12 @@ export const AppProvider = ({ children }) => {
         },
         settings,
         setSettings,
+        currentUser,
         userProfile,
         setUserProfile,
         updateUserProfile,
+        signInWithGoogle,
+        signOut,
         inspectingDoc,
         setInspectingDoc,
         t,

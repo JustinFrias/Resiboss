@@ -22,14 +22,20 @@ import {
   Globe,
   DollarSign,
   Loader2,
+  LogIn,
+  LogOut,
+  AlertCircle,
 } from 'lucide-react';
 
 export const SettingsView = () => {
   const {
     documents,
+    currentUser,
     userProfile,
     setUserProfile,
     updateUserProfile,
+    signInWithGoogle,
+    signOut,
     language,
     setLanguage,
     currency,
@@ -43,23 +49,55 @@ export const SettingsView = () => {
 
   const [activeTab, setActiveTab] = useState('Profile');
   const [form, setForm] = useState({
-    firstName: userProfile?.firstName || 'Justinfrias951',
-    lastName: userProfile?.lastName || 'User',
-    email: userProfile?.email || 'justinfrias951@gmail.com',
-    photo: userProfile?.photo || '/user_avatar.png',
+    firstName: userProfile?.firstName || '',
+    lastName: userProfile?.lastName || '',
+    email: userProfile?.email || '',
+    photo: userProfile?.photo || null,
   });
 
   // Sync form state whenever userProfile updates
   useEffect(() => {
     if (userProfile) {
       setForm({
-        firstName: userProfile.firstName ?? 'Justinfrias951',
-        lastName: userProfile.lastName ?? 'User',
-        email: userProfile.email ?? 'justinfrias951@gmail.com',
-        photo: userProfile.photo ?? '/user_avatar.png',
+        firstName: userProfile.firstName || '',
+        lastName: userProfile.lastName || '',
+        email: userProfile.email || '',
+        photo: userProfile.photo || null,
+      });
+    } else {
+      setForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        photo: null,
       });
     }
   }, [userProfile]);
+
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [authError, setAuthError] = useState(null);
+
+  const handleGoogleSignIn = async () => {
+    setIsSigningIn(true);
+    setAuthError(null);
+    soundFx.playClick();
+    try {
+      if (signInWithGoogle) {
+        await signInWithGoogle();
+      }
+    } catch (err) {
+      console.error('Sign in error:', err);
+      setAuthError(err.message || 'Failed to initialize Google Sign-In.');
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    soundFx.playClick();
+    if (signOut) {
+      await signOut();
+    }
+  };
 
   const [isSaving, setIsSaving] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
@@ -375,12 +413,12 @@ export const SettingsView = () => {
                   width: '30px',
                   height: '30px',
                   borderRadius: '8px',
-                  background: 'rgba(16, 185, 129, 0.12)',
-                  color: '#34d399',
+                  background: userProfile ? 'rgba(16, 185, 129, 0.12)' : 'rgba(148, 163, 184, 0.12)',
+                  color: userProfile ? '#34d399' : '#94a3b8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  border: userProfile ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
                 }}
               >
                 <Laptop size={15} />
@@ -390,11 +428,11 @@ export const SettingsView = () => {
               style={{
                 fontSize: '1.6rem',
                 fontWeight: 800,
-                color: '#ffffff',
+                color: userProfile ? '#34d399' : 'var(--text-muted)',
                 fontFamily: 'var(--font-mono)',
               }}
             >
-              1
+              {userProfile ? '1 (Online)' : '0 (Guest)'}
             </div>
           </div>
         </TiltCard>
@@ -443,263 +481,403 @@ export const SettingsView = () => {
 
         {/* Tab Body Content */}
         <div style={{ padding: '20px 24px' }}>
-          {/* TAB 1: PROFILE */}
+          {/* TAB 1: PROFILE (Shown only when user is signed in, otherwise prompt sign in) */}
           {activeTab === 'Profile' && (
             <div>
-              <h2
-                style={{
-                  fontSize: '1.15rem',
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  marginBottom: '10px',
-                }}
-              >
-                Profile
-              </h2>
-
-              {/* Subtle glass line divider */}
-              <div
-                style={{
-                  height: '1px',
-                  background: 'linear-gradient(90deg, rgba(0, 242, 254, 0.35), rgba(255, 255, 255, 0.1), transparent)',
-                  marginBottom: '16px',
-                }}
-              />
-
-              {/* Avatar Row */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  marginBottom: '16px',
-                }}
-              >
-                {/* Profile Photo with Cyan Glass Ring */}
+              {!userProfile ? (
+                /* Unauthenticated: Show Sign In Screen */
                 <div
                   style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    background: '#090d1a',
+                    padding: '40px 20px',
+                    maxWidth: '500px',
+                    margin: '0 auto',
+                    textAlign: 'center',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px solid rgba(0, 242, 254, 0.5)',
-                    boxShadow: '0 0 16px rgba(0, 242, 254, 0.3)',
-                    flexShrink: 0,
                   }}
                 >
-                  {form.photo ? (
-                    <img
-                      src={form.photo}
-                      alt="User Avatar"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '20px',
+                      background: 'rgba(0, 242, 254, 0.12)',
+                      border: '1px solid rgba(0, 242, 254, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#00f2fe',
+                      boxShadow: '0 0 25px rgba(0, 242, 254, 0.25)',
+                      marginBottom: '18px',
+                    }}
+                  >
+                    <ShieldCheck size={32} />
+                  </div>
+
+                  <span className="liquid-badge liquid-badge-cyan" style={{ marginBottom: '10px' }}>
+                    SIGN IN REQUIRED
+                  </span>
+
+                  <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                    Sign In to View & Edit Profile
+                  </h2>
+
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px', maxWidth: '420px' }}>
+                    Sign in with your Google account to manage your profile, securely sync receipts to your Supabase database, and access your vault anywhere.
+                  </p>
+
+                  {authError && (
                     <div
                       style={{
                         width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(135deg, #7f1d1d, #991b1b)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#ffffff',
-                        fontWeight: 700,
-                        fontSize: '1.2rem',
-                      }}
-                    >
-                      {form.firstName.charAt(0)}
-                    </div>
-                  )}
-                </div>
-
-                {/* Upload Photo Button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="liquid-btn liquid-btn-secondary"
-                  style={{
-                    padding: '7px 14px',
-                    borderRadius: '10px',
-                    fontSize: '0.84rem',
-                  }}
-                >
-                  <Upload size={14} color="#00f2fe" />
-                  <span>Upload Photo</span>
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handlePhotoUpload}
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                />
-
-                {/* Remove Photo Button */}
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="liquid-btn liquid-btn-secondary"
-                  style={{
-                    padding: '7px 14px',
-                    borderRadius: '10px',
-                    fontSize: '0.84rem',
-                  }}
-                >
-                  <X size={14} color="var(--text-muted)" />
-                  <span>Remove</span>
-                </button>
-              </div>
-
-              {/* Form Input Fields */}
-              <form onSubmit={handleSaveProfile}>
-                {/* Row 1: First Name & Last Name (2 Columns) */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '16px',
-                    marginBottom: '14px',
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                        display: 'block',
-                        marginBottom: '6px',
-                      }}
-                    >
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      className="liquid-input"
-                      value={form.firstName}
-                      onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                      style={{ padding: '9px 12px' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                        display: 'block',
-                        marginBottom: '6px',
-                      }}
-                    >
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      className="liquid-input"
-                      value={form.lastName}
-                      onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                      style={{ padding: '9px 12px' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Row 2: Email Address */}
-                <div style={{ marginBottom: '18px' }}>
-                  <label
-                    style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: 'var(--text-secondary)',
-                      display: 'block',
-                      marginBottom: '6px',
-                    }}
-                  >
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    className="liquid-input"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    style={{ maxWidth: '49%', padding: '9px 12px' }}
-                  />
-                </div>
-
-                {/* Save Profile Button (Bottom Right) */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '14px', marginTop: '12px' }}>
-                  {savedNotice && (
-                    <div
-                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        color: '#f87171',
+                        fontSize: '0.84rem',
+                        marginBottom: '16px',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        color: '#10b981',
-                        fontSize: '0.86rem',
-                        fontWeight: 600,
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        border: '1px solid rgba(16, 185, 129, 0.35)',
-                        padding: '8px 16px',
-                        borderRadius: '10px',
-                        boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)',
-                        animation: 'fadeIn 0.25s ease',
+                        textAlign: 'left',
                       }}
                     >
-                      <CheckCircle2 size={16} color="#10b981" />
-                      <span>Profile saved successfully!</span>
+                      <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                      <span>{authError}</span>
                     </div>
                   )}
 
                   <button
-                    type="submit"
-                    disabled={isSaving}
+                    onClick={handleGoogleSignIn}
+                    disabled={isSigningIn}
                     className="liquid-btn liquid-btn-primary"
                     style={{
-                      padding: '10px 26px',
-                      borderRadius: '10px',
-                      fontSize: '0.92rem',
+                      width: '100%',
+                      maxWidth: '320px',
+                      padding: '13px 20px',
+                      borderRadius: '12px',
+                      fontSize: '0.94rem',
                       fontWeight: 700,
-                      background: savedNotice
-                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                        : undefined,
-                      borderColor: savedNotice ? '#10b981' : undefined,
-                      color: savedNotice ? '#ffffff' : undefined,
-                      boxShadow: savedNotice
-                        ? '0 0 20px rgba(16, 185, 129, 0.6)'
-                        : undefined,
-                      transition: 'all 0.3s ease',
-                      cursor: isSaving ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      boxShadow: '0 0 25px rgba(0, 242, 254, 0.35)',
+                      cursor: isSigningIn ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {savedNotice ? (
+                    {isSigningIn ? (
                       <>
-                        <CheckCircle2 size={16} />
-                        <span>Saved!</span>
-                      </>
-                    ) : isSaving ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Saving...</span>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Connecting to Google...</span>
                       </>
                     ) : (
                       <>
-                        <Save size={15} />
-                        <span>Save Profile</span>
+                        {/* Authentic Google 4-Color Logo */}
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
+                          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/>
+                          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/>
+                          <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.6 7.5 23.5 12 23.5z"/>
+                        </svg>
+                        <span>Continue with Google</span>
                       </>
                     )}
                   </button>
+
+                  <div style={{ marginTop: '16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Secured via Supabase OAuth 2.0 Encryption
+                  </div>
                 </div>
-              </form>
+              ) : (
+                /* Authenticated User: Show Profile Fields & Sign Out */
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div>
+                      <h2
+                        style={{
+                          fontSize: '1.15rem',
+                          fontWeight: 800,
+                          color: '#ffffff',
+                          margin: 0,
+                        }}
+                      >
+                        Profile Information
+                      </h2>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                        Signed in as {userProfile.email}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="liquid-btn liquid-btn-secondary"
+                      style={{
+                        padding: '6px 14px',
+                        fontSize: '0.8rem',
+                        color: '#f87171',
+                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                      title="Sign Out of Resiboss"
+                    >
+                      <LogOut size={14} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+
+                  {/* Subtle glass line divider */}
+                  <div
+                    style={{
+                      height: '1px',
+                      background: 'linear-gradient(90deg, rgba(0, 242, 254, 0.35), rgba(255, 255, 255, 0.1), transparent)',
+                      marginBottom: '16px',
+                    }}
+                  />
+
+                  {/* Avatar Row */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '14px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    {/* Profile Photo with Cyan Glass Ring */}
+                    <div
+                      style={{
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        background: '#090d1a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid rgba(0, 242, 254, 0.5)',
+                        boxShadow: '0 0 16px rgba(0, 242, 254, 0.3)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {form.photo ? (
+                        <img
+                          src={form.photo}
+                          alt="User Avatar"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            background: 'linear-gradient(135deg, #0284c7, #7c3aed)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '1.2rem',
+                          }}
+                        >
+                          {(form.firstName || userProfile.firstName || 'U').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload Photo Button */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="liquid-btn liquid-btn-secondary"
+                      style={{
+                        padding: '7px 14px',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                      }}
+                    >
+                      <Upload size={14} color="#00f2fe" />
+                      <span>Upload Photo</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePhotoUpload}
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                    />
+
+                    {/* Remove Photo Button */}
+                    {form.photo && (
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="liquid-btn liquid-btn-secondary"
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: '10px',
+                          fontSize: '0.84rem',
+                        }}
+                      >
+                        <X size={14} color="var(--text-muted)" />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Form Input Fields */}
+                  <form onSubmit={handleSaveProfile}>
+                    {/* Row 1: First Name & Last Name (2 Columns) */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '16px',
+                        marginBottom: '14px',
+                      }}
+                    >
+                      <div>
+                        <label
+                          style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                            display: 'block',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          className="liquid-input"
+                          value={form.firstName}
+                          onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                          style={{ padding: '9px 12px' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                            display: 'block',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          className="liquid-input"
+                          value={form.lastName}
+                          onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                          style={{ padding: '9px 12px' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 2: Email Address */}
+                    <div style={{ marginBottom: '18px' }}>
+                      <label
+                        style={{
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          color: 'var(--text-secondary)',
+                          display: 'block',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        className="liquid-input"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        style={{ maxWidth: '49%', padding: '9px 12px' }}
+                      />
+                    </div>
+
+                    {/* Save Profile Button (Bottom Right) */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '14px', marginTop: '12px' }}>
+                      {savedNotice && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            color: '#10b981',
+                            fontSize: '0.86rem',
+                            fontWeight: 600,
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            border: '1px solid rgba(16, 185, 129, 0.35)',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)',
+                            animation: 'fadeIn 0.25s ease',
+                          }}
+                        >
+                          <CheckCircle2 size={16} color="#10b981" />
+                          <span>Profile saved successfully!</span>
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="liquid-btn liquid-btn-primary"
+                        style={{
+                          padding: '10px 26px',
+                          borderRadius: '10px',
+                          fontSize: '0.92rem',
+                          fontWeight: 700,
+                          background: savedNotice
+                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                            : undefined,
+                          borderColor: savedNotice ? '#10b981' : undefined,
+                          color: savedNotice ? '#ffffff' : undefined,
+                          boxShadow: savedNotice
+                            ? '0 0 20px rgba(16, 185, 129, 0.6)'
+                            : undefined,
+                          transition: 'all 0.3s ease',
+                          cursor: isSaving ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        {savedNotice ? (
+                          <>
+                            <CheckCircle2 size={16} />
+                            <span>Saved!</span>
+                          </>
+                        ) : isSaving ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save size={15} />
+                            <span>Save Profile</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           )}
 
