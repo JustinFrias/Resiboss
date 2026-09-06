@@ -102,7 +102,7 @@ export const ScannerView = () => {
         cameraInputRef.current.value = '';
         cameraInputRef.current.click();
       } else {
-        setCameraError('Hindi mabuksan ang camera. Pakitiyak na pinayagan ang camera permission o mag-upload ng file ng resibo.');
+        setCameraError('Unable to open camera. Please make sure camera permissions are granted or upload a receipt file.');
       }
     }
   };
@@ -170,7 +170,7 @@ export const ScannerView = () => {
     setScanMode('scanned');
     setIsScanning(true);
     setScanProgress(5);
-    setScanStepText('Sinusuri ang litrato ng resibo...');
+    setScanStepText('Analyzing receipt image with OCR...');
     setDetectedBoxes([]);
     setScanError(null);
     setCurrentReceipt(null);
@@ -189,9 +189,9 @@ export const ScannerView = () => {
       if (!ocrResult.isValid) {
         setIsScanning(false);
         setScanError({
-          title: 'Hindi Resibo ang Na-detect',
-          message: ocrResult.errorReason || 'Ang in-upload na litrato ay hindi mukhang opisyal na resibo o transaction invoice.',
-          tip: 'Siguraduhing maliwanag, patag, at nakatutok sa resibo na may tindahan at presyo ang iyong kuha.',
+          title: 'Non-Receipt Image Detected',
+          message: ocrResult.errorReason || 'The uploaded photo does not appear to be an official receipt or sales invoice.',
+          tip: 'Ensure the image is clear, flat, and focused on a receipt containing a store name and prices.',
           imageUri: imageUri,
           filename: filename,
         });
@@ -214,9 +214,9 @@ export const ScannerView = () => {
       console.error('OCR run error:', err);
       setIsScanning(false);
       setScanError({
-        title: 'Hindi Mabasa ang Resibo',
-        message: 'Hindi nakakita ng nababasang detalye sa larawan.',
-        tip: 'Pakisubukang kumuha ng mas maliwanag at malinaw na litrato ng resibo.',
+        title: 'Receipt Unreadable',
+        message: 'Could not extract readable text or receipt details from this image.',
+        tip: 'Please try capturing a brighter and clearer photo of the receipt.',
         imageUri: imageUri,
         filename: filename,
       });
@@ -642,7 +642,7 @@ export const ScannerView = () => {
                 <Camera size={13} /> LIVE VIEWFINDER
               </span>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Itapat ang resibo sa gitna ng kamera
+                Align receipt in the center of the camera
               </span>
             </div>
             <button
@@ -739,7 +739,7 @@ export const ScannerView = () => {
                   fontSize: '0.78rem',
                   cursor: 'pointer',
                 }}
-                title="Pumili agad ng bagong resibo mula sa files nang hindi umaalis sa scanner"
+                title="Quickly select a new receipt from files without leaving scanner"
               >
                 <Upload size={13} />
                 <span>Scan Another</span>
@@ -797,7 +797,7 @@ export const ScannerView = () => {
                   }}
                 >
                   <AlertTriangle size={13} />
-                  <span>HINDI RESIBO • SCAN REJECTED</span>
+                  <span>NON-RECEIPT • SCAN REJECTED</span>
                 </div>
               )}
 
@@ -844,7 +844,7 @@ export const ScannerView = () => {
                     <button
                       onClick={() => setShowBoxes(!showBoxes)}
                       className={`scanner-zoom-btn ${showBoxes ? 'active' : ''}`}
-                      title={showBoxes ? 'Itago ang Bounding Boxes' : 'Ipakita ang Bounding Boxes'}
+                      title={showBoxes ? 'Hide Bounding Boxes' : 'Show Bounding Boxes'}
                     >
                       {showBoxes ? <Eye size={15} /> : <EyeOff size={15} />}
                     </button>
@@ -853,7 +853,7 @@ export const ScannerView = () => {
                   <button
                     onClick={() => setIsFullscreenModal(true)}
                     className="scanner-zoom-btn"
-                    title="Palakihin / Fullscreen Inspector"
+                    title="Maximize / Fullscreen Inspector"
                   >
                     <Maximize2 size={15} />
                   </button>
@@ -919,7 +919,7 @@ export const ScannerView = () => {
                   ))}
                 </div>
               ) : (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Walang litratong napili</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No image selected</div>
               )}
 
               {zoomLevel > 1 && (
@@ -936,7 +936,7 @@ export const ScannerView = () => {
                     zIndex: 25,
                   }}
                 >
-                  I-drag para mag-pan
+                  Drag to pan
                 </div>
               )}
             </div>
@@ -1006,7 +1006,7 @@ export const ScannerView = () => {
                     </div>
                     <div>
                       <span className="liquid-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f43f5e', borderColor: 'rgba(239, 68, 68, 0.3)', fontSize: '0.68rem', padding: '2px 8px' }}>
-                        SCAN REJECTED • HINDI RESIBO
+                        SCAN REJECTED • NON-RECEIPT
                       </span>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '4px', color: 'var(--text-primary)' }}>
                         {scanError.title}
@@ -1028,17 +1028,17 @@ export const ScannerView = () => {
                     }}
                   >
                     <div style={{ fontSize: '0.82rem', fontWeight: 650, color: 'var(--text-primary)', marginBottom: '10px' }}>
-                      Bakit tinanggihan ang larawan?
+                      Why was this image rejected?
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> Walang nakitang Total Amount o Presyo (₱, $, PHP)
+                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> No Total Amount or Price detected (₱, $, PHP)
                       </li>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> Walang rehistradong Merchant o Tindahan
+                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> No registered Merchant or Store name detected
                       </li>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> Hindi tugma sa pormat ng Official Receipt, Sales Invoice, o Billing Statement
+                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> Does not match Official Receipt, Sales Invoice, or Billing Statement layout
                       </li>
                     </ul>
                   </div>
@@ -1058,7 +1058,7 @@ export const ScannerView = () => {
                   >
                     <Sparkles size={16} color="var(--cyan-glow)" style={{ flexShrink: 0, marginTop: '2px' }} />
                     <div>
-                      <strong style={{ color: 'var(--cyan-glow)' }}>Tip para sa Matagumpay na Scan:</strong>
+                      <strong style={{ color: 'var(--cyan-glow)' }}>Tips for a Successful Scan:</strong>
                       <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem' }}>
                         {scanError.tip}
                       </p>
@@ -1074,7 +1074,7 @@ export const ScannerView = () => {
                       style={{ padding: '12px', fontSize: '0.85rem', borderRadius: '12px' }}
                     >
                       <Camera size={16} />
-                      <span>Kumuha Ulit</span>
+                      <span>Retake Photo</span>
                     </button>
                     <button
                       onClick={handleScanAnother}
@@ -1082,7 +1082,7 @@ export const ScannerView = () => {
                       style={{ padding: '12px', fontSize: '0.85rem', borderRadius: '12px' }}
                     >
                       <Upload size={16} />
-                      <span>Pumili ng Resibo</span>
+                      <span>Choose Receipt</span>
                     </button>
                   </div>
 
@@ -1094,7 +1094,7 @@ export const ScannerView = () => {
                       title="Encode items manually"
                     >
                       <Plus size={14} />
-                      <span>I-encode nang Manual</span>
+                      <span>Manual Entry</span>
                     </button>
                     <button
                       onClick={handleResetToIdle}
@@ -1107,7 +1107,7 @@ export const ScannerView = () => {
                         padding: '8px',
                       }}
                     >
-                      Bumalik sa Simula
+                      Reset to Start
                     </button>
                   </div>
                 </div>
@@ -1121,7 +1121,7 @@ export const ScannerView = () => {
                       Extracted Receipt Details
                     </h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      Tunay na nahimay mula sa iyong resibo gamit ang AI OCR.
+                      Extracted directly from your receipt using AI OCR.
                     </span>
                   </div>
                   {currentReceipt && (
@@ -1283,7 +1283,7 @@ export const ScannerView = () => {
                           ))
                         ) : (
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>
-                            Walang line items na na-isolate.
+                            No line items isolated.
                           </div>
                         )}
                       </div>
@@ -1293,7 +1293,7 @@ export const ScannerView = () => {
                         className="liquid-btn liquid-btn-secondary"
                         style={{ width: '100%', marginTop: '8px', padding: '6px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                       >
-                        <Plus size={13} /> Magdagdag ng Item
+                        <Plus size={13} /> Add Item
                       </button>
                     </div>
 
@@ -1339,7 +1339,7 @@ export const ScannerView = () => {
                   </div>
                 ) : (
                   <div style={{ color: 'var(--text-secondary)', padding: '20px', textAlign: 'center' }}>
-                    Sinusuri ang resibo gamit ang AI OCR...
+                    Analyzing receipt with AI OCR...
                   </div>
                 )}
               </div>

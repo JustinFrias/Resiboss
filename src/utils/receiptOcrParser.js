@@ -190,7 +190,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
 
     if (cleanWords.length < 3) {
       isValidReceipt = false;
-      invalidReason = 'Walang nakitang text sa larawan. Karaniwang litrato (tao, mukha, tanawin, o bagay) at hindi resibo ang na-scan.';
+      invalidReason = 'No readable text detected in image. The photo appears to be a regular photo (person, object, landscape) rather than a receipt.';
     } else if (hasKnownBrand) {
       isValidReceipt = true;
     } else if (hasStrongKeywords && hasPrices) {
@@ -201,7 +201,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       isValidReceipt = true;
     } else {
       isValidReceipt = false;
-      invalidReason = 'Hindi na-detect bilang resibo o invoice. Walang nakitang presyo, tindahan, o total amount sa in-upload na litrato.';
+      invalidReason = 'Not detected as a valid receipt or invoice. No itemized prices, merchant header, or total amount found in this photo.';
     }
 
     if (!isValidReceipt) {
@@ -522,7 +522,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     console.error('OCR Extraction error:', error);
     return {
       isValid: false,
-      errorReason: 'Hindi ma-proseso ang larawan. Pakisubukang kumuha ng mas malinaw na litrato ng resibo.',
+      errorReason: 'Unable to process image. Please try taking a brighter and sharper photo of the receipt.',
       rawOcrText: '',
       confidence: 0,
     };
