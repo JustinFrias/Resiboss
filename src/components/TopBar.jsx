@@ -13,6 +13,8 @@ import {
   CloudDownload,
   ShieldCheck,
   ArrowRight,
+  User,
+  LogOut,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 
@@ -31,6 +33,8 @@ export const TopBar = ({ onOpenMobile }) => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     clearNotifications,
+    userProfile,
+    signOut,
   } = useApp();
 
   // Search Bar State
@@ -42,6 +46,10 @@ export const TopBar = ({ onOpenMobile }) => {
   // Notifications Popover State
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const notifContainerRef = useRef(null);
+
+  // User Profile Dropdown Popover State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileContainerRef = useRef(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -75,6 +83,7 @@ export const TopBar = ({ onOpenMobile }) => {
       if (e.key === 'Escape') {
         setIsSearchFocused(false);
         setIsNotifOpen(false);
+        setIsProfileOpen(false);
       }
     };
 
@@ -84,6 +93,9 @@ export const TopBar = ({ onOpenMobile }) => {
       }
       if (notifContainerRef.current && !notifContainerRef.current.contains(e.target)) {
         setIsNotifOpen(false);
+      }
+      if (profileContainerRef.current && !profileContainerRef.current.contains(e.target)) {
+        setIsProfileOpen(false);
       }
     };
 
@@ -800,7 +812,223 @@ export const TopBar = ({ onOpenMobile }) => {
           )}
         </div>
 
+        {/* User Profile Avatar with Dropdown Menu (Matching User Screenshot) */}
+        <div ref={profileContainerRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => {
+              soundFx?.playClick?.();
+              setIsProfileOpen(!isProfileOpen);
+              setIsNotifOpen(false);
+            }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              padding: 0,
+              border: '2px solid #00f2fe',
+              background: 'linear-gradient(135deg, #0284c7, #7c3aed)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              boxShadow: isProfileOpen
+                ? '0 0 18px rgba(0, 242, 254, 0.7), 0 0 8px #00f2fe'
+                : '0 0 10px rgba(0, 242, 254, 0.4)',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 18px rgba(0, 242, 254, 0.7), 0 0 8px #00f2fe';
+            }}
+            onMouseLeave={(e) => {
+              if (!isProfileOpen) {
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 242, 254, 0.4)';
+              }
+            }}
+            title={userProfile ? `${userProfile.firstName || 'User'} Profile` : 'Account Menu'}
+          >
+            {userProfile?.photo ? (
+              <img
+                src={userProfile.photo}
+                alt="Profile"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : (
+              <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#ffffff' }}>
+                {(userProfile?.firstName || 'U').charAt(0).toUpperCase()}
+              </span>
+            )}
+          </button>
 
+          {/* Profile Dropdown Popover Card */}
+          {isProfileOpen && (
+            <div
+              className="glass-panel"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 10px)',
+                right: 0,
+                width: '260px',
+                background: 'rgba(9, 14, 28, 0.96)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                borderRadius: '16px',
+                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75), 0 0 25px rgba(0, 242, 254, 0.15)',
+                padding: '16px',
+                zIndex: 1000,
+                animation: 'scaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              }}
+            >
+              {/* Top Info: Avatar + Name & Email */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '2px solid rgba(0, 242, 254, 0.45)',
+                    background: 'linear-gradient(135deg, #0284c7, #7c3aed)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {userProfile?.photo ? (
+                    <img
+                      src={userProfile.photo}
+                      alt="Avatar"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff' }}>
+                      {(userProfile?.firstName || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left' }}>
+                  <span
+                    style={{
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      color: '#ffffff',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {userProfile ? `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'Justin Frias' : 'Guest User'}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.74rem',
+                      color: 'var(--text-secondary)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {userProfile?.email || 'justinfrias951@gmail.com'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div
+                style={{
+                  height: '1px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  marginBottom: '10px',
+                }}
+              />
+
+              {/* Option 1: Edit Profile & Avatar */}
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx?.playClick?.();
+                  setActiveTab('settings');
+                  setIsProfileOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.86rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 242, 254, 0.1)';
+                  e.currentTarget.style.color = '#00f2fe';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+              >
+                <User size={16} />
+                <span>Edit Profile & Avatar</span>
+              </button>
+
+              {/* Option 2: Sign Out (Red) */}
+              <button
+                type="button"
+                onClick={async () => {
+                  soundFx?.playClick?.();
+                  setIsProfileOpen(false);
+                  if (signOut) {
+                    await signOut();
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#f87171',
+                  fontSize: '0.86rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  textAlign: 'left',
+                  marginTop: '4px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                  e.currentTarget.style.color = '#ef4444';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                  e.currentTarget.style.color = '#f87171';
+                }}
+              >
+                <LogOut size={16} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
