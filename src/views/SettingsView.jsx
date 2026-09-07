@@ -236,9 +236,6 @@ export const SettingsView = () => {
         >
           {t.settings.generalTitle}
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
-          {t.settings.generalDesc}
-        </p>
       </div>
 
       {/* Save Notification Toast */}
