@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components/TiltCard';
 import { soundFx } from '../utils/soundEffects';
+import { PipedreamAuthCard } from '../components/PipedreamAuthCard';
+import { PipedreamSetupTab } from '../components/PipedreamSetupTab';
 import {
   Settings,
   Upload,
@@ -282,7 +284,7 @@ export const SettingsView = () => {
             background: 'rgba(10, 16, 34, 0.45)',
           }}
         >
-          {['Profile', 'Categories', 'Security', 'Notifications'].map((tab) => {
+          {['Profile', 'Pipedream Auth', 'Categories', 'Security', 'Notifications'].map((tab) => {
             const isActive = activeTab === tab;
             return (
               <button
@@ -316,112 +318,8 @@ export const SettingsView = () => {
           {activeTab === 'Profile' && (
             <div>
               {!userProfile ? (
-                /* Unauthenticated: Show Sign In Screen */
-                <div
-                  style={{
-                    padding: '40px 20px',
-                    maxWidth: '500px',
-                    margin: '0 auto',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '20px',
-                      background: 'rgba(0, 242, 254, 0.12)',
-                      border: '1px solid rgba(0, 242, 254, 0.35)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#00f2fe',
-                      boxShadow: '0 0 25px rgba(0, 242, 254, 0.25)',
-                      marginBottom: '18px',
-                    }}
-                  >
-                    <ShieldCheck size={32} />
-                  </div>
-
-                  <span className="liquid-badge liquid-badge-cyan" style={{ marginBottom: '10px' }}>
-                    SIGN IN REQUIRED
-                  </span>
-
-                  <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    Sign In to View & Edit Profile
-                  </h2>
-
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px', maxWidth: '420px' }}>
-                    Sign in with your Google account to manage your profile, securely sync receipts to your Supabase database, and access your vault anywhere.
-                  </p>
-
-                  {authError && (
-                    <div
-                      style={{
-                        width: '100%',
-                        padding: '10px 16px',
-                        borderRadius: '10px',
-                        background: 'rgba(239, 68, 68, 0.15)',
-                        border: '1px solid rgba(239, 68, 68, 0.4)',
-                        color: '#f87171',
-                        fontSize: '0.84rem',
-                        marginBottom: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        textAlign: 'left',
-                      }}
-                    >
-                      <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                      <span>{authError}</span>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleGoogleSignIn}
-                    disabled={isSigningIn}
-                    className="liquid-btn liquid-btn-primary"
-                    style={{
-                      width: '100%',
-                      maxWidth: '320px',
-                      padding: '13px 20px',
-                      borderRadius: '12px',
-                      fontSize: '0.94rem',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      boxShadow: '0 0 25px rgba(0, 242, 254, 0.35)',
-                      cursor: isSigningIn ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {isSigningIn ? (
-                      <>
-                        <Loader2 size={18} className="animate-spin" />
-                        <span>Connecting to Google...</span>
-                      </>
-                    ) : (
-                      <>
-                        {/* Authentic Google 4-Color Logo */}
-                        <svg width="20" height="20" viewBox="0 0 24 24">
-                          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
-                          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/>
-                          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/>
-                          <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.6 7.5 23.5 12 23.5z"/>
-                        </svg>
-                        <span>Continue with Google</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div style={{ marginTop: '16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Secured via Supabase OAuth 2.0 Encryption
-                  </div>
-                </div>
+                /* Unauthenticated: Show Pipedream Sign In / Register Card */
+                <PipedreamAuthCard onNavigateToSettings={() => setActiveTab('Pipedream Auth')} />
               ) : (
                 /* Authenticated User: Show Profile Fields & Sign Out */
                 <div>
@@ -712,7 +610,12 @@ export const SettingsView = () => {
             </div>
           )}
 
-
+          {/* TAB: PIPEDREAM AUTH */}
+          {activeTab === 'Pipedream Auth' && (
+            <div>
+              <PipedreamSetupTab />
+            </div>
+          )}
 
           {/* TAB 2: CATEGORIES */}
           {activeTab === 'Categories' && (

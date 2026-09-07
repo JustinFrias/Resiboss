@@ -288,6 +288,123 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   };
 
+  // Pipedream Authentication Webhook Integration
+  const [pipedreamAuthUrl, setPipedreamAuthUrlState] = useState(() => {
+    try {
+      return localStorage.getItem('resiboss_pipedream_auth_url') || import.meta.env.VITE_PIPEDREAM_AUTH_URL || '';
+    } catch (e) {
+      return '';
+    }
+  });
+
+  const setPipedreamAuthUrl = (url) => {
+    const trimmed = (url || '').trim();
+    setPipedreamAuthUrlState(trimmed);
+    try {
+      localStorage.setItem('resiboss_pipedream_auth_url', trimmed);
+    } catch (e) {}
+  };
+
+  const signInWithPipedream = async (email, password) => {
+    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL;
+    if (!url) {
+      throw new Error('Pipedream Webhook URL is not configured. Pakilagay ang iyong Pipedream Auth Webhook URL sa Settings.');
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'login',
+        email: email.trim().toLowerCase(),
+        password,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Invalid email or password.');
+    }
+
+    const user = data.user || {};
+    const profile = {
+      id: user.id || `user_${Date.now()}`,
+      firstName: user.firstName || user.fullName?.split(' ')[0] || email.split('@')[0],
+      lastName: user.lastName || user.fullName?.split(' ').slice(1).join(' ') || '',
+      email: user.email || email.trim().toLowerCase(),
+      photo: user.photo || null,
+      authProvider: 'pipedream',
+      isAuthSession: true,
+      token: data.token || null,
+    };
+
+    setCurrentUser({ id: profile.id, email: profile.email });
+    setUserProfile(profile);
+    try {
+      localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+    } catch (e) {}
+
+    return profile;
+  };
+
+  const registerWithPipedream = async (fullName, email, password) => {
+    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL;
+    if (!url) {
+      throw new Error('Pipedream Webhook URL is not configured. Pakilagay ang iyong Pipedream Auth Webhook URL sa Settings.');
+    }
+
+    const trimmedName = fullName.trim();
+    const parts = trimmedName.split(' ');
+    const firstName = parts[0] || 'User';
+    const lastName = parts.slice(1).join(' ') || '';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'register',
+        fullName: trimmedName,
+        firstName,
+        lastName,
+        email: email.trim().toLowerCase(),
+        password,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to register account.');
+    }
+
+    const user = data.user || {};
+    const profile = {
+      id: user.id || `user_${Date.now()}`,
+      firstName: user.firstName || firstName,
+      lastName: user.lastName || lastName,
+      email: user.email || email.trim().toLowerCase(),
+      photo: null,
+      authProvider: 'pipedream',
+      isAuthSession: true,
+      token: data.token || null,
+    };
+
+    setCurrentUser({ id: profile.id, email: profile.email });
+    setUserProfile(profile);
+    try {
+      localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+    } catch (e) {}
+
+    return profile;
+  };
+
   const updateUserProfile = (updatedProfile) => {
     setUserProfile((prev) => {
       const merged = { ...prev, ...updatedProfile, isAuthSession: true };
@@ -404,6 +521,10 @@ export const AppProvider = ({ children }) => {
         setUserProfile,
         updateUserProfile,
         signInWithGoogle,
+        pipedreamAuthUrl,
+        setPipedreamAuthUrl,
+        signInWithPipedream,
+        registerWithPipedream,
         signOut,
         inspectingDoc,
         setInspectingDoc,
