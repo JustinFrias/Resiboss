@@ -10,6 +10,21 @@ export const ReceiptViewer3D = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  React.useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+  const isMobile = windowWidth <= 768;
+  const baseScale = isMobile ? Math.max(0.46, Math.min(0.56, (windowWidth - 32) / 620)) : 1;
+
   if (!inspectingDoc) return null;
 
   const handleMouseDown = (e) => {
@@ -93,8 +108,37 @@ export const ReceiptViewer3D = () => {
           border: '1px solid rgba(255, 255, 255, 0.22)',
           boxShadow: '0 25px 60px -15px rgba(0, 242, 254, 0.25)',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
+        {/* Mobile floating close button (always visible at top right) */}
+        <button
+          onClick={() => setInspectingDoc(null)}
+          className="modal-3d-mobile-close"
+          title="Close Inspection"
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            zIndex: 60,
+            background: 'rgba(5, 8, 20, 0.85)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            borderRadius: '50%',
+            width: '38px',
+            height: '38px',
+            display: 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffffff',
+            cursor: 'pointer',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
+          }}
+        >
+          <X size={18} />
+        </button>
+
         {/* Left Side: 3D Interactive Physical Receipt Canvas */}
         <div
           className="modal-3d-canvas-wrap"
@@ -166,13 +210,15 @@ export const ReceiptViewer3D = () => {
               gap: '6px',
             }}
           >
-            <Sparkles size={13} color="#00f2fe" /> Click & drag to rotate in 3D space
+            <Sparkles size={13} color="#00f2fe" />
+            <span>{isMobile ? 'Drag to rotate • Scroll down for details' : 'Click & drag to rotate in 3D space'}</span>
           </div>
 
           {/* 3D Physical Paper Receipt */}
           <div
+            className="receipt-3d-paper"
             style={{
-              transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale(${zoom})`,
+              transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale(${zoom * baseScale})`,
               transformStyle: 'preserve-3d',
               transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               width: '320px',

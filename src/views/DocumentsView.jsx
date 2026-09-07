@@ -363,8 +363,8 @@ export const DocumentsView = () => {
         </div>
       ) : (
         /* Table View */
-        <div className="glass-panel" style={{ overflowX: 'auto', padding: '12px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+        <div className="glass-panel documents-table-wrap" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', padding: '12px' }}>
+          <table style={{ width: '100%', minWidth: '660px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--text-secondary)' }}>
                 <th style={{ padding: '14px 16px' }}>Invoice ID</th>

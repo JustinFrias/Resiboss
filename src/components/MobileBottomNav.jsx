@@ -1,8 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import {
-  LayoutDashboard,
-  ScanLine,
   FolderArchive,
   BarChart3,
   Settings,
@@ -21,20 +19,7 @@ export const MobileBottomNav = () => {
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
-      {/* 1. Dashboard Tab */}
-      <button
-        type="button"
-        onClick={() => handleTabClick('dashboard')}
-        className={`mobile-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-        aria-label="Dashboard"
-      >
-        <div className="mobile-nav-icon-wrap">
-          <LayoutDashboard size={20} />
-        </div>
-        <span className="mobile-nav-label">{t.nav?.dashboard || 'Dashboard'}</span>
-      </button>
-
-      {/* 2. Documents Tab */}
+      {/* 1. Documents Tab */}
       <button
         type="button"
         onClick={() => handleTabClick('documents')}
@@ -48,19 +33,6 @@ export const MobileBottomNav = () => {
           )}
         </div>
         <span className="mobile-nav-label">{t.nav?.documents || 'Vault'}</span>
-      </button>
-
-      {/* 3. HERO SCANNER BUTTON (Elevated Floating Action) */}
-      <button
-        type="button"
-        onClick={() => handleTabClick('scanner')}
-        className={`mobile-nav-hero-btn ${activeTab === 'scanner' ? 'active' : ''}`}
-        aria-label="Scan Receipt"
-      >
-        <div className="mobile-nav-hero-circle">
-          <ScanLine size={24} />
-        </div>
-        <span className="mobile-nav-hero-label">{t.nav?.scanner || 'Scan'}</span>
       </button>
 
       {/* 4. Analytics Tab */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { ResibossLogo } from './ResibossLogo';
 import {
@@ -17,8 +17,10 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
 } from 'lucide-react';
+import { soundFx } from '../utils/soundEffects';
 
 export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
   const {
@@ -54,6 +56,29 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
 
   const currencies = ['PHP', 'USD', 'EUR', 'JPY'];
 
+  // Custom Liquid Glass Dropdown States
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isCurrOpen, setIsCurrOpen] = useState(false);
+  const langRef = useRef(null);
+  const currRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setIsLangOpen(false);
+      }
+      if (currRef.current && !currRef.current.contains(e.target)) {
+        setIsCurrOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
     if (onCloseMobile) onCloseMobile();
@@ -70,7 +95,10 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
             inset: 0,
             background: 'rgba(3, 7, 18, 0.75)',
             backdropFilter: 'blur(10px)',
-            zIndex: 95,
+            WebkitBackdropFilter: 'blur(10px)',
+            zIndex: 999,
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
           }}
         />
       )}
@@ -98,6 +126,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               {/* Expand Button */}
               <button
                 onClick={toggleSidebar}
+                className="sidebar-minimize-btn"
                 title="Expand Sidebar"
                 style={{
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -138,6 +167,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                 {/* Minimize Toggle Button */}
                 <button
                   onClick={toggleSidebar}
+                  className="sidebar-minimize-btn"
                   title="Minimize Sidebar"
                   style={{
                     background: 'rgba(255, 255, 255, 0.08)',
@@ -171,12 +201,13 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                   <button
                     onClick={onCloseMobile}
                     className="mobile-close-btn"
+                    title="Close Menu"
                     style={{
                       background: 'rgba(255, 255, 255, 0.08)',
                       border: '1px solid var(--glass-border)',
                       borderRadius: '50%',
-                      width: '32px',
-                      height: '32px',
+                      width: '36px',
+                      height: '36px',
                       display: 'none',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -184,7 +215,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                       cursor: 'pointer',
                     }}
                   >
-                    <X size={16} />
+                    <X size={18} />
                   </button>
                 )}
               </div>
@@ -279,90 +310,219 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
             >
               {settings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
             </button>
-
-            {/* Vault Status Indicator */}
-            <div
-              title="Vault Active • 100% Client-Side"
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: 'rgba(10, 15, 30, 0.55)',
-                border: '1px solid var(--glass-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'help',
-              }}
-            >
-              <div
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  boxShadow: '0 0 8px #10b981',
-                }}
-              />
-            </div>
           </div>
         ) : (
           /* Expanded Bottom Controls */
           <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Quick Language & Currency Row */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
-              {/* Language Selector */}
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="sidebar-select"
-                style={{
-                  flex: 1,
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  padding: '6px 8px',
-                  borderRadius: '10px',
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-                title="Language"
-              >
-                {languages.map((l) => (
-                  <option key={l.code} value={l.code} style={{ background: '#090d1a', color: '#fff' }}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+              {/* Custom Liquid Glass Language Dropdown */}
+              <div ref={langRef} style={{ position: 'relative', flex: 1 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLangOpen(!isLangOpen);
+                    setIsCurrOpen(false);
+                    soundFx.playClick();
+                  }}
+                  className="sidebar-select-btn"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: isLangOpen ? 'rgba(0, 242, 254, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+                    border: isLangOpen ? '1px solid var(--cyan-glow)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    padding: '6px 10px',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  title="Select Language"
+                >
+                  <span>{languages.find((l) => l.code === language)?.label || 'EN'}</span>
+                  <ChevronDown
+                    size={13}
+                    color="var(--text-muted)"
+                    style={{
+                      transform: isLangOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  />
+                </button>
 
-              {/* Currency Selector */}
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="sidebar-select"
-                style={{
-                  flex: 1,
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#00f2fe',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  padding: '6px 8px',
-                  borderRadius: '10px',
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-                title="Currency"
-              >
-                {currencies.map((c) => (
-                  <option key={c} value={c} style={{ background: '#090d1a', color: '#fff' }}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+                {isLangOpen && (
+                  <div
+                    className="glass-panel"
+                    style={{
+                      position: 'absolute',
+                      bottom: 'calc(100% + 6px)',
+                      left: 0,
+                      minWidth: '95px',
+                      background: 'var(--bg-surface-elevated, #0a0f24)',
+                      border: '1px solid var(--glass-border-bright)',
+                      borderRadius: '12px',
+                      padding: '4px',
+                      boxShadow: '0 12px 30px rgba(0, 0, 0, 0.65)',
+                      zIndex: 100,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                    }}
+                  >
+                    {languages.map((l) => (
+                      <div
+                        key={l.code}
+                        onClick={() => {
+                          setLanguage(l.code);
+                          setIsLangOpen(false);
+                          soundFx.playClick();
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          fontWeight: language === l.code ? 700 : 500,
+                          color: language === l.code ? 'var(--cyan-glow)' : 'var(--text-primary)',
+                          background: language === l.code ? 'rgba(0, 242, 254, 0.14)' : 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (language !== l.code) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (language !== l.code) e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        <span>{l.label}</span>
+                        {language === l.code && (
+                          <div
+                            style={{
+                              width: '5px',
+                              height: '5px',
+                              borderRadius: '50%',
+                              background: '#00f2fe',
+                              boxShadow: '0 0 6px #00f2fe',
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Custom Liquid Glass Currency Dropdown */}
+              <div ref={currRef} style={{ position: 'relative', flex: 1 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCurrOpen(!isCurrOpen);
+                    setIsLangOpen(false);
+                    soundFx.playClick();
+                  }}
+                  className="sidebar-select-btn"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: isCurrOpen ? 'rgba(0, 242, 254, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+                    border: isCurrOpen ? '1px solid var(--cyan-glow)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#00f2fe',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    padding: '6px 10px',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  title="Select Currency"
+                >
+                  <span>{currency}</span>
+                  <ChevronDown
+                    size={13}
+                    color="var(--text-muted)"
+                    style={{
+                      transform: isCurrOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  />
+                </button>
+
+                {isCurrOpen && (
+                  <div
+                    className="glass-panel"
+                    style={{
+                      position: 'absolute',
+                      bottom: 'calc(100% + 6px)',
+                      left: 0,
+                      minWidth: '95px',
+                      background: 'var(--bg-surface-elevated, #0a0f24)',
+                      border: '1px solid var(--glass-border-bright)',
+                      borderRadius: '12px',
+                      padding: '4px',
+                      boxShadow: '0 12px 30px rgba(0, 0, 0, 0.65)',
+                      zIndex: 100,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                    }}
+                  >
+                    {currencies.map((c) => (
+                      <div
+                        key={c}
+                        onClick={() => {
+                          setCurrency(c);
+                          setIsCurrOpen(false);
+                          soundFx.playClick();
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: currency === c ? 700 : 500,
+                          color: currency === c ? 'var(--cyan-glow)' : 'var(--text-primary)',
+                          background: currency === c ? 'rgba(0, 242, 254, 0.14)' : 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currency !== c) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currency !== c) e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        <span>{c}</span>
+                        {currency === c && (
+                          <div
+                            style={{
+                              width: '5px',
+                              height: '5px',
+                              borderRadius: '50%',
+                              background: '#00f2fe',
+                              boxShadow: '0 0 6px #00f2fe',
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Sound FX Toggle */}
               <button
@@ -384,33 +544,6 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               >
                 {settings.soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
               </button>
-            </div>
-
-            {/* System Encrypted Status Bar */}
-            <div
-              style={{
-                padding: '8px 12px',
-                borderRadius: '10px',
-                background: 'rgba(10, 15, 30, 0.55)',
-                border: '1px solid var(--glass-border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.72rem',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              <div
-                style={{
-                  width: '7px',
-                  height: '7px',
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  boxShadow: '0 0 8px #10b981',
-                }}
-              />
-              <span style={{ fontWeight: 600, color: '#34d399' }}>Vault Active</span>
-              <span>• 100% Client-Side</span>
             </div>
           </div>
         )}

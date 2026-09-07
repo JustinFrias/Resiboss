@@ -28,6 +28,8 @@ export const TopBar = ({ onOpenMobile }) => {
     theme,
     toggleTheme,
     notifications,
+    setNotifications,
+    markNotificationAsRead,
     markAllNotificationsAsRead,
     clearNotifications,
     userProfile,
@@ -89,9 +91,11 @@ export const TopBar = ({ onOpenMobile }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, []);
 
@@ -118,25 +122,56 @@ export const TopBar = ({ onOpenMobile }) => {
 
   const handleNotificationClick = (n) => {
     soundFx.playClick();
-    setNotifications((prev) =>
-      prev.map((item) => (item.id === n.id ? { ...item, read: true } : item))
-    );
 
-    if (n.type === 'scanner' || n.id === 'notif-1') {
-      const doc = documents.find((d) => d.id === 'REC-2025-001') || documents[0];
-      if (doc) {
-        setInspectingDoc(doc);
-      }
-      setActiveTab('documents');
-    } else if (n.type === 'export' || n.id === 'notif-2') {
-      setActiveTab('export');
-    } else if (n.type === 'tax' || n.id === 'notif-3') {
-      setActiveTab('documents');
-    } else {
-      setActiveTab('dashboard');
+    // Mark clicked notification as read safely
+    if (typeof markNotificationAsRead === 'function') {
+      markNotificationAsRead(n.id);
+    } else if (typeof setNotifications === 'function') {
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item))
+      );
     }
 
     setIsNotifOpen(false);
+
+    // Resolve target view & document
+    let target = n.targetTab;
+
+    if (!target) {
+      if (n.type === 'scanner' || n.id === 'notif-1') {
+        const doc = documents.find((d) => d.id === (n.docId || 'REC-2025-001'));
+        if (doc) {
+          setInspectingDoc(doc);
+          target = 'documents';
+        } else {
+          target = 'scanner';
+        }
+      } else if (n.type === 'export' || n.id === 'notif-2') {
+        target = 'export';
+      } else if (n.type === 'tax' || n.id === 'notif-3') {
+        target = 'export';
+      } else if (n.type === 'documents') {
+        target = 'documents';
+      } else if (n.type === 'analytic') {
+        target = 'analytic';
+      } else if (n.type === 'settings') {
+        target = 'settings';
+      } else {
+        target = 'dashboard';
+      }
+    } else {
+      if (n.docId) {
+        const doc = documents.find((d) => d.id === n.docId);
+        if (doc) {
+          setInspectingDoc(doc);
+        }
+      }
+    }
+
+    if (target) {
+      setActiveTab(target);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleClearAllNotifications = (e) => {
@@ -157,6 +192,17 @@ export const TopBar = ({ onOpenMobile }) => {
       default:
         return <FileText size={16} color="#38bdf8" />;
     }
+  };
+
+  const getTargetBadge = (item) => {
+    if (item.targetLabel) return item.targetLabel;
+    if (item.type === 'scanner' || item.id === 'notif-1') return 'Scanner';
+    if (item.type === 'export' || item.id === 'notif-2') return 'Export Journal';
+    if (item.type === 'tax' || item.id === 'notif-3') return 'Export & Tax';
+    if (item.type === 'documents') return 'Vault';
+    if (item.type === 'analytic') return 'Analytics';
+    if (item.type === 'settings') return 'Settings';
+    return 'View';
   };
 
   return (
@@ -199,7 +245,16 @@ export const TopBar = ({ onOpenMobile }) => {
           <Menu size={18} />
         </button>
 
-        <div className="topbar-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}>
+        <div
+          className="topbar-breadcrumb"
+          onClick={() => {
+            soundFx.playClick();
+            setActiveTab('dashboard');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: 'pointer' }}
+          title="Go to Dashboard"
+        >
           <span style={{ color: 'var(--text-muted)' }}>{t.appName || 'Resiboss'}</span>
           <span style={{ color: 'var(--text-muted)' }}>/</span>
           <span style={{ color: 'var(--cyan-glow)', fontWeight: 700 }}>{getBreadcrumb()}</span>
@@ -207,11 +262,17 @@ export const TopBar = ({ onOpenMobile }) => {
       </div>
 
       {/* 2. Right: Search Bar + Theme Toggle + Notifications */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'flex-end' }}>
+      <div className="topbar-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'flex-end' }}>
         {/* Modern Interactive Search Bar */}
         <div
           ref={searchContainerRef}
           className={`topbar-search-container ${isSearchFocused ? 'is-focused' : ''}`}
+          onClick={() => {
+            if (!isSearchFocused) {
+              setIsSearchFocused(true);
+              setTimeout(() => searchInputRef.current?.focus(), 60);
+            }
+          }}
           style={{
             position: 'relative',
             width: '100%',
@@ -232,7 +293,7 @@ export const TopBar = ({ onOpenMobile }) => {
               transition: 'all 0.2s ease',
             }}
           >
-            <Search size={15} color={isSearchFocused ? 'var(--cyan-glow)' : 'var(--text-muted)'} />
+            <Search size={15} color={isSearchFocused ? 'var(--cyan-glow)' : 'var(--text-muted)'} style={{ flexShrink: 0 }} />
             <input
               ref={searchInputRef}
               type="text"
@@ -251,7 +312,9 @@ export const TopBar = ({ onOpenMobile }) => {
             />
             {searchQuery ? (
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
                   setSearchQuery('');
                   searchInputRef.current?.focus();
                 }}
@@ -263,7 +326,33 @@ export const TopBar = ({ onOpenMobile }) => {
                   color: 'var(--text-muted)',
                   display: 'flex',
                   alignItems: 'center',
+                  flexShrink: 0,
                 }}
+                title="Clear query"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+            {isSearchFocused ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSearchFocused(false);
+                  setSearchQuery('');
+                }}
+                className="topbar-search-cancel-btn"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                }}
+                title="Cancel search"
               >
                 <X size={14} />
               </button>
@@ -279,6 +368,7 @@ export const TopBar = ({ onOpenMobile }) => {
                   border: '1px solid var(--glass-border)',
                   color: 'var(--text-muted)',
                   letterSpacing: '0.02em',
+                  flexShrink: 0,
                 }}
               >
                 ⌘K
@@ -289,7 +379,7 @@ export const TopBar = ({ onOpenMobile }) => {
           {/* Search Results Dropdown Popover */}
           {isSearchFocused && searchQuery.trim().length > 0 && (
             <div
-              className="glass-panel"
+              className="glass-panel topbar-search-dropdown"
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
@@ -385,6 +475,7 @@ export const TopBar = ({ onOpenMobile }) => {
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          className="topbar-action-btn topbar-theme-btn"
           style={{
             width: '38px',
             height: '38px',
@@ -414,6 +505,7 @@ export const TopBar = ({ onOpenMobile }) => {
               soundFx.playClick();
             }}
             title="System Notifications"
+            className="topbar-action-btn topbar-notif-btn"
             style={{
               width: '38px',
               height: '38px',
@@ -462,7 +554,7 @@ export const TopBar = ({ onOpenMobile }) => {
           {/* Notifications Popover Dropdown */}
           {isNotifOpen && (
             <div
-              className="glass-panel"
+              className="glass-panel topbar-notif-popover"
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 10px)',
@@ -536,7 +628,16 @@ export const TopBar = ({ onOpenMobile }) => {
                   notifications.map((n) => (
                     <div
                       key={n.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleNotificationClick(n)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleNotificationClick(n);
+                        }
+                      }}
+                      title={`Go to ${getTargetBadge(n)}`}
                       style={{
                         padding: '10px 12px',
                         borderRadius: '12px',
@@ -547,16 +648,36 @@ export const TopBar = ({ onOpenMobile }) => {
                         gap: '12px',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        transition: 'all 0.2s ease',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         cursor: 'pointer',
+                        userSelect: 'none',
+                        outline: 'none',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--bg-surface-hover)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.35)';
                         e.currentTarget.style.transform = 'translateX(3px)';
+                        const arrow = e.currentTarget.querySelector('.notif-arrow');
+                        if (arrow) {
+                          arrow.style.color = '#00f2fe';
+                          arrow.style.transform = 'translateX(2px)';
+                        }
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = n.read ? 'transparent' : 'var(--cyan-subtle)';
+                        e.currentTarget.style.borderColor = n.read ? 'transparent' : 'var(--glass-border)';
                         e.currentTarget.style.transform = 'none';
+                        const arrow = e.currentTarget.querySelector('.notif-arrow');
+                        if (arrow) {
+                          arrow.style.color = 'var(--text-muted)';
+                          arrow.style.transform = 'none';
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        e.currentTarget.style.transform = 'scale(0.98)';
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.transform = 'translateX(3px)';
                       }}
                     >
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', flex: 1 }}>
@@ -581,9 +702,28 @@ export const TopBar = ({ onOpenMobile }) => {
                               fontWeight: 700,
                               color: 'var(--text-primary)',
                               marginBottom: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              flexWrap: 'wrap',
                             }}
                           >
-                            {n.title}
+                            <span>{n.title}</span>
+                            <span
+                              style={{
+                                fontSize: '0.62rem',
+                                fontWeight: 700,
+                                padding: '1px 6px',
+                                borderRadius: '999px',
+                                background: 'rgba(0, 242, 254, 0.1)',
+                                color: 'var(--cyan-glow)',
+                                border: '1px solid rgba(0, 242, 254, 0.25)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                              }}
+                            >
+                              {getTargetBadge(n)}
+                            </span>
                           </div>
                           <div
                             style={{
@@ -613,7 +753,12 @@ export const TopBar = ({ onOpenMobile }) => {
                             }}
                           />
                         )}
-                        <ArrowRight size={14} color="var(--text-muted)" />
+                        <ArrowRight
+                          className="notif-arrow"
+                          size={14}
+                          color="var(--text-muted)"
+                          style={{ transition: 'all 0.2s ease' }}
+                        />
                       </div>
                     </div>
                   ))
@@ -665,6 +810,7 @@ export const TopBar = ({ onOpenMobile }) => {
               soundFx.playClick();
               setActiveTab('settings');
             }}
+            className="topbar-profile-btn"
             title={`${userProfile?.firstName || 'User'} ${userProfile?.lastName || ''} - Go to Settings`}
             style={{
               display: 'flex',
@@ -716,7 +862,7 @@ export const TopBar = ({ onOpenMobile }) => {
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.15 }}>
+            <div className="topbar-profile-info" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.15 }}>
               <span
                 style={{
                   fontSize: '0.78rem',
@@ -741,7 +887,7 @@ export const TopBar = ({ onOpenMobile }) => {
               soundFx.playClick();
               setActiveTab('settings');
             }}
-            className="liquid-btn liquid-btn-primary"
+            className="liquid-btn liquid-btn-primary topbar-signin-btn"
             style={{
               padding: '6px 14px',
               borderRadius: '10px',
@@ -754,7 +900,7 @@ export const TopBar = ({ onOpenMobile }) => {
             title="Sign In to Resiboss"
           >
             <LogIn size={15} />
-            <span>Sign In</span>
+            <span className="topbar-btn-text">Sign In</span>
           </button>
         )}
       </div>

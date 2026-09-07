@@ -103,6 +103,9 @@ export const AppProvider = ({ children }) => {
         time: '5m ago',
         read: false,
         type: 'scanner',
+        targetTab: 'scanner',
+        targetLabel: 'Scanner',
+        docId: 'REC-2025-001',
       },
       {
         id: 'notif-2',
@@ -111,6 +114,8 @@ export const AppProvider = ({ children }) => {
         time: '45m ago',
         read: false,
         type: 'export',
+        targetTab: 'export',
+        targetLabel: 'Export Journal',
       },
       {
         id: 'notif-3',
@@ -119,6 +124,8 @@ export const AppProvider = ({ children }) => {
         time: '2h ago',
         read: false,
         type: 'tax',
+        targetTab: 'export',
+        targetLabel: 'Tax Journal',
       },
     ];
   });
@@ -141,9 +148,31 @@ export const AppProvider = ({ children }) => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const markNotificationAsRead = (id) => {
+    soundFx.playClick();
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
   const markAllNotificationsAsRead = () => {
     soundFx.playClick();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const addNotification = (notif) => {
+    const item = {
+      id: notif.id || `notif-${Date.now()}`,
+      title: notif.title || 'Notification',
+      desc: notif.desc || '',
+      time: notif.time || 'Just now',
+      read: false,
+      type: notif.type || 'info',
+      targetTab: notif.targetTab || 'dashboard',
+      ...notif,
+    };
+    setNotifications((prev) => [item, ...prev]);
+    return item;
   };
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -391,8 +420,10 @@ export const AppProvider = ({ children }) => {
         toggleTheme,
         notifications,
         setNotifications,
+        markNotificationAsRead,
         markAllNotificationsAsRead,
         clearNotifications,
+        addNotification,
         sidebarCollapsed,
         setSidebarCollapsed,
         toggleSidebar,
