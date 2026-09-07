@@ -314,7 +314,7 @@ export const AppProvider = ({ children }) => {
   const signInWithPipedream = async (email, password) => {
     const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL || DEFAULT_PIPEDREAM_URL;
     if (!url) {
-      throw new Error('Pipedream Webhook URL is not configured. Pakilagay ang iyong Pipedream Auth Webhook URL sa Settings.');
+      throw new Error('Hindi maabot ang authentication server. Pakisubukang muli mamaya.');
     }
 
     const controller = new AbortController();
@@ -380,7 +380,7 @@ export const AppProvider = ({ children }) => {
   const registerWithPipedream = async (fullName, email, password) => {
     const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL || DEFAULT_PIPEDREAM_URL;
     if (!url) {
-      throw new Error('Pipedream Webhook URL is not configured. Pakilagay ang iyong Pipedream Auth Webhook URL sa Settings.');
+      throw new Error('Hindi maabot ang authentication server. Pakisubukang muli mamaya.');
     }
 
     const trimmedName = fullName.trim();

@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components/TiltCard';
 import { soundFx } from '../utils/soundEffects';
 import { PipedreamAuthCard } from '../components/PipedreamAuthCard';
-import { PipedreamSetupTab } from '../components/PipedreamSetupTab';
 import {
   Settings,
   Upload,
@@ -284,7 +283,7 @@ export const SettingsView = () => {
             background: 'rgba(10, 16, 34, 0.45)',
           }}
         >
-          {['Profile', 'Pipedream Auth', 'Categories', 'Security', 'Notifications'].map((tab) => {
+          {['Profile', 'Categories', 'Security', 'Notifications'].map((tab) => {
             const isActive = activeTab === tab;
             return (
               <button
@@ -318,8 +317,8 @@ export const SettingsView = () => {
           {activeTab === 'Profile' && (
             <div>
               {!userProfile ? (
-                /* Unauthenticated: Show Pipedream Sign In / Register Card */
-                <PipedreamAuthCard onNavigateToSettings={() => setActiveTab('Pipedream Auth')} />
+                /* Unauthenticated: Show Sign In / Register Card */
+                <PipedreamAuthCard />
               ) : (
                 /* Authenticated User: Show Profile Fields & Sign Out */
                 <div>
@@ -610,12 +609,6 @@ export const SettingsView = () => {
             </div>
           )}
 
-          {/* TAB: PIPEDREAM AUTH */}
-          {activeTab === 'Pipedream Auth' && (
-            <div>
-              <PipedreamSetupTab />
-            </div>
-          )}
 
           {/* TAB 2: CATEGORIES */}
           {activeTab === 'Categories' && (
