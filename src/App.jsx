@@ -12,12 +12,18 @@ import { DocumentsView } from './views/DocumentsView';
 import { AnalyticView } from './views/AnalyticView';
 import { ExportView } from './views/ExportView';
 import { SettingsView } from './views/SettingsView';
+import { AuthView } from './views/AuthView';
 
 import './styles/liquid-glass.css';
 
 const MainLayout = () => {
-  const { activeTab, sidebarCollapsed } = useApp();
+  const { activeTab, sidebarCollapsed, userProfile } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // If not logged in, show Login / Sign Up screen first
+  if (!userProfile) {
+    return <AuthView />;
+  }
 
   const renderActiveView = () => {
     switch (activeTab) {
