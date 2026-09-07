@@ -463,10 +463,10 @@ export const ScannerView = () => {
                 marginBottom: '4px',
               }}
             >
-              Resiboss Scan
+              {t.scanner.resibossScanTitle}
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', margin: 0 }}>
-              Upload or photograph receipts — AI extracts vendor, amounts, VAT & line items instantly.
+              {t.scanner.resibossScanDesc}
             </p>
           </div>
 
@@ -516,10 +516,10 @@ export const ScannerView = () => {
                 <Camera size={24} color="var(--cyan-glow)" />
               </div>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                Take Photo
+                {t.scanner.takePhoto}
               </h2>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-                Use your camera to photograph a receipt
+                {t.scanner.takePhotoDesc}
               </p>
             </div>
 
@@ -564,10 +564,10 @@ export const ScannerView = () => {
                 <FileText size={24} color="var(--cyan-glow)" />
               </div>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                Upload File
+                {t.scanner.uploadFile}
               </h2>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-                JPG, PNG, WEBP, or GIF
+                {t.scanner.uploadFileFormats}
               </p>
             </div>
           </div>
@@ -589,10 +589,10 @@ export const ScannerView = () => {
             <Sparkles size={18} color="var(--cyan-glow)" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div>
               <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                AI-powered document extraction
+                {t.scanner.aiExtractionTitle}
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Extracts vendor, TIN, OR number, date, amounts, VAT breakdown, and line items.
+                {t.scanner.aiExtractionDesc}
               </div>
             </div>
           </div>
@@ -609,10 +609,10 @@ export const ScannerView = () => {
               marginBottom: '4px',
             }}
           >
-            Resiboss Scan
+            {t.scanner.resibossScanTitle}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', margin: 0 }}>
-            Upload or photograph receipts — AI extracts vendor, amounts, VAT & line items instantly.
+            {t.scanner.resibossScanDesc}
           </p>
         </div>
       )}
@@ -1004,7 +1004,7 @@ export const ScannerView = () => {
                 style={{ width: '100%', padding: '14px', fontSize: '1rem', borderRadius: '14px' }}
               >
                 <ScanLine size={18} />
-                <span>Re-scan with AI OCR</span>
+                <span>{t.scanner.rescan}</span>
               </button>
             )}
           </div>
@@ -1103,7 +1103,7 @@ export const ScannerView = () => {
                       style={{ padding: '12px', fontSize: '0.85rem', borderRadius: '12px' }}
                     >
                       <Camera size={16} />
-                      <span>Retake Photo</span>
+                      <span>{t.scanner.takePhoto}</span>
                     </button>
                     <button
                       onClick={handleScanAnother}
@@ -1111,7 +1111,7 @@ export const ScannerView = () => {
                       style={{ padding: '12px', fontSize: '0.85rem', borderRadius: '12px' }}
                     >
                       <Upload size={16} />
-                      <span>Choose Receipt</span>
+                      <span>{t.scanner.uploadFile}</span>
                     </button>
                   </div>
 
@@ -1123,7 +1123,7 @@ export const ScannerView = () => {
                       title="Encode items manually"
                     >
                       <Plus size={14} />
-                      <span>Manual Entry</span>
+                      <span>{t.scanner.manualEntry}</span>
                     </button>
                     <button
                       onClick={handleResetToIdle}
@@ -1136,7 +1136,7 @@ export const ScannerView = () => {
                         padding: '8px',
                       }}
                     >
-                      Reset to Start
+                      {t.scanner.resetStart}
                     </button>
                   </div>
                 </div>
@@ -1147,15 +1147,15 @@ export const ScannerView = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
                   <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Extracted Receipt Details
+                      {t.scanner.extractedDetailsTitle}
                     </h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      Extracted directly from your receipt using AI OCR.
+                      {t.scanner.extractedDetailsDesc}
                     </span>
                   </div>
                   {currentReceipt && (
                     <span className="liquid-badge liquid-badge-emerald">
-                      <CheckCircle2 size={12} /> {currentReceipt.confidence}% Precision
+                      <CheckCircle2 size={12} /> {currentReceipt.confidence}% {t.scanner.precision}
                     </span>
                   )}
                 </div>
@@ -1165,7 +1165,7 @@ export const ScannerView = () => {
                     {/* Vendor Field */}
                     <div>
                       <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                        Vendor / Merchant Name
+                        {t.scanner.vendor}
                       </label>
                       <input
                         className="liquid-input"
@@ -1178,7 +1178,7 @@ export const ScannerView = () => {
                     <div className="scanner-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                          Receipt Date
+                          {t.scanner.date}
                         </label>
                         <input
                           type="date"
@@ -1189,7 +1189,7 @@ export const ScannerView = () => {
                       </div>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                          Tax ID / TIN Number
+                          {t.scanner.invoiceNo}
                         </label>
                         <input
                           className="liquid-input"
@@ -1203,24 +1203,23 @@ export const ScannerView = () => {
                     <div className="scanner-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                          Category
+                          {t.scanner.category}
                         </label>
                         <select
                           className="liquid-input"
                           value={currentReceipt.category || 'Food'}
                           onChange={(e) => setCurrentReceipt({ ...currentReceipt, category: e.target.value })}
                         >
-                          <option value="Food">Food & Dining</option>
-                          <option value="Groceries">Groceries</option>
-                          <option value="Utilities">Utilities</option>
-                          <option value="Travel">Transportation & Fuel</option>
-                          <option value="Technology">Technology & Hardware</option>
-                          <option value="Office">Office Supplies</option>
+                          {Object.keys(t.categories).map((catKey) => (
+                            <option key={catKey} value={catKey}>
+                              {t.categories[catKey]}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                          Payment Method
+                          {t.scanner.paymentMethod}
                         </label>
                         <input
                           className="liquid-input"
@@ -1234,7 +1233,7 @@ export const ScannerView = () => {
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                          Line Items Extracted ({currentReceipt.items ? currentReceipt.items.length : 0})
+                          {t.scanner.itemsList} ({currentReceipt.items ? currentReceipt.items.length : 0})
                         </label>
                         <button
                           onClick={() => setShowRawOcr(!showRawOcr)}
@@ -1249,7 +1248,7 @@ export const ScannerView = () => {
                             gap: '4px',
                           }}
                         >
-                          <Eye size={12} /> {showRawOcr ? 'Hide Raw OCR' : 'Inspect Raw Text'}
+                          <Eye size={12} /> {showRawOcr ? t.scanner.rawOcrHide : t.scanner.rawOcrShow}
                         </button>
                       </div>
 
@@ -1322,7 +1321,7 @@ export const ScannerView = () => {
                         className="liquid-btn liquid-btn-secondary"
                         style={{ width: '100%', marginTop: '8px', padding: '6px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                       >
-                        <Plus size={13} /> Add Item
+                        <Plus size={13} /> {t.scanner.addItem}
                       </button>
                     </div>
 
@@ -1341,7 +1340,7 @@ export const ScannerView = () => {
                     >
                       <div>
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                          Subtotal: {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.subtotal || 0).toFixed(2)} • Tax / VAT: {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.vat || 0).toFixed(2)}
+                          {t.scanner.subtotal}: {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.subtotal || 0).toFixed(2)} • {t.scanner.vat}: {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.vat || 0).toFixed(2)}
                         </div>
                         <div style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--cyan-glow)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
                           {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.total || 0).toFixed(2)}
@@ -1383,7 +1382,7 @@ export const ScannerView = () => {
                   style={{ flex: 1, padding: '13px', fontSize: '0.98rem' }}
                 >
                   <CheckCircle2 size={18} />
-                  <span>Save to Document Vault</span>
+                  <span>{t.scanner.saveToVault}</span>
                 </button>
               </div>
             )}

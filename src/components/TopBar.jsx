@@ -295,7 +295,7 @@ export const TopBar = ({ onOpenMobile }) => {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search receipts, TIN, merchant..."
+              placeholder={t.topbar?.searchPlaceholder || t.documents?.searchPlaceholder || "Search receipts, TIN, merchant..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -406,7 +406,7 @@ export const TopBar = ({ onOpenMobile }) => {
                   marginBottom: '6px',
                 }}
               >
-                Matching Receipts ({filteredDocs.length})
+                {t.topbar?.matchingReceipts || "Matching Receipts"} ({filteredDocs.length})
               </div>
 
               {filteredDocs.length > 0 ? (
@@ -462,7 +462,7 @@ export const TopBar = ({ onOpenMobile }) => {
                 ))
               ) : (
                 <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
-                  No receipts found for "{searchQuery}"
+                  {t.topbar?.noReceiptsFound || "No receipts found for"} "{searchQuery}"
                 </div>
               )}
             </div>
@@ -581,7 +581,7 @@ export const TopBar = ({ onOpenMobile }) => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Notifications
+                    {t.topbar?.notifications || "Notifications"}
                   </span>
                   {unreadCount > 0 && (
                     <span
@@ -595,7 +595,7 @@ export const TopBar = ({ onOpenMobile }) => {
                         border: '1px solid rgba(0, 242, 254, 0.3)',
                       }}
                     >
-                      {unreadCount} new
+                      {unreadCount} {t.topbar?.newBadge || "new"}
                     </span>
                   )}
                 </div>
@@ -615,7 +615,7 @@ export const TopBar = ({ onOpenMobile }) => {
                       gap: '4px',
                     }}
                   >
-                    <CheckCheck size={14} /> Mark read
+                    <CheckCheck size={14} /> {t.topbar?.markRead || "Mark read"}
                   </button>
                 )}
               </div>

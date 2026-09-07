@@ -68,7 +68,7 @@ export const DashboardView = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: '#34d399' }}>
               <TrendingUp size={14} />
-              <span>+12.4% vs last month</span>
+              <span>{t.dashboard.vsLastMonth}</span>
             </div>
           </div>
         </TiltCard>
@@ -100,7 +100,7 @@ export const DashboardView = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
               <ShieldCheck size={14} color="#34d399" />
-              <span>{verifiedCount} verified in ledger</span>
+              <span>{verifiedCount} {t.dashboard.verifiedLedger}</span>
             </div>
           </div>
         </TiltCard>
@@ -131,7 +131,7 @@ export const DashboardView = () => {
               {formatCurrency(totalVat)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-              <span>12% standard BIR tax credit</span>
+              <span>{t.dashboard.taxCreditDesc}</span>
             </div>
           </div>
         </TiltCard>
@@ -162,7 +162,7 @@ export const DashboardView = () => {
               {formatCurrency(avgAmount)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-              <span>Across all categories</span>
+              <span>{t.dashboard.acrossCategories}</span>
             </div>
           </div>
         </TiltCard>
@@ -184,7 +184,7 @@ export const DashboardView = () => {
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard.spendingTrend}</h3>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Real-time expense curve with holographic projection
+                {t.dashboard.spendingSubtitle}
               </span>
             </div>
             <span className="liquid-badge liquid-badge-cyan">Q3 2026</span>
@@ -239,7 +239,7 @@ export const DashboardView = () => {
             <span>May 2026</span>
             <span>Jun 2026</span>
             <span>Jul 2026</span>
-            <span>Aug 2026 (Peak)</span>
+            <span>Aug 2026 ({t.dashboard.peakMonth})</span>
           </div>
         </div>
 
@@ -248,13 +248,13 @@ export const DashboardView = () => {
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard.categoryBreakdown}</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Top spending segments
+              {t.dashboard.topSegments}
             </span>
           </div>
 
           {categoryEntries.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.86rem', textAlign: 'center', padding: '36px 0' }}>
-              No categorized expenses yet.
+              {t.dashboard.noCategorizedExpenses}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -305,7 +305,7 @@ export const DashboardView = () => {
           <div>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard.recentActivity}</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Latest audited receipts with instant 3D model inspector
+              {t.dashboard.recentAuditSubtitle}
             </span>
           </div>
           <button
@@ -323,17 +323,17 @@ export const DashboardView = () => {
             <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--text-muted)' }}>
               <Receipt size={40} color="#00f2fe" style={{ opacity: 0.35, margin: '0 auto 12px auto' }} />
               <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                No receipts recorded yet
+                {t.dashboard.noReceiptsYet}
               </div>
               <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 18px auto' }}>
-                Start scanning with your camera or upload receipt images to begin automatic OCR tracking and expense analytics.
+                {t.dashboard.noReceiptsDesc}
               </p>
               <button
                 onClick={() => setActiveTab('scanner')}
                 className="liquid-btn liquid-btn-primary"
                 style={{ padding: '8px 22px', fontSize: '0.88rem', margin: '0 auto' }}
               >
-                Scan First Receipt
+                {t.dashboard.scanFirstBtn}
               </button>
             </div>
           ) : (

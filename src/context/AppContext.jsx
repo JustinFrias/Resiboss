@@ -41,8 +41,21 @@ export const AppProvider = ({ children }) => {
   });
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState('PHP');
+  const [language, setLanguageState] = useState(() => {
+    try {
+      return localStorage.getItem('resiboss_language_v1') || 'en';
+    } catch (e) {
+      return 'en';
+    }
+  });
+
+  const setLanguage = (lang) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('resiboss_language_v1', lang);
+    } catch (e) {}
+  };
   const [inspectingDoc, setInspectingDoc] = useState(null);
 
   const [settings, setSettings] = useState(() => {

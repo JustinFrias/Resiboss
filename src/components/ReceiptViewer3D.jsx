@@ -445,13 +445,13 @@ export const ReceiptViewer3D = () => {
               }}
             >
               <div style={{ background: 'rgba(10, 15, 30, 0.5)', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Converted Total</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.documents.convertedTotal}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--cyan-glow)', marginTop: '2px' }}>
                   {formatCurrency(inspectingDoc.total)}
                 </div>
               </div>
               <div style={{ background: 'rgba(10, 15, 30, 0.5)', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>OCR Precision</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.scanner.confidence}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--emerald-glow)', marginTop: '2px' }}>
                   {inspectingDoc.confidence || 99.1}%
                 </div>
@@ -461,19 +461,19 @@ export const ReceiptViewer3D = () => {
             {/* Metadata Fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Invoice ID:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t.documents.tableId}:</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{inspectingDoc.id}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Tax ID (TIN):</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t.scanner.invoiceNo}:</span>
                 <span style={{ fontFamily: 'var(--font-mono)' }}>{inspectingDoc.tin}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Payment Method:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t.scanner.paymentMethod}:</span>
                 <span style={{ fontWeight: 500 }}>{inspectingDoc.paymentMethod}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Tax Deductible VAT:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t.documents.totalDeductibleVat}:</span>
                 <span style={{ fontWeight: 600, color: '#34d399' }}>{formatCurrency(inspectingDoc.vat)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
@@ -491,13 +491,13 @@ export const ReceiptViewer3D = () => {
               style={{ flex: 1 }}
             >
               <CheckCircle2 size={16} />
-              {inspectingDoc.status === 'Verified' ? 'Mark Pending' : 'Verify & Approve'}
+              {inspectingDoc.status === 'Verified' ? t.documents.markPending : t.documents.verifyApprove}
             </button>
             <button
               onClick={() => deleteDocument(inspectingDoc.id)}
               className="liquid-btn liquid-btn-secondary"
               style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-              title="Delete Document"
+              title={t.documents.delete}
             >
               <Trash2 size={16} />
             </button>

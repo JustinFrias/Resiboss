@@ -157,10 +157,10 @@ export const ExportView = () => {
               marginBottom: '2px',
             }}
           >
-            Export
+            {t.export.exportHeader}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
-            Export scanned documents into formatted Excel journals
+            {t.export.exportSub}
           </p>
         </div>
 
@@ -253,7 +253,7 @@ export const ExportView = () => {
             onMouseLeave={(e) => (e.currentTarget.style.background = '#059669')}
           >
             <CloudDownload size={15} />
-            <span>Cloud Export (Reviewed)</span>
+            <span>{t.export.cloudExport}</span>
           </button>
 
           {/* Local Download Button */}
@@ -278,7 +278,7 @@ export const ExportView = () => {
             onMouseLeave={(e) => (e.currentTarget.style.background = '#1d4ed8')}
           >
             <Download size={15} />
-            <span>Local Download</span>
+            <span>{t.export.localDownload}</span>
           </button>
         </div>
       </div>
@@ -324,7 +324,7 @@ export const ExportView = () => {
             marginBottom: '14px',
           }}
         >
-          Export Format
+          {t.export.formatSelect}
         </h2>
 
         {/* 3 Format Cards Row */}
@@ -359,10 +359,10 @@ export const ExportView = () => {
           >
             <div>
               <div style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                Purchases & Expenses Journal
+                {t.export.purchasesJournal}
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Purchases & Input Tax format
+                {t.export.purchasesDesc}
               </div>
             </div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--cyan-glow)', marginTop: '10px' }}>
@@ -392,10 +392,10 @@ export const ExportView = () => {
           >
             <div>
               <div style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                VAT Sales to be Reported
+                {t.export.vatSales}
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                VAT Sales & Output Tax format
+                {t.export.vatSalesDesc}
               </div>
             </div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--cyan-glow)', marginTop: '10px' }}>
@@ -425,10 +425,10 @@ export const ExportView = () => {
           >
             <div>
               <div style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                Custom CSV
+                {t.export.customCsv}
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                All submitted documents, flat CSV format
+                {t.export.customCsvDesc}
               </div>
             </div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--cyan-glow)', marginTop: '10px' }}>

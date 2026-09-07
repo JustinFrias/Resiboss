@@ -58,7 +58,7 @@ export const AnalyticView = () => {
           </span>
         </div>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-          Predictive Fiscal Analytics
+          {t.analytic.predictiveTitle}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
           {t.analytic.subtitle}
@@ -77,13 +77,13 @@ export const AnalyticView = () => {
         <TiltCard>
           <div className="glass-panel" style={{ padding: '24px' }}>
             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              Taxable Net Subtotal
+              {t.analytic.taxableNetSubtotal}
             </div>
             <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(totalSubtotal)}
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-              Pre-tax business expense baseline
+              {t.analytic.preTaxBaseline}
             </div>
           </div>
         </TiltCard>
@@ -91,13 +91,13 @@ export const AnalyticView = () => {
         <TiltCard>
           <div className="glass-panel" style={{ padding: '24px' }}>
             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              12% Input VAT Deductible
+              {t.analytic.inputVatDeductible}
             </div>
             <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(totalVat)}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#34d399', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <ShieldCheck size={14} /> Tax credit eligible for BIR Form 2550Q
+              <ShieldCheck size={14} /> {t.analytic.birTaxCredit}
             </div>
           </div>
         </TiltCard>
@@ -133,7 +133,7 @@ export const AnalyticView = () => {
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.analytic.monthlyTrend}</h3>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Aggregated expenditures per billing cycle
+                {t.analytic.aggregatedExpDesc}
               </span>
             </div>
             <span className="liquid-badge liquid-badge-cyan">FY 2026</span>
@@ -204,7 +204,7 @@ export const AnalyticView = () => {
           <div style={{ marginBottom: '18px' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.analytic.categoryShare}</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Proportional expense distribution
+              {t.analytic.proportionalDesc}
             </span>
           </div>
 

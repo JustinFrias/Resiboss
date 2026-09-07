@@ -54,7 +54,7 @@ export const DocumentsView = () => {
             </span>
           </div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Official Audit Vault
+            {t.documents.auditVaultTitle}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
             {t.documents.subtitle}
@@ -71,7 +71,7 @@ export const DocumentsView = () => {
               textAlign: 'right',
             }}
           >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total Documents</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalDocuments}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#c084fc', fontFamily: 'var(--font-mono)' }}>
               {documents.length}
             </div>
@@ -84,7 +84,7 @@ export const DocumentsView = () => {
               textAlign: 'right',
             }}
           >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Approx Storage</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.approxStorage}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
               {approxStorageMB} MB
             </div>
@@ -97,7 +97,7 @@ export const DocumentsView = () => {
               textAlign: 'right',
             }}
           >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Filtered Volume</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.filteredVolume}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(totalVaultValue)}
             </div>
@@ -110,7 +110,7 @@ export const DocumentsView = () => {
               textAlign: 'right',
             }}
           >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total Deductible VAT</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalDeductibleVat}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(totalDeductibleVat)}
             </div>
@@ -176,10 +176,10 @@ export const DocumentsView = () => {
               {t.documents.allStatus}
             </option>
             <option value="Verified" style={{ background: '#090d1a', color: '#fff' }}>
-              Verified
+              {t.dashboard.verified}
             </option>
             <option value="Pending" style={{ background: '#090d1a', color: '#fff' }}>
-              Pending
+              {t.dashboard.pending}
             </option>
           </select>
         </div>
@@ -325,13 +325,13 @@ export const DocumentsView = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '14px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Total Amount</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalAmount}</div>
                       <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
                         {formatCurrency(doc.total)}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#34d399' }}>VAT Credit</div>
+                      <div style={{ fontSize: '0.7rem', color: '#34d399' }}>{t.documents.vatCredit}</div>
                       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
                         {formatCurrency(doc.vat)}
                       </div>
@@ -367,14 +367,14 @@ export const DocumentsView = () => {
           <table style={{ width: '100%', minWidth: '660px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--text-secondary)' }}>
-                <th style={{ padding: '14px 16px' }}>Invoice ID</th>
-                <th style={{ padding: '14px 16px' }}>Merchant</th>
-                <th style={{ padding: '14px 16px' }}>Date</th>
-                <th style={{ padding: '14px 16px' }}>Category</th>
-                <th style={{ padding: '14px 16px' }}>Status</th>
-                <th style={{ padding: '14px 16px' }}>VAT (12%)</th>
-                <th style={{ padding: '14px 16px', textAlign: 'right' }}>Total</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>Actions</th>
+                <th style={{ padding: '14px 16px' }}>{t.documents.tableId}</th>
+                <th style={{ padding: '14px 16px' }}>{t.documents.tableMerchant}</th>
+                <th style={{ padding: '14px 16px' }}>{t.documents.tableDate}</th>
+                <th style={{ padding: '14px 16px' }}>{t.documents.tableCategory}</th>
+                <th style={{ padding: '14px 16px' }}>{t.documents.tableStatus}</th>
+                <th style={{ padding: '14px 16px' }}>{t.documents.tableVat}</th>
+                <th style={{ padding: '14px 16px', textAlign: 'right' }}>{t.documents.tableTotal}</th>
+                <th style={{ padding: '14px 16px', textAlign: 'center' }}>{t.documents.tableActions}</th>
               </tr>
             </thead>
             <tbody>

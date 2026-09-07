@@ -240,10 +240,10 @@ export const SettingsView = () => {
             marginBottom: '4px',
           }}
         >
-          General Settings
+          {t.settings.generalTitle}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
-          Manage your profile, workspace, security, and privacy in one place.
+          {t.settings.generalDesc}
         </p>
       </div>
 
@@ -266,7 +266,7 @@ export const SettingsView = () => {
           }}
         >
           <CheckCircle2 size={16} color="#00f2fe" />
-          <span style={{ fontWeight: 600 }}>Profile settings successfully saved!</span>
+          <span style={{ fontWeight: 600 }}>{t.settings.savedAlert}</span>
         </div>
       )}
 
@@ -283,13 +283,18 @@ export const SettingsView = () => {
             background: 'rgba(10, 16, 34, 0.45)',
           }}
         >
-          {['Profile', 'Categories', 'Security', 'Notifications'].map((tab) => {
-            const isActive = activeTab === tab;
+          {[
+            { id: 'Profile', label: t.settings.tabProfile },
+            { id: 'Categories', label: t.settings.tabCategories },
+            { id: 'Security', label: t.settings.tabSecurity },
+            { id: 'Notifications', label: t.settings.tabNotifications },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
             return (
               <button
-                key={tab}
+                key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab);
+                  setActiveTab(tab.id);
                   soundFx.playClick();
                 }}
                 style={{
@@ -305,7 +310,7 @@ export const SettingsView = () => {
                   textShadow: isActive ? '0 0 15px rgba(0, 242, 254, 0.6)' : 'none',
                 }}
               >
-                {tab}
+                {tab.label}
               </button>
             );
           })}
@@ -332,7 +337,7 @@ export const SettingsView = () => {
                           margin: 0,
                         }}
                       >
-                        Profile Information
+                        {t.settings.profileInfo}
                       </h2>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                         Signed in as {userProfile.email}
@@ -355,7 +360,7 @@ export const SettingsView = () => {
                       title="Sign Out of Resiboss"
                     >
                       <LogOut size={14} />
-                      <span>Sign Out</span>
+                      <span>{t.settings.signOut}</span>
                     </button>
                   </div>
 
@@ -598,7 +603,7 @@ export const SettingsView = () => {
                         ) : (
                           <>
                             <Save size={15} />
-                            <span>Save Profile</span>
+                            <span>{t.settings.saveProfile}</span>
                           </>
                         )}
                       </button>
@@ -621,7 +626,7 @@ export const SettingsView = () => {
                   marginBottom: '16px',
                 }}
               >
-                Receipt Expense Categories
+                {t.settings.receiptCategories}
               </h2>
               <div
                 style={{
@@ -897,7 +902,7 @@ export const SettingsView = () => {
                   className="liquid-btn liquid-btn-secondary"
                   style={{ width: '100%', justifyContent: 'center', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
                 >
-                  <Trash2 size={16} /> Clear Vault Storage
+                  <Trash2 size={16} /> {t.settings.clearAll}
                 </button>
               </div>
             </div>
@@ -914,7 +919,7 @@ export const SettingsView = () => {
                   marginBottom: '16px',
                 }}
               >
-                System Preferences & Audio FX
+                {t.settings.systemPreferences}
               </h2>
               <div
                 style={{
@@ -929,7 +934,7 @@ export const SettingsView = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div>
                     <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
-                      Interface Language
+                      {t.settings.language}
                     </label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {languages.map((l) => (
@@ -963,7 +968,7 @@ export const SettingsView = () => {
 
                   <div>
                     <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
-                      Vault Default Currency
+                      {t.settings.currency}
                     </label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {currencies.map((c) => (
@@ -1010,10 +1015,10 @@ export const SettingsView = () => {
                 >
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#ffffff' }}>
-                      Audio Sound Effects
+                      {t.settings.soundEffects}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      Synthesized scanner laser hums, blips, and success chimes
+                      {t.settings.soundEffectsDesc}
                     </div>
                   </div>
                   <input
@@ -1042,10 +1047,10 @@ export const SettingsView = () => {
                 >
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#ffffff' }}>
-                      3D Fluid Tilt Physics
+                      {t.settings.enable3DTilt}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      Cards physically tilt towards cursor with specular light refraction
+                      {t.settings.enable3DTiltDesc}
                     </div>
                   </div>
                   <input
