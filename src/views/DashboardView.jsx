@@ -195,21 +195,15 @@ export const DashboardView = () => {
             <svg viewBox="0 0 500 200" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
               <defs>
                 <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00f2fe" stopOpacity="0.4" />
-                  <stop offset="60%" stopColor="#a855f7" stopOpacity="0.1" />
-                  <stop offset="100%" stopColor="#05070f" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#00f2fe" />
-                  <stop offset="50%" stopColor="#38bdf8" />
-                  <stop offset="100%" stopColor="#c084fc" />
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
               {/* Grid Lines */}
-              <line x1="0" y1="50" x2="500" y2="50" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="4 4" />
-              <line x1="0" y1="100" x2="500" y2="100" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="4 4" />
-              <line x1="0" y1="150" x2="500" y2="150" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="4 4" />
+              <line x1="0" y1="50" x2="500" y2="50" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
+              <line x1="0" y1="100" x2="500" y2="100" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
+              <line x1="0" y1="150" x2="500" y2="150" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
 
               {/* Filled Area */}
               <path
@@ -217,21 +211,21 @@ export const DashboardView = () => {
                 fill="url(#areaGrad)"
               />
 
-              {/* Glowing Line */}
+              {/* Clean Line */}
               <path
                 d="M 0 170 Q 70 120 125 140 T 250 80 T 375 110 T 500 45"
                 fill="none"
-                stroke="url(#lineGrad)"
-                strokeWidth="3.5"
+                stroke="#38bdf8"
+                strokeWidth="2.5"
                 strokeLinecap="round"
-                filter="drop-shadow(0 0 8px rgba(0, 242, 254, 0.7))"
+                strokeLinejoin="round"
               />
 
               {/* Data Points */}
-              <circle cx="125" cy="140" r="5" fill="#00f2fe" filter="drop-shadow(0 0 6px #00f2fe)" />
-              <circle cx="250" cy="80" r="5" fill="#38bdf8" filter="drop-shadow(0 0 6px #38bdf8)" />
-              <circle cx="375" cy="110" r="5" fill="#a855f7" filter="drop-shadow(0 0 6px #a855f7)" />
-              <circle cx="500" cy="45" r="6" fill="#ffffff" filter="drop-shadow(0 0 10px #ffffff)" />
+              <circle cx="125" cy="140" r="4" fill="var(--bg-space, #080c15)" stroke="#38bdf8" strokeWidth="2" />
+              <circle cx="250" cy="80" r="4" fill="var(--bg-space, #080c15)" stroke="#38bdf8" strokeWidth="2" />
+              <circle cx="375" cy="110" r="4" fill="var(--bg-space, #080c15)" stroke="#38bdf8" strokeWidth="2" />
+              <circle cx="500" cy="45" r="4.5" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5" />
             </svg>
           </div>
 
@@ -274,7 +268,7 @@ export const DashboardView = () => {
                     <div
                       style={{
                         width: '100%',
-                        height: '8px',
+                        height: '7px',
                         background: 'var(--track-bg, rgba(255, 255, 255, 0.08))',
                         borderRadius: '999px',
                         overflow: 'hidden',
@@ -285,7 +279,6 @@ export const DashboardView = () => {
                           width: `${pct}%`,
                           height: '100%',
                           background: currentColor,
-                          boxShadow: `0 0 10px ${currentColor}`,
                           borderRadius: '999px',
                           transition: 'width 0.6s ease',
                         }}
@@ -321,7 +314,7 @@ export const DashboardView = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {documents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--text-muted)' }}>
-              <Receipt size={40} color="#00f2fe" style={{ opacity: 0.35, margin: '0 auto 12px auto' }} />
+              <Receipt size={40} color="#38bdf8" style={{ opacity: 0.35, margin: '0 auto 12px auto' }} />
               <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
                 {t.dashboard.noReceiptsYet}
               </div>
@@ -375,10 +368,10 @@ export const DashboardView = () => {
                       setInspectingDoc(doc);
                     }}
                     className="recent-doc-3d-btn"
-                    title="3D Model Inspector"
+                    title="View Receipt"
                   >
                     <Eye size={13} />
-                    <span>3D</span>
+                    <span>View</span>
                   </button>
                 </div>
               </div>

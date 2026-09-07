@@ -8,49 +8,49 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Color Palette */
-  --bg-deep: #05070f;
-  --bg-space: #090d1a;
-  --bg-surface: rgba(14, 20, 38, 0.65);
-  --bg-surface-elevated: rgba(22, 31, 58, 0.75);
-  --bg-surface-hover: rgba(33, 46, 82, 0.85);
+  --bg-deep: #080c15;
+  --bg-space: #0b101d;
+  --bg-surface: rgba(13, 18, 32, 0.88);
+  --bg-surface-elevated: rgba(18, 25, 44, 0.94);
+  --bg-surface-hover: rgba(26, 36, 62, 0.95);
   
-  /* Liquid Glass Gradients & Colors */
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-border-bright: rgba(255, 255, 255, 0.32);
-  --glass-border-glow: rgba(0, 242, 254, 0.4);
-  --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.02) 100%);
-  --glass-specular: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.25), transparent 70%);
+  /* Modern Glass Gradients & Colors */
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-bright: rgba(255, 255, 255, 0.16);
+  --glass-border-glow: rgba(56, 189, 248, 0.35);
+  --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.01) 100%);
+  --glass-specular: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.15), transparent 70%);
 
-  /* Neon Accents */
-  --cyan-glow: #00f2fe;
-  --cyan-subtle: rgba(0, 242, 254, 0.15);
+  /* Refined Accents */
+  --cyan-glow: #38bdf8;
+  --cyan-subtle: rgba(56, 189, 248, 0.12);
   --violet-glow: #a855f7;
-  --violet-subtle: rgba(168, 85, 247, 0.15);
+  --violet-subtle: rgba(168, 85, 247, 0.12);
   --emerald-glow: #10b981;
-  --emerald-subtle: rgba(16, 185, 129, 0.15);
+  --emerald-subtle: rgba(16, 185, 129, 0.12);
   --amber-glow: #f59e0b;
-  --amber-subtle: rgba(245, 158, 11, 0.15);
+  --amber-subtle: rgba(245, 158, 11, 0.12);
   --rose-glow: #f43f5e;
-  --rose-subtle: rgba(244, 63, 94, 0.15);
+  --rose-subtle: rgba(244, 63, 94, 0.12);
 
   /* Typography */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --text-glow: 0 0 20px rgba(0, 242, 254, 0.5);
+  --text-glow: none;
 
   /* Shadows */
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
-  --shadow-glow-cyan: 0 0 25px rgba(0, 242, 254, 0.35);
-  --shadow-glow-violet: 0 0 25px rgba(168, 85, 247, 0.35);
+  --shadow-glass: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  --shadow-glow-cyan: 0 0 16px rgba(56, 189, 248, 0.15);
+  --shadow-glow-violet: 0 0 16px rgba(168, 85, 247, 0.15);
 
   /* Layout */
   --sidebar-width: 270px;
   --radius-sm: 8px;
   --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --blur-amount: 22px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --blur-amount: 16px;
 }
 
 /* Light Mode Theme */
@@ -345,29 +345,25 @@ html, body {
 .liquid-badge-cyan {
   background: var(--cyan-subtle);
   color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.25);
 }
 
 .liquid-badge-violet {
   background: var(--violet-subtle);
   color: #c084fc;
-  border-color: rgba(192, 132, 252, 0.35);
-  box-shadow: 0 0 12px rgba(192, 132, 252, 0.2);
+  border-color: rgba(192, 132, 252, 0.25);
 }
 
 .liquid-badge-emerald {
   background: var(--emerald-subtle);
   color: #34d399;
-  border-color: rgba(52, 211, 153, 0.35);
-  box-shadow: 0 0 12px rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.25);
 }
 
 .liquid-badge-amber {
   background: var(--amber-subtle);
   color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.35);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.25);
 }
 
 /* Light Mode Badges with Crisp Contrast */
@@ -407,9 +403,9 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 18px;
-  border-radius: 14px;
-  background: rgba(12, 18, 36, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
               box-shadow 0.2s ease,
@@ -418,29 +414,29 @@ html, body {
 }
 
 .recent-doc-row:hover {
-  transform: translateY(-2px);
-  background: rgba(22, 33, 64, 0.8);
-  border-color: rgba(0, 242, 254, 0.35);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 16px rgba(0, 242, 254, 0.15);
+  transform: translateY(-1px);
+  background: rgba(22, 33, 58, 0.85);
+  border-color: rgba(56, 189, 248, 0.28);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .recent-doc-icon-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(0, 242, 254, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 242, 254, 0.25);
-  color: #00f2fe;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
   flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
 .recent-doc-row:hover .recent-doc-icon-wrap {
-  transform: scale(1.05);
-  border-color: #00f2fe;
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.16);
 }
 
 .recent-doc-merchant {
@@ -460,7 +456,7 @@ html, body {
 }
 
 .recent-doc-amount {
-  font-size: 1.08rem;
+  font-size: 1.05rem;
   font-weight: 750;
   font-family: var(--font-mono);
   color: #f8fafc;
@@ -478,12 +474,12 @@ html, body {
 .recent-doc-3d-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.76rem;
-  font-weight: 650;
-  padding: 6px 12px;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 14px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   color: #cbd5e1;
   border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
@@ -491,9 +487,9 @@ html, body {
 }
 
 .recent-doc-row:hover .recent-doc-3d-btn {
-  background: rgba(0, 242, 254, 0.2);
-  color: #00f2fe;
-  border-color: rgba(0, 242, 254, 0.4);
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 /* Light Mode Harmonized Recent Documents */

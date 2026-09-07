@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 
-export const TiltCard = ({ children, className = '', style = {}, maxRotation = 8, scale = 1.02, onClick }) => {
+export const TiltCard = ({ children, className = '', style = {}, maxRotation = 3, scale = 1.005, onClick }) => {
   const cardRef = useRef(null);
   const [transform, setTransform] = useState('');
   const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
