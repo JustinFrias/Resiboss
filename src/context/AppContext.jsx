@@ -1,9 +1,19 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { initialReceipts } from '../utils/initialData';
 import { translations } from '../utils/i18n';
 import { soundFx } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+
+// Helper: check if running inside a Capacitor native platform (Android/iOS)
+function isNativeApp() {
+  try {
+    // eslint-disable-next-line no-undef
+    return typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
+  } catch (_) {
+    return false;
+  }
+}
 
 const AppContext = createContext();
 
@@ -268,8 +278,44 @@ export const AppProvider = ({ children }) => {
       }
     });
 
+    // ── Android deep-link handler for Google OAuth callback ──────────────────
+    // When the Chrome Custom Tab redirects back to resiboss.vercel.app,
+    // Android intercepts the URL via the intent filter and fires appUrlOpen.
+    // We then extract the tokens from the URL hash and set the Supabase session.
+    let appUrlListener = null;
+    if (isNativeApp()) {
+      import('@capacitor/app').then(({ App }) => {
+        App.addListener('appUrlOpen', async ({ url }) => {
+          // Close the Chrome Custom Tab if still open
+          try {
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.close();
+          } catch (_) {}
+
+          // Parse the hash fragment for Supabase tokens
+          // e.g. https://resiboss.vercel.app/#access_token=...&refresh_token=...
+          try {
+            const hashStr = url.includes('#') ? url.split('#')[1] : '';
+            const params = new URLSearchParams(hashStr);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+
+            if (accessToken && refreshToken) {
+              await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+              // onAuthStateChange will fire and update state automatically
+            }
+          } catch (err) {
+            console.warn('[ResiBoss] OAuth deep-link parse error:', err);
+          }
+        }).then((handle) => {
+          appUrlListener = handle;
+        });
+      }).catch(() => {});
+    }
+
     return () => {
       subscription?.unsubscribe();
+      appUrlListener?.remove?.();
     };
   }, []);
 
@@ -277,14 +323,35 @@ export const AppProvider = ({ children }) => {
     if (!supabase) {
       throw new Error('Supabase is not configured.');
     }
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://resiboss.vercel.app',
-      },
-    });
-    if (error) throw error;
-    return data;
+
+    if (isNativeApp()) {
+      // ── Native Android: use Chrome Custom Tab (stays in-app) ──────────────
+      // Get the OAuth URL without triggering a browser redirect
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'https://resiboss.vercel.app',
+          skipBrowserRedirect: true, // <-- key: gives us the URL, doesn't navigate
+        },
+      });
+      if (error) throw error;
+
+      // Open in Chrome Custom Tab (Google allows this, unlike WebViews)
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url: data.url, windowName: '_self' });
+      // The appUrlOpen listener (registered in useEffect below) handles the callback
+      return data;
+    } else {
+      // ── Web: standard OAuth flow ──────────────────────────────────────────
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      return data;
+    }
   };
 
   const signOut = async () => {
