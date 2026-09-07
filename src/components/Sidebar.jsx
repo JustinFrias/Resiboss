@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronDown,
   X,
+  FileText,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 
@@ -36,6 +37,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
     t,
     sidebarCollapsed,
     toggleSidebar,
+    setIsTermsOpen,
   } = useApp();
 
   const navItems = [
@@ -310,6 +312,30 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
             >
               {settings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
             </button>
+
+            {/* Terms & Conditions (Collapsed) */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFx?.playClick?.();
+                setIsTermsOpen(true);
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '10px',
+                width: '38px',
+                height: '38px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+              }}
+              title="Terms & Conditions"
+            >
+              <FileText size={16} />
+            </button>
           </div>
         ) : (
           /* Expanded Bottom Controls */
@@ -543,6 +569,35 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                 title={settings.soundEnabled ? 'Mute Sounds' : 'Enable Sounds'}
               >
                 {settings.soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+              </button>
+            </div>
+
+            {/* Legal / Terms Link */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-4px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx?.playClick?.();
+                  setIsTermsOpen(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.73rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '4px 6px',
+                  transition: 'color 0.2s ease',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#00f2fe')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                <FileText size={12} />
+                <span>Terms & Conditions</span>
               </button>
             </div>
           </div>

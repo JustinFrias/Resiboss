@@ -5,6 +5,7 @@ import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { ReceiptViewer3D } from './components/ReceiptViewer3D';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { TermsModal } from './components/TermsModal';
 
 import { DashboardView } from './views/DashboardView';
 import { ScannerView } from './views/ScannerView';
@@ -87,6 +88,7 @@ export default function App() {
   return (
     <AppProvider>
       <MainLayout />
+      <TermsModal />
     </AppProvider>
   );
 }

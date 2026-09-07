@@ -57,6 +57,7 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   };
   const [inspectingDoc, setInspectingDoc] = useState(null);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   const [settings, setSettings] = useState(() => {
     try {
@@ -608,6 +609,8 @@ export const AppProvider = ({ children }) => {
         setSidebarCollapsed,
         toggleSidebar,
         soundFx,
+        isTermsOpen,
+        setIsTermsOpen,
       }}
     >
       {children}
