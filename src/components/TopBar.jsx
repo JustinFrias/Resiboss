@@ -13,7 +13,6 @@ import {
   CloudDownload,
   ShieldCheck,
   ArrowRight,
-  LogIn,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 
@@ -32,8 +31,6 @@ export const TopBar = ({ onOpenMobile }) => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     clearNotifications,
-    userProfile,
-    signOut,
   } = useApp();
 
   // Search Bar State
@@ -803,107 +800,7 @@ export const TopBar = ({ onOpenMobile }) => {
           )}
         </div>
 
-        {/* User Profile Pill / Button */}
-        {/* 5. User Profile Button OR Sign In Button */}
-        {userProfile ? (
-          <div
-            onClick={() => {
-              soundFx.playClick();
-              setActiveTab('settings');
-            }}
-            className="topbar-profile-btn"
-            title={`${userProfile?.firstName || 'User'} ${userProfile?.lastName || ''} - Go to Settings`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '4px 10px 4px 4px',
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid var(--glass-border)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--cyan-subtle)';
-              e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-              e.currentTarget.style.borderColor = 'var(--glass-border)';
-            }}
-          >
-            <div
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '9px',
-                overflow: 'hidden',
-                background: 'linear-gradient(135deg, #00f2fe 0%, #a855f7 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 10px rgba(0, 242, 254, 0.3)',
-                flexShrink: 0,
-              }}
-            >
-              {userProfile?.photo ? (
-                <img
-                  src={userProfile.photo}
-                  alt="Profile"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              ) : (
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#030712' }}>
-                  {(userProfile?.firstName || 'U').charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="topbar-profile-info" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.15 }}>
-              <span
-                style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  maxWidth: '90px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {userProfile?.firstName || 'User'}
-              </span>
-              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>
-                Pro Vault
-              </span>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => {
-              soundFx.playClick();
-              setActiveTab('settings');
-            }}
-            className="liquid-btn liquid-btn-primary topbar-signin-btn"
-            style={{
-              padding: '6px 14px',
-              borderRadius: '10px',
-              fontSize: '0.82rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0,
-            }}
-            title="Sign In to Resiboss"
-          >
-            <LogIn size={15} />
-            <span className="topbar-btn-text">Sign In</span>
-          </button>
-        )}
+
       </div>
     </header>
   );
