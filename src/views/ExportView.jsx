@@ -231,31 +231,6 @@ export const ExportView = () => {
             )}
           </div>
 
-          {/* Cloud Export (Reviewed) Button */}
-          <button
-            onClick={handleCloudExport}
-            style={{
-              background: '#059669',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '999px',
-              padding: '8px 18px',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#10b981')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#059669')}
-          >
-            <CloudDownload size={15} />
-            <span>{t.export.cloudExport}</span>
-          </button>
-
           {/* Local Download Button */}
           <button
             onClick={handleLocalDownload}
