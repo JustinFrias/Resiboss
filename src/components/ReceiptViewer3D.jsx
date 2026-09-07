@@ -486,20 +486,25 @@ export const ReceiptViewer3D = () => {
           {/* Action Footer */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--glass-border)' }}>
             <button
-              onClick={handleStatusToggle}
-              className="liquid-btn liquid-btn-primary"
-              style={{ flex: 1 }}
-            >
-              <CheckCircle2 size={16} />
-              {inspectingDoc.status === 'Verified' ? t.documents.markPending : t.documents.verifyApprove}
-            </button>
-            <button
-              onClick={() => deleteDocument(inspectingDoc.id)}
+              onClick={() => {
+                deleteDocument(inspectingDoc.id);
+                setInspectingDoc(null);
+              }}
               className="liquid-btn liquid-btn-secondary"
-              style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                color: '#f87171',
+                borderColor: 'rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+              }}
               title={t.documents.delete}
             >
               <Trash2 size={16} />
+              <span>{t.documents.delete || 'Delete Receipt'}</span>
             </button>
           </div>
         </div>
