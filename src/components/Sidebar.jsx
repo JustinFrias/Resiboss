@@ -20,6 +20,8 @@ import {
   ChevronDown,
   X,
   FileText,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 
@@ -46,8 +48,30 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
     { id: 'documents', label: t.nav.documents, icon: FolderArchive, badge: documents.length },
     { id: 'analytic', label: t.nav.analytic, icon: BarChart3 },
     { id: 'export', label: t.nav.export, icon: Download },
-    { id: 'settings', label: t.nav.settings, icon: Settings },
   ];
+
+  // Live Date & Time for sidebar widget
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = currentTime.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const formattedTime = currentTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 
   const languages = [
     { code: 'en', label: 'EN' },
@@ -293,6 +317,42 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               gap: '10px',
             }}
           >
+            {/* Settings (Collapsed) */}
+            <button
+              onClick={() => handleNavClick('settings')}
+              title={t.nav.settings || 'Settings'}
+              className={`sidebar-nav-btn collapsed ${activeTab === 'settings' ? 'active' : ''}`}
+            >
+              <Settings
+                size={20}
+                className="sidebar-nav-icon"
+                strokeWidth={activeTab === 'settings' ? 2.4 : 2}
+              />
+            </button>
+
+            {/* Live Clock Mini Pill (Collapsed) */}
+            <div
+              title={`${formattedDate} • ${formattedTime}`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px 4px',
+                borderRadius: '10px',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                gap: '3px',
+                width: '42px',
+                cursor: 'default',
+              }}
+            >
+              <Clock size={14} color="#3b82f6" />
+              <span style={{ fontSize: '0.58rem', fontWeight: 700, color: '#ffffff' }}>
+                {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
+              </span>
+            </div>
+
             {/* Sound FX Toggle */}
             <button
               onClick={() => setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))}
@@ -572,8 +632,70 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               </button>
             </div>
 
+            {/* Settings Nav Item (Moved to bottom above Date/Time) */}
+            <button
+              key="settings"
+              onClick={() => handleNavClick('settings')}
+              className={`sidebar-nav-btn ${activeTab === 'settings' ? 'active' : ''}`}
+              style={{ width: '100%', margin: 0 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {activeTab === 'settings' && <div className="sidebar-active-indicator" />}
+                <Settings
+                  size={18}
+                  className="sidebar-nav-icon"
+                  strokeWidth={activeTab === 'settings' ? 2.4 : 2}
+                />
+                <span style={{ fontSize: '0.92rem' }}>{t.nav.settings || 'Settings'}</span>
+              </div>
+            </button>
+
+            {/* Real-time Date & Time Pill (Matching User Screenshot) */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '9px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.35)',
+                userSelect: 'none',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={14} color="#3b82f6" strokeWidth={2} />
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    color: '#94a3b8',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.2px',
+                  }}
+                >
+                  {formattedDate}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Clock size={14} color="#3b82f6" strokeWidth={2} />
+                <span
+                  style={{
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  {formattedTime}
+                </span>
+              </div>
+            </div>
+
             {/* Legal / Terms Link */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-2px' }}>
               <button
                 type="button"
                 onClick={() => {
