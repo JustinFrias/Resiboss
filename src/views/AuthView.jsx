@@ -1,6 +1,7 @@
 import React from 'react';
 import { LiquidBackground3D } from '../components/LiquidBackground3D';
 import { PipedreamAuthCard } from '../components/PipedreamAuthCard';
+import { ResibossLogo } from '../components/ResibossLogo';
 import { useApp } from '../context/AppContext';
 
 export const AuthView = () => {
@@ -54,30 +55,11 @@ export const AuthView = () => {
       >
         <div
           style={{
-            width: '74px',
-            height: '74px',
-            borderRadius: '22px',
-            background: 'rgba(5, 10, 29, 0.75)',
-            border: '1.5px solid rgba(0, 242, 254, 0.4)',
-            boxShadow: '0 0 35px rgba(0, 242, 254, 0.3), inset 0 0 15px rgba(0, 242, 254, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             marginBottom: '14px',
-            backdropFilter: 'blur(12px)',
-            overflow: 'hidden',
+            filter: 'drop-shadow(0 0 25px rgba(0, 242, 254, 0.45))',
           }}
         >
-          <img
-            src="/resiboss-logo.png"
-            alt="Resiboss Logo"
-            style={{
-              width: '56px',
-              height: '56px',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 0 10px rgba(0, 242, 254, 0.6))',
-            }}
-          />
+          <ResibossLogo size={72} showText={false} />
         </div>
 
         <h1
