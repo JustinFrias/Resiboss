@@ -87,15 +87,17 @@ lint/tmp/
 # lint/reports/
 
 # Android Profiling
-*.hprof
-
 # Cordova plugins for Capacitor
-capacitor-cordova-android-plugins
+# capacitor-cordova-android-plugins is tracked so Gradle finds build files
 
 # Copied web assets
 app/src/main/assets/public
+
+# Keep assets directory structure
+!app/src/main/assets/.gitkeep
 
 # Generated Config files
 app/src/main/assets/capacitor.config.json
 app/src/main/assets/capacitor.plugins.json
 app/src/main/res/xml/config.xml
+
