@@ -5,6 +5,9 @@
   "server": {
     "url": "https://resiboss.vercel.app",
     "cleartext": true,
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "allowNavigation": [
+      "resiboss.vercel.app"
+    ]
   }
 }
