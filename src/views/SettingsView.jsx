@@ -9,7 +9,6 @@ import {
   Moon,
   Bell,
   Mail,
-  Tag,
   ShieldCheck,
   Upload,
   Maximize2,
@@ -110,17 +109,6 @@ export const SettingsView = () => {
   });
   const [testEmailRecipient, setTestEmailRecipient] = useState('');
   const [emailNotice, setEmailNotice] = useState(null);
-
-  // Custom Labels Tab States (Matching Screenshot 3)
-  const [customLabels, setCustomLabels] = useState([
-    { id: 1, name: 'Design', color: '#6366f1' },
-    { id: 2, name: 'Mobile', color: '#00f2fe' },
-    { id: 3, name: 'Security', color: '#f43f5e' },
-    { id: 4, name: 'Backend', color: '#10b981' },
-    { id: 5, name: 'Utilities', color: '#f59e0b' },
-  ]);
-  const [newLabelName, setNewLabelName] = useState('');
-  const [newLabelColor, setNewLabelColor] = useState('#6366f1');
 
   // Storage Stats (Matching Screenshot 4)
   const [storageUsageKb, setStorageUsageKb] = useState('1558.0');
@@ -233,20 +221,6 @@ export const SettingsView = () => {
     setForm((prev) => ({ ...prev, borderStyle: borderId }));
   };
 
-  // Add Custom Label (Screenshot 3)
-  const handleAddCustomLabel = (e) => {
-    e?.preventDefault();
-    if (!newLabelName.trim()) return;
-    soundFx.playClick();
-    const newEntry = {
-      id: Date.now(),
-      name: newLabelName.trim(),
-      color: newLabelColor,
-    };
-    setCustomLabels((prev) => [...prev, newEntry]);
-    setNewLabelName('');
-  };
-
   // Send Test Email (Screenshot 2)
   const handleSendTestEmail = () => {
     soundFx.playLaserHum();
@@ -266,7 +240,6 @@ export const SettingsView = () => {
       userProfile,
       documents,
       notifications,
-      customLabels,
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -325,7 +298,6 @@ export const SettingsView = () => {
     { id: 'theme', label: 'Appearance & Theme', icon: Sun },
     { id: 'alerts', label: 'In-App Alerts', icon: Bell },
     { id: 'email', label: 'Email Updates', icon: Mail },
-    { id: 'labels', label: 'Custom Labels', icon: Tag },
     { id: 'privacy', label: 'Privacy & Storage', icon: ShieldCheck },
   ];
 
@@ -1380,146 +1352,7 @@ export const SettingsView = () => {
             </div>
           )}
 
-          {/* TAB 5: Custom Labels (Matching User Screenshot 3 Exactly) */}
-          {activeSettingTab === 'labels' && (
-            <div>
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px 0' }}>
-                  Workspace Category Labels
-                </h2>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Create customized classification tags available on all task cards.
-                </p>
-              </div>
-
-              {/* Add Label Row (Screenshot 3) */}
-              <form
-                onSubmit={handleAddCustomLabel}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  maxWidth: '680px',
-                  marginBottom: '26px',
-                }}
-              >
-                <input
-                  type="text"
-                  value={newLabelName}
-                  onChange={(e) => setNewLabelName(e.target.value)}
-                  placeholder="New label name (e.g. Design, Mobile, Security)..."
-                  style={{
-                    flex: 1,
-                    padding: '10px 16px',
-                    borderRadius: '12px',
-                    background: 'rgba(0, 0, 0, 0.35)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    fontSize: '0.86rem',
-                    outline: 'none',
-                  }}
-                />
-
-                {/* Color Swatch Box */}
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="color"
-                    value={newLabelColor}
-                    onChange={(e) => setNewLabelColor(e.target.value)}
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: newLabelColor,
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                    title="Choose Label Color"
-                  />
-                </div>
-
-                {/* + Add Button */}
-                <button
-                  type="submit"
-                  style={{
-                    background: '#2563eb',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '10px 18px',
-                    color: '#ffffff',
-                    fontSize: '0.86rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#1d4ed8')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#2563eb')}
-                >
-                  <Plus size={15} />
-                  <span>Add</span>
-                </button>
-              </form>
-
-              {/* Labels List Preview */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {customLabels.map((lbl) => (
-                  <div
-                    key={lbl.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 14px',
-                      borderRadius: '10px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: `1px solid ${lbl.color}44`,
-                      color: '#ffffff',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: '9px',
-                        height: '9px',
-                        borderRadius: '50%',
-                        background: lbl.color,
-                        boxShadow: `0 0 8px ${lbl.color}`,
-                      }}
-                    />
-                    <span>{lbl.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFx.playClick();
-                        setCustomLabels((prev) => prev.filter((item) => item.id !== lbl.id));
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-muted)',
-                        cursor: 'pointer',
-                        padding: 0,
-                        marginLeft: '4px',
-                        display: 'flex',
-                      }}
-                      title="Remove label"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: Privacy & Storage (Matching User Screenshot 4 Exactly) */}
+          {/* TAB 5: Privacy & Storage (Matching User Screenshot 4 Exactly) */}
           {activeSettingTab === 'privacy' && (
             <div>
               <div style={{ marginBottom: '20px' }}>
