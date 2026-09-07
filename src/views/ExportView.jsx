@@ -141,38 +141,33 @@ export const ExportView = () => {
 
         if (fmt === 'purchases') {
           csvHeaders = [
-            'Col_A',
-            'Date (B)',
-            'Col_C',
-            'Col_D',
-            'TIN (E)',
-            'Category (F)',
-            'Merchant (G)',
-            'Col_H',
-            'Col_I',
-            'Col_J',
-            'Document Type (K)',
-            'Invoice No (L)',
-            'Vatable Purchases (M)',
-            'Zero Rated (N)',
-            'Input Tax (O)',
-            'Invoice Amount (P)',
+            'Taxable Month',
+            'Date',
+            'Taxpayer TIN',
+            'Supplier / Merchant Name',
+            'Category',
+            'Document Type',
+            'Receipt / Invoice No',
+            'Vatable Purchases',
+            'Zero Rated',
+            'Input Tax (12% VAT)',
+            'Total Amount',
           ];
 
           csvRows = docsToExport.map((doc, idx) => {
             const vatExp = ((doc.total || 0) / 1.12).toFixed(2);
             const inputTax = (doc.vat || ((doc.total || 0) * 0.12) / 1.12).toFixed(2);
+            const dateObj = doc.date ? new Date(doc.date) : new Date();
+            const taxMonth = !isNaN(dateObj.getTime())
+              ? dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+              : 'Current';
+
             return [
-              '',
-              `"${doc.date}"`,
-              '',
-              '',
+              `"${taxMonth}"`,
+              `"${doc.date || ''}"`,
               `"${doc.tin || '000-000-000-000'}"`,
-              `"${doc.category || 'Business Expense'}"`,
               `"${(doc.merchant || 'Store').replace(/"/g, '""')}"`,
-              '',
-              '',
-              '',
+              `"${doc.category || 'Business Expense'}"`,
               `"Official Receipt"`,
               `"${doc.id || 'OR-' + (idx + 1001)}"`,
               vatExp,
@@ -182,32 +177,54 @@ export const ExportView = () => {
             ].join(',');
           });
         } else if (fmt === 'sales') {
-          csvHeaders = ['Date', 'Customer_TIN', 'Customer_Name', 'Invoice_No', 'Vatable_Sales', 'VAT_Output', 'Total_Sales'];
+          csvHeaders = [
+            'Date',
+            'Customer TIN',
+            'Customer Name',
+            'Invoice No',
+            'Vatable Sales',
+            'VAT Output (12%)',
+            'Total Sales Amount',
+          ];
           csvRows = [];
         } else {
-          // Custom CSV
-          csvHeaders = ['Receipt_ID', 'Date', 'Vendor', 'TIN', 'Category', 'Payment_Method', 'Subtotal', 'Tax', 'Total_Amount'];
+          // Custom CSV - Clean, human-readable column headers without raw database underscores
+          csvHeaders = [
+            'Receipt ID',
+            'Date',
+            'Merchant Name',
+            'TIN',
+            'Category',
+            'Payment Method',
+            'Status',
+            'Subtotal (Net of VAT)',
+            'VAT Amount (12%)',
+            'Total Amount (PHP)',
+          ];
           csvRows = docsToExport.map((doc) => [
-            `"${doc.id}"`,
-            `"${doc.date}"`,
-            `"${(doc.merchant || '').replace(/"/g, '""')}"`,
-            `"${doc.tin || ''}"`,
-            `"${doc.category || ''}"`,
-            `"${doc.paymentMethod || ''}"`,
-            (doc.subtotal || 0).toFixed(2),
-            (doc.vat || 0).toFixed(2),
-            (doc.total || 0).toFixed(2),
+            `"${(doc.id || '').replace(/"/g, '""')}"`,
+            `"${(doc.date || '').replace(/"/g, '""')}"`,
+            `"${(doc.merchant || 'Unknown Merchant').replace(/"/g, '""')}"`,
+            `"${(doc.tin || 'N/A').replace(/"/g, '""')}"`,
+            `"${(doc.category || 'General').replace(/"/g, '""')}"`,
+            `"${(doc.paymentMethod || 'Cash').replace(/"/g, '""')}"`,
+            `"${(doc.status || 'Verified').replace(/"/g, '""')}"`,
+            ((doc.subtotal || (doc.total ? doc.total / 1.12 : 0))).toFixed(2),
+            ((doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0))).toFixed(2),
+            ((doc.total || 0)).toFixed(2),
           ].join(','));
         }
 
-        const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\n');
-        const encodedUri = encodeURI(csvContent);
+        const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
+        link.setAttribute('href', downloadUrl);
         link.setAttribute('download', `Resiboss_${fmt}_Journal_${timestamp}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
       }, index * 300);
     });
 
