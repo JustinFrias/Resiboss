@@ -48,12 +48,7 @@ export const DocumentsView = () => {
       {/* Title Header */}
       <div className="view-title-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-            <span className="liquid-badge liquid-badge-violet">
-              <FolderArchive size={13} /> {t.documents.title}
-            </span>
-          </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
             {t.documents.auditVaultTitle}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
