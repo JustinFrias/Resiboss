@@ -3,6 +3,8 @@
   "appName": "Resiboss",
   "webDir": "dist",
   "server": {
+    "url": "https://resiboss.vercel.app",
+    "cleartext": true,
     "androidScheme": "https"
   }
 }
