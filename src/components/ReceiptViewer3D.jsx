@@ -444,13 +444,13 @@ export const ReceiptViewer3D = () => {
                 marginBottom: '20px',
               }}
             >
-              <div style={{ background: 'rgba(10, 15, 30, 0.5)', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <div style={{ background: 'var(--bg-surface, rgba(10, 15, 30, 0.5))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.documents.convertedTotal}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--cyan-glow)', marginTop: '2px' }}>
                   {formatCurrency(inspectingDoc.total)}
                 </div>
               </div>
-              <div style={{ background: 'rgba(10, 15, 30, 0.5)', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <div style={{ background: 'var(--bg-surface, rgba(10, 15, 30, 0.5))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.scanner.confidence}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--emerald-glow)', marginTop: '2px' }}>
                   {inspectingDoc.confidence || 99.1}%
@@ -460,19 +460,19 @@ export const ReceiptViewer3D = () => {
 
             {/* Metadata Fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t.documents.tableId}:</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{inspectingDoc.id}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t.scanner.invoiceNo}:</span>
                 <span style={{ fontFamily: 'var(--font-mono)' }}>{inspectingDoc.tin}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t.scanner.paymentMethod}:</span>
                 <span style={{ fontWeight: 500 }}>{inspectingDoc.paymentMethod}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t.documents.totalDeductibleVat}:</span>
                 <span style={{ fontWeight: 600, color: '#34d399' }}>{formatCurrency(inspectingDoc.vat)}</span>
               </div>

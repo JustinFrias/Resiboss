@@ -215,7 +215,7 @@ export const PipedreamSetupTab = () => {
       {/* Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 6px 0' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
             Pipedream Authentication Integration
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0 }}>
@@ -245,18 +245,18 @@ export const PipedreamSetupTab = () => {
       {/* Webhook Configuration Box */}
       <div
         style={{
-          background: 'rgba(15, 23, 42, 0.65)',
-          border: '1px solid rgba(0, 242, 254, 0.3)',
+          background: 'var(--bg-surface-elevated, rgba(15, 23, 42, 0.65))',
+          border: '1px solid var(--glass-border)',
           borderRadius: '16px',
           padding: '20px',
           marginBottom: '26px',
-          boxShadow: '0 0 25px rgba(0, 242, 254, 0.08)',
+          boxShadow: 'var(--glass-shadow-sm, 0 0 25px rgba(0, 242, 254, 0.08))',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Zap size={18} color="#00f2fe" />
-            <span style={{ fontWeight: 700, fontSize: '0.94rem', color: '#ffffff' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)' }}>
               Your Pipedream Webhook URL
             </span>
           </div>
@@ -298,9 +298,9 @@ export const PipedreamSetupTab = () => {
                 width: '100%',
                 padding: '11px 12px 11px 38px',
                 borderRadius: '10px',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#ffffff',
+                background: 'var(--bg-surface, rgba(0, 0, 0, 0.4))',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--text-primary)',
                 fontSize: '0.88rem',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -381,7 +381,7 @@ export const PipedreamSetupTab = () => {
 
       {/* Step-by-Step Setup Guide */}
       <div style={{ marginBottom: '28px' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Code2 size={18} color="#a855f7" />
           <span>Paano I-set up sa Pipedream (3 Madaling Hakbang)</span>
         </h3>
@@ -390,8 +390,8 @@ export const PipedreamSetupTab = () => {
           {/* Step 1 */}
           <div
             style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--bg-surface, rgba(255, 255, 255, 0.03))',
+              border: '1px solid var(--glass-border)',
               borderRadius: '12px',
               padding: '14px 16px',
             }}
@@ -407,8 +407,8 @@ export const PipedreamSetupTab = () => {
           {/* Step 2 */}
           <div
             style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--bg-surface, rgba(255, 255, 255, 0.03))',
+              border: '1px solid var(--glass-border)',
               borderRadius: '12px',
               padding: '14px 16px',
             }}
@@ -424,8 +424,8 @@ export const PipedreamSetupTab = () => {
           {/* Step 3 */}
           <div
             style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--bg-surface, rgba(255, 255, 255, 0.03))',
+              border: '1px solid var(--glass-border)',
               borderRadius: '12px',
               padding: '14px 16px',
             }}
@@ -444,7 +444,7 @@ export const PipedreamSetupTab = () => {
       <div
         style={{
           background: 'rgba(10, 15, 30, 0.9)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          border: '1px solid var(--glass-border)',
           borderRadius: '14px',
           overflow: 'hidden',
         }}
@@ -456,7 +456,7 @@ export const PipedreamSetupTab = () => {
             alignItems: 'center',
             padding: '10px 16px',
             background: 'rgba(255, 255, 255, 0.05)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--glass-border)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

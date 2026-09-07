@@ -35,8 +35,8 @@ export const PipedreamAuthCard = () => {
         margin: '0 auto',
         padding: '36px 28px',
         borderRadius: '24px',
-        border: '1px solid rgba(0, 242, 254, 0.25)',
-        boxShadow: '0 16px 48px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 242, 254, 0.12)',
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow, 0 16px 48px rgba(0, 0, 0, 0.6))',
         position: 'relative',
         boxSizing: 'border-box',
         textAlign: 'center',
@@ -65,7 +65,7 @@ export const PipedreamAuthCard = () => {
         style={{
           fontSize: '1.5rem',
           fontWeight: 800,
-          color: '#ffffff',
+          color: 'var(--text-primary)',
           margin: '0 0 8px 0',
           letterSpacing: '-0.01em',
         }}

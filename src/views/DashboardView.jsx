@@ -63,7 +63,7 @@ export const DashboardView = () => {
                 <Wallet size={18} />
               </div>
             </div>
-            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(totalAmount)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: '#34d399' }}>
@@ -95,7 +95,7 @@ export const DashboardView = () => {
                 <Receipt size={18} />
               </div>
             </div>
-            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
               {documents.length}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
@@ -158,7 +158,7 @@ export const DashboardView = () => {
                 <TrendingUp size={18} />
               </div>
             </div>
-            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(avgAmount)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
@@ -222,10 +222,10 @@ export const DashboardView = () => {
               />
 
               {/* Data Points */}
-              <circle cx="125" cy="140" r="4" fill="var(--bg-space, #080c15)" stroke="#38bdf8" strokeWidth="2" />
-              <circle cx="250" cy="80" r="4" fill="var(--bg-space, #080c15)" stroke="#38bdf8" strokeWidth="2" />
-              <circle cx="375" cy="110" r="4" fill="var(--bg-space, #080c15)" stroke="#38bdf8" strokeWidth="2" />
-              <circle cx="500" cy="45" r="4.5" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5" />
+              <circle cx="125" cy="140" r="4" fill="var(--bg-surface, #ffffff)" stroke="#38bdf8" strokeWidth="2" />
+              <circle cx="250" cy="80" r="4" fill="var(--bg-surface, #ffffff)" stroke="#38bdf8" strokeWidth="2" />
+              <circle cx="375" cy="110" r="4" fill="var(--bg-surface, #ffffff)" stroke="#38bdf8" strokeWidth="2" />
+              <circle cx="500" cy="45" r="4.5" fill="#38bdf8" stroke="var(--bg-surface, #ffffff)" strokeWidth="1.5" />
             </svg>
           </div>
 

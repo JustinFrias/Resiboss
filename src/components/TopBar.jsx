@@ -893,12 +893,12 @@ export const TopBar = ({ onOpenMobile }) => {
                 top: 'calc(100% + 10px)',
                 right: 0,
                 width: '260px',
-                background: 'rgba(9, 14, 28, 0.96)',
+                background: 'var(--bg-surface-elevated, rgba(9, 14, 28, 0.96))',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '16px',
-                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75), 0 0 25px rgba(0, 242, 254, 0.15)',
+                boxShadow: 'var(--glass-shadow, 0 20px 50px rgba(0, 0, 0, 0.75))',
                 padding: '16px',
                 zIndex: 1000,
                 animation: 'scaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -937,7 +937,7 @@ export const TopBar = ({ onOpenMobile }) => {
                     style={{
                       fontSize: '0.92rem',
                       fontWeight: 700,
-                      color: '#ffffff',
+                      color: 'var(--text-primary)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -963,7 +963,7 @@ export const TopBar = ({ onOpenMobile }) => {
               <div
                 style={{
                   height: '1px',
-                  background: 'rgba(255, 255, 255, 0.08)',
+                  background: 'var(--glass-border)',
                   marginBottom: '10px',
                 }}
               />

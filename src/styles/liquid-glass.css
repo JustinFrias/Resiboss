@@ -44,7 +44,9 @@
   --shadow-glow-cyan: 0 0 16px rgba(56, 189, 248, 0.15);
   --shadow-glow-violet: 0 0 16px rgba(168, 85, 247, 0.15);
 
-  /* Layout */
+  /* Layout & Charts */
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --track-bg: rgba(255, 255, 255, 0.08);
   --sidebar-width: 270px;
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -57,35 +59,38 @@
 [data-theme="light"] {
   --bg-deep: #f8fafc;
   --bg-space: #f1f5f9;
-  --bg-surface: rgba(255, 255, 255, 0.88);
-  --bg-surface-elevated: rgba(255, 255, 255, 0.96);
-  --bg-surface-hover: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-hover: #f8fafc;
 
-  --glass-border: rgba(15, 23, 42, 0.12);
-  --glass-border-bright: rgba(15, 23, 42, 0.2);
-  --glass-border-glow: rgba(2, 132, 199, 0.5);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-border-bright: rgba(15, 23, 42, 0.18);
+  --glass-border-glow: rgba(2, 132, 199, 0.4);
   --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 100%);
   --glass-specular: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.98), transparent 70%);
 
+  --chart-grid: rgba(15, 23, 42, 0.08);
+  --track-bg: rgba(15, 23, 42, 0.08);
+
   --cyan-glow: #0284c7;
-  --cyan-subtle: rgba(2, 132, 199, 0.12);
+  --cyan-subtle: rgba(2, 132, 199, 0.1);
   --violet-glow: #7c3aed;
-  --violet-subtle: rgba(124, 58, 237, 0.12);
+  --violet-subtle: rgba(124, 58, 237, 0.1);
   --emerald-glow: #059669;
-  --emerald-subtle: rgba(5, 150, 105, 0.12);
+  --emerald-subtle: rgba(5, 150, 105, 0.1);
   --amber-glow: #d97706;
-  --amber-subtle: rgba(217, 119, 6, 0.12);
+  --amber-subtle: rgba(217, 119, 6, 0.1);
   --rose-glow: #e11d48;
-  --rose-subtle: rgba(225, 29, 72, 0.12);
+  --rose-subtle: rgba(225, 29, 72, 0.1);
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #64748b;
   --text-glow: none;
 
-  --shadow-glass: 0 10px 30px 0 rgba(15, 23, 42, 0.08);
-  --shadow-glow-cyan: 0 0 20px rgba(2, 132, 199, 0.15);
-  --shadow-glow-violet: 0 0 20px rgba(124, 58, 237, 0.15);
+  --shadow-glass: 0 4px 20px 0 rgba(15, 23, 42, 0.06);
+  --shadow-glow-cyan: 0 0 16px rgba(2, 132, 199, 0.12);
+  --shadow-glow-violet: 0 0 16px rgba(124, 58, 237, 0.12);
 }
 
 /* Light Mode Typography & Color Overrides */
@@ -150,14 +155,53 @@
 [data-theme="light"] [style*="background: rgba(12, 18, 36"],
 [data-theme="light"] [style*="background: rgba(10, 15, 30"],
 [data-theme="light"] [style*="background: rgba(9, 13, 26"],
+[data-theme="light"] [style*="background: rgba(9, 14, 28"],
 [data-theme="light"] [style*="background: #090e21"],
 [data-theme="light"] [style*="background: #090d1a"] {
-  background: rgba(255, 255, 255, 0.94) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
   border-color: rgba(15, 23, 42, 0.12) !important;
 }
 
 [data-theme="light"] [style*="background: rgba(10, 18, 42"] {
   background: rgba(2, 132, 199, 0.08) !important;
+}
+
+/* Semi-transparent dark surfaces in light mode */
+[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.22)"],
+[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.35)"],
+[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.4)"] {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] [style*="background: rgba(15, 23, 42, 0.65)"] {
+  background: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.025)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.03)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.04)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.05)"] {
+  background: rgba(241, 245, 249, 0.7) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.06)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.08)"] {
+  background: rgba(241, 245, 249, 0.95) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] [style*="border: 2px solid rgba(255, 255, 255, 0.3)"] {
+  border-color: rgba(15, 23, 42, 0.25) !important;
+}
+
+[data-theme="light"] .terms-modal-backdrop,
+[data-theme="light"] .modal-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
 }
 
 /* Brand logo title gradient in Light Mode */
@@ -233,6 +277,10 @@
 [data-theme="light"] [style*="background: #059669"] *,
 [data-theme="light"] [style*="background: #1d4ed8"],
 [data-theme="light"] [style*="background: #1d4ed8"] *,
+[data-theme="light"] [style*="background: #2563eb"],
+[data-theme="light"] [style*="background: #2563eb"] *,
+[data-theme="light"] [style*="background: #dc2626"],
+[data-theme="light"] [style*="background: #dc2626"] *,
 [data-theme="light"] [style*="background: linear-gradient(135deg, #ef4444"],
 [data-theme="light"] [style*="background: linear-gradient(135deg, #ef4444"] * {
   color: #ffffff !important;

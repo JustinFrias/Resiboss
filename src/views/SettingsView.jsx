@@ -335,7 +335,7 @@ export const SettingsView = () => {
               style={{
                 fontSize: '1.4rem',
                 fontWeight: 800,
-                color: '#ffffff',
+                color: 'var(--text-primary)',
                 margin: 0,
                 letterSpacing: '-0.02em',
               }}
@@ -358,25 +358,24 @@ export const SettingsView = () => {
         <button
           type="button"
           onClick={() => {
-            soundFx.playClick();
+            soundFx?.playClick?.();
             setActiveTab('dashboard');
           }}
+          className="liquid-btn liquid-btn-secondary"
           style={{
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '50%',
-            width: '34px',
-            height: '34px',
+            width: '38px',
+            height: '38px',
+            padding: 0,
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--text-secondary)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)';
-            e.currentTarget.style.color = '#ffffff';
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+            e.currentTarget.style.color = '#f87171';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
@@ -395,11 +394,11 @@ export const SettingsView = () => {
           display: 'flex',
           flexDirection: 'row',
           borderRadius: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          background: 'rgba(10, 15, 30, 0.94)',
+          border: '1px solid var(--glass-border)',
+          background: 'var(--bg-surface-elevated, rgba(10, 15, 30, 0.94))',
           backdropFilter: 'blur(28px)',
           WebkitBackdropFilter: 'blur(28px)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(0, 242, 254, 0.08)',
+          boxShadow: 'var(--glass-shadow, 0 25px 60px rgba(0, 0, 0, 0.65))',
           overflow: 'hidden',
           minHeight: '640px',
         }}
@@ -408,12 +407,12 @@ export const SettingsView = () => {
         <div
           style={{
             width: '235px',
-            borderRight: '1px solid rgba(255, 255, 255, 0.07)',
+            borderRight: '1px solid var(--glass-border)',
             padding: '18px 12px',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
-            background: 'rgba(0, 0, 0, 0.22)',
+            background: 'var(--bg-surface, rgba(0, 0, 0, 0.22))',
             flexShrink: 0,
           }}
         >
@@ -480,7 +479,7 @@ export const SettingsView = () => {
                       style={{
                         fontSize: '1.2rem',
                         fontWeight: 800,
-                        color: '#ffffff',
+                        color: 'var(--text-primary)',
                         margin: '0 0 4px 0',
                       }}
                     >
@@ -591,7 +590,7 @@ export const SettingsView = () => {
                               border: showZoom ? '1px solid #00f2fe' : '1px solid rgba(255, 255, 255, 0.12)',
                               borderRadius: '10px',
                               padding: '8px 14px',
-                              color: showZoom ? '#00f2fe' : '#ffffff',
+                              color: showZoom ? '#00f2fe' : 'var(--text-primary)',
                               fontSize: '0.84rem',
                               fontWeight: 500,
                               display: 'flex',
@@ -740,7 +739,7 @@ export const SettingsView = () => {
                       style={{
                         fontSize: '0.94rem',
                         fontWeight: 700,
-                        color: '#ffffff',
+                        color: 'var(--text-primary)',
                         margin: '0 0 2px 0',
                       }}
                     >
@@ -919,7 +918,7 @@ export const SettingsView = () => {
                       justifyContent: 'space-between',
                       flexWrap: 'wrap',
                       gap: '14px',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderTop: '1px solid var(--glass-border)',
                       paddingTop: '16px',
                     }}
                   >
@@ -1023,7 +1022,7 @@ export const SettingsView = () => {
           {activeSettingTab === 'theme' && (
             <div>
               <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px 0' }}>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
                   Appearance & Theme
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -1033,8 +1032,8 @@ export const SettingsView = () => {
 
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.025)',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '16px',
                   padding: '20px',
                   display: 'flex',
@@ -1044,7 +1043,7 @@ export const SettingsView = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffffff' }}>Theme Mode</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Theme Mode</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                       Current: {theme === 'dark' ? 'Dark Futuristic Cyber' : 'Clean Pearl Light'}
                     </div>
@@ -1071,11 +1070,11 @@ export const SettingsView = () => {
                   </button>
                 </div>
 
-                <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)' }} />
+                <div style={{ height: '1px', background: 'var(--glass-border)' }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffffff' }}>Audio & UI Sound Effects</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Audio & UI Sound Effects</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                       Play subtle tactile audio cues on button clicks and scans.
                     </div>
@@ -1109,7 +1108,7 @@ export const SettingsView = () => {
           {activeSettingTab === 'alerts' && (
             <div>
               <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px 0' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
                   In-App Alert Activity
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -1120,8 +1119,8 @@ export const SettingsView = () => {
               {/* Stored Notifications Box (Screenshot 1) */}
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.025)',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '16px',
                   padding: '20px 22px',
                   display: 'flex',
@@ -1132,7 +1131,7 @@ export const SettingsView = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 700, color: '#ffffff', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
                     Stored Notifications
                   </div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
@@ -1148,10 +1147,10 @@ export const SettingsView = () => {
                   }}
                   style={{
                     background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    border: '1px solid var(--glass-border)',
                     borderRadius: '12px',
                     padding: '8px 16px',
-                    color: '#ffffff',
+                    color: 'var(--text-primary)',
                     fontSize: '0.84rem',
                     fontWeight: 600,
                     display: 'flex',
@@ -1167,8 +1166,8 @@ export const SettingsView = () => {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.borderColor = 'var(--glass-border)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
                   }}
                 >
                   <Trash2 size={15} />
@@ -1182,7 +1181,7 @@ export const SettingsView = () => {
           {activeSettingTab === 'email' && (
             <div>
               <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px 0' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
                   Automated Email Notifications
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -1194,8 +1193,8 @@ export const SettingsView = () => {
               <div
                 onClick={() => setEnableEmailDelivery(!enableEmailDelivery)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.025)',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '16px',
                   padding: '18px 22px',
                   display: 'flex',
@@ -1206,7 +1205,7 @@ export const SettingsView = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.96rem', fontWeight: 700, color: '#ffffff', marginBottom: '3px' }}>
+                  <div style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
                     Enable Email Delivery
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -1221,7 +1220,7 @@ export const SettingsView = () => {
                     height: '20px',
                     borderRadius: '5px',
                     background: enableEmailDelivery ? '#2563eb' : 'transparent',
-                    border: enableEmailDelivery ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                    border: enableEmailDelivery ? 'none' : '2px solid var(--glass-border-bright, rgba(255, 255, 255, 0.3))',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1233,7 +1232,7 @@ export const SettingsView = () => {
 
               {/* Notification Triggers Section (Screenshot 2) */}
               <div style={{ marginBottom: '26px' }}>
-                <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#ffffff', margin: '0 0 12px 0' }}>
+                <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px 0' }}>
                   Notification Triggers
                 </h3>
 
@@ -1266,7 +1265,7 @@ export const SettingsView = () => {
                             height: '18px',
                             borderRadius: '4px',
                             background: isChecked ? '#2563eb' : 'transparent',
-                            border: isChecked ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                            border: isChecked ? 'none' : '2px solid var(--glass-border-bright, rgba(255, 255, 255, 0.3))',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1275,7 +1274,7 @@ export const SettingsView = () => {
                         >
                           {isChecked && <Check size={13} color="#ffffff" strokeWidth={3} />}
                         </div>
-                        <span style={{ fontSize: '0.86rem', color: '#cbd5e1' }}>{trig.label}</span>
+                        <span style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>{trig.label}</span>
                       </div>
                     );
                   })}
@@ -1284,7 +1283,7 @@ export const SettingsView = () => {
 
               {/* Send Instant Test Notification (Screenshot 2) */}
               <div>
-                <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#ffffff', margin: '0 0 10px 0' }}>
+                <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px 0' }}>
                   Send Instant Test Notification
                 </h3>
 
@@ -1314,9 +1313,9 @@ export const SettingsView = () => {
                       flex: 1,
                       padding: '10px 14px',
                       borderRadius: '12px',
-                      background: 'rgba(0, 0, 0, 0.35)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
+                      background: 'var(--bg-surface, rgba(0, 0, 0, 0.35))',
+                      border: '1px solid var(--glass-border)',
+                      color: 'var(--text-primary)',
                       fontSize: '0.86rem',
                       outline: 'none',
                     }}
@@ -1356,7 +1355,7 @@ export const SettingsView = () => {
           {activeSettingTab === 'privacy' && (
             <div>
               <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px 0' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
                   Storage, Backups & Account Security
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -1367,8 +1366,8 @@ export const SettingsView = () => {
               {/* Metrics & Backups Card (Screenshot 4) */}
               <div
                 style={{
-                  background: 'rgba(255, 255, 255, 0.025)',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '16px',
                   padding: '22px 24px',
                   marginBottom: '24px',
@@ -1388,7 +1387,7 @@ export const SettingsView = () => {
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                       Boards
                     </div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       3
                     </div>
                   </div>
@@ -1397,7 +1396,7 @@ export const SettingsView = () => {
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                       Task Cards
                     </div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       {documents?.length || 1}
                     </div>
                   </div>
@@ -1406,7 +1405,7 @@ export const SettingsView = () => {
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                       Local Storage
                     </div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       {storageUsageKb} KB
                     </div>
                   </div>
@@ -1420,10 +1419,10 @@ export const SettingsView = () => {
                     style={{
                       flex: 1,
                       background: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      border: '1px solid var(--glass-border)',
                       borderRadius: '12px',
                       padding: '11px 18px',
-                      color: '#ffffff',
+                      color: 'var(--text-primary)',
                       fontSize: '0.86rem',
                       fontWeight: 600,
                       display: 'flex',
@@ -1441,8 +1440,8 @@ export const SettingsView = () => {
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.borderColor = 'var(--glass-border)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
                     }}
                   >
                     <Download size={15} />
@@ -1455,10 +1454,10 @@ export const SettingsView = () => {
                     style={{
                       flex: 1,
                       background: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      border: '1px solid var(--glass-border)',
                       borderRadius: '12px',
                       padding: '11px 18px',
-                      color: '#ffffff',
+                      color: 'var(--text-primary)',
                       fontSize: '0.86rem',
                       fontWeight: 600,
                       display: 'flex',
@@ -1476,8 +1475,8 @@ export const SettingsView = () => {
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.borderColor = 'var(--glass-border)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
                     }}
                   >
                     <Upload size={15} />
@@ -1520,7 +1519,7 @@ export const SettingsView = () => {
                 <p
                   style={{
                     fontSize: '0.82rem',
-                    color: '#cbd5e1',
+                    color: 'var(--text-secondary)',
                     lineHeight: 1.45,
                     marginBottom: '18px',
                   }}

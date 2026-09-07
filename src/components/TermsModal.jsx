@@ -79,10 +79,10 @@ export const TermsModal = () => {
           width: '100%',
           maxWidth: '860px',
           maxHeight: '90vh',
-          background: 'radial-gradient(circle at 50% 0%, rgba(15, 26, 56, 0.95), rgba(7, 12, 26, 0.98))',
-          border: '1px solid rgba(0, 242, 254, 0.3)',
+          background: 'var(--bg-surface-elevated, #070c1a)',
+          border: '1px solid var(--glass-border)',
           borderRadius: '24px',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 242, 254, 0.15)',
+          boxShadow: 'var(--glass-shadow, 0 30px 80px rgba(0, 0, 0, 0.8))',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -97,7 +97,7 @@ export const TermsModal = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(10, 16, 36, 0.65)',
+            background: 'var(--bg-surface, rgba(10, 16, 36, 0.65))',
             flexWrap: 'wrap',
             gap: '14px',
           }}
@@ -132,7 +132,7 @@ export const TermsModal = () => {
                 style={{
                   fontSize: '1.35rem',
                   fontWeight: 800,
-                  color: '#ffffff',
+                  color: 'var(--text-primary)',
                   margin: '4px 0 0 0',
                   letterSpacing: '-0.01em',
                 }}
@@ -228,7 +228,7 @@ export const TermsModal = () => {
             gap: '20px',
             lineHeight: 1.6,
             fontSize: '0.88rem',
-            color: '#cbd5e1',
+            color: 'var(--text-secondary)',
           }}
         >
           {/* Important Notice Callout */}
@@ -244,7 +244,7 @@ export const TermsModal = () => {
             }}
           >
             <ShieldCheck size={20} color="#00f2fe" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div style={{ fontSize: '0.82rem', color: '#e2e8f0' }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>
               <strong>{isFil ? 'Mahalagang Paalala:' : 'Important Summary:'}</strong>{' '}
               {isFil
                 ? 'Ang Resiboss ay isang tool para sa digital receipt tracking, OCR extraction, at VAT estimation. Nirerespeto namin ang iyong privacy (Data Privacy Act of 2012 RA 10173). Mananatiling ikaw at ang iyong Certified Public Accountant ang may pananagutan sa opisyal na pag-file ng buwis sa BIR.'
@@ -253,8 +253,8 @@ export const TermsModal = () => {
           </div>
 
           {/* Section 1: Acceptance */}
-          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <FileText size={16} color="#00f2fe" />
               {isFil ? '1. Pagtanggap sa mga Tuntunin' : '1. Acceptance of Terms'}
             </h3>
@@ -266,8 +266,8 @@ export const TermsModal = () => {
           </div>
 
           {/* Section 2: Services & OCR Processing */}
-          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Sparkles size={16} color="#a855f7" />
               {isFil ? '2. Serbisyo at Optical Character Recognition (OCR)' : '2. Scope of Services & OCR Processing'}
             </h3>
@@ -296,8 +296,8 @@ export const TermsModal = () => {
           </div>
 
           {/* Section 3: Data Privacy & Security */}
-          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Lock size={16} color="#10b981" />
               {isFil ? '3. Proteksyon ng Datos at Privacy (RA 10173)' : '3. Data Privacy & Cryptographic Security (RA 10173)'}
             </h3>
@@ -309,8 +309,8 @@ export const TermsModal = () => {
           </div>
 
           {/* Section 4: Tax Calculation Disclaimer (BIR) */}
-          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertTriangle size={16} color="#f59e0b" />
               {isFil ? '4. Paalala sa Pagkukuwenta ng Buwis (BIR Disclaimer)' : '4. Statutory Tax & BIR Calculation Disclaimer'}
             </h3>
@@ -322,8 +322,8 @@ export const TermsModal = () => {
           </div>
 
           {/* Section 5: User Obligations */}
-          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <CheckCircle2 size={16} color="#38bdf8" />
               {isFil ? '5. Responsibilidad ng Gumagamit' : '5. User Responsibilities & Acceptable Conduct'}
             </h3>
@@ -335,8 +335,8 @@ export const TermsModal = () => {
           </div>
 
           {/* Section 6: Limitation of Liability */}
-          <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Scale size={16} color="#c084fc" />
               {isFil ? '6. Limitasyon ng Pananagutan (Limitation of Liability)' : '6. Limitation of Liability & "As Is" Warranty'}
             </h3>
@@ -349,7 +349,7 @@ export const TermsModal = () => {
 
           {/* Section 7: Governing Law & Contact */}
           <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <HelpCircle size={16} color="#00f2fe" />
               {isFil ? '7. Batas na Sumasaklaw at Pakikipag-ugnayan' : '7. Governing Law & Contact'}
             </h3>
@@ -366,7 +366,7 @@ export const TermsModal = () => {
           style={{
             padding: '16px 28px',
             borderTop: '1px solid var(--glass-border)',
-            background: 'rgba(10, 16, 36, 0.65)',
+            background: 'var(--bg-surface, rgba(10, 16, 36, 0.65))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

@@ -73,7 +73,7 @@ export const AnalyticView = () => {
             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               {t.analytic.taxableNetSubtotal}
             </div>
-            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
               {formatCurrency(totalSubtotal)}
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
@@ -141,7 +141,7 @@ export const AnalyticView = () => {
               justifyContent: 'space-between',
               gap: '18px',
               padding: '0 10px 10px 10px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid var(--glass-border)',
             }}
           >
             {monthlyData.map((m, idx) => {
@@ -178,13 +178,13 @@ export const AnalyticView = () => {
                       height: `${heightPct}%`,
                       background: isLatest
                         ? 'linear-gradient(180deg, #00f2fe 0%, #a855f7 100%)'
-                        : 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                        : 'linear-gradient(180deg, var(--glass-border-bright) 0%, var(--glass-border) 100%)',
                       borderRadius: '8px 8px 3px 3px',
                       boxShadow: isLatest ? '0 0 20px rgba(0, 242, 254, 0.45)' : 'none',
                       transition: 'height 0.6s ease',
                     }}
                   />
-                  <div style={{ marginTop: '10px', fontSize: '0.8rem', fontWeight: 600, color: isLatest ? '#ffffff' : 'var(--text-muted)' }}>
+                  <div style={{ marginTop: '10px', fontSize: '0.8rem', fontWeight: 600, color: isLatest ? 'var(--cyan-glow)' : 'var(--text-muted)' }}>
                     {m.month}
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export const AnalyticView = () => {
             {/* SVG Donut Ring */}
             <div style={{ position: 'relative', width: '160px', height: '160px' }}>
               <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', width: '100%', height: '100%' }}>
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="rgba(255,255,255,0.08)" strokeWidth="12" />
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--glass-border)" strokeWidth="12" />
                 <circle
                   cx="50"
                   cy="50"
@@ -241,7 +241,7 @@ export const AnalyticView = () => {
                 }}
               >
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>CATEGORIES</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff' }}>{categoryList.length}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{categoryList.length}</div>
               </div>
             </div>
           </div>
@@ -295,7 +295,7 @@ export const AnalyticView = () => {
                   alignItems: 'center',
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  background: 'rgba(10, 15, 30, 0.4)',
+                  background: 'var(--bg-surface-elevated)',
                   border: '1px solid var(--glass-border)',
                 }}
               >
@@ -305,18 +305,18 @@ export const AnalyticView = () => {
                       width: '24px',
                       height: '24px',
                       borderRadius: '6px',
-                      background: 'rgba(255, 255, 255, 0.08)',
+                      background: 'var(--cyan-subtle)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: '#00f2fe',
+                      color: 'var(--cyan-glow)',
                     }}
                   >
                     #{idx + 1}
                   </div>
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#ffffff' }}>{merchant}</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{merchant}</span>
                 </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#38bdf8' }}>
                   {formatCurrency(val)}

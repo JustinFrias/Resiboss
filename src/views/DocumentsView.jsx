@@ -274,7 +274,7 @@ export const DocumentsView = () => {
                     style={{
                       fontSize: '1.12rem',
                       fontWeight: 700,
-                      color: '#ffffff',
+                      color: 'var(--text-primary)',
                       marginBottom: '6px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -291,7 +291,7 @@ export const DocumentsView = () => {
                   {/* Items summary */}
                   <div
                     style={{
-                      background: 'rgba(10, 15, 30, 0.45)',
+                      background: 'var(--bg-surface)',
                       padding: '8px 12px',
                       borderRadius: '8px',
                       border: '1px solid var(--glass-border)',
@@ -318,10 +318,10 @@ export const DocumentsView = () => {
 
                 {/* Bottom Row: Amount & 3D Inspect Trigger */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '14px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '14px', paddingTop: '10px', borderTop: '1px solid var(--glass-border)' }}>
                     <div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalAmount}</div>
-                      <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
                         {formatCurrency(doc.total)}
                       </div>
                     </div>
@@ -361,7 +361,7 @@ export const DocumentsView = () => {
         <div className="glass-panel documents-table-wrap" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', padding: '12px' }}>
           <table style={{ width: '100%', minWidth: '660px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--text-secondary)' }}>
+              <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>
                 <th style={{ padding: '14px 16px' }}>{t.documents.tableId}</th>
                 <th style={{ padding: '14px 16px' }}>{t.documents.tableMerchant}</th>
                 <th style={{ padding: '14px 16px' }}>{t.documents.tableDate}</th>
@@ -377,16 +377,16 @@ export const DocumentsView = () => {
                 <tr
                   key={doc.id}
                   style={{
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderBottom: '1px solid var(--glass-border)',
                     transition: 'background 0.2s ease',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0, 242, 254, 0.04)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cyan-subtle)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#00f2fe' }}>
+                  <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--cyan-glow)' }}>
                     {doc.id}
                   </td>
-                  <td style={{ padding: '14px 16px', fontWeight: 600, color: '#ffffff' }}>
+                  <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {doc.merchant}
                   </td>
                   <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
@@ -405,7 +405,7 @@ export const DocumentsView = () => {
                   <td style={{ padding: '14px 16px', color: '#34d399', fontFamily: 'var(--font-mono)' }}>
                     {formatCurrency(doc.vat)}
                   </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#ffffff' }}>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
                     {formatCurrency(doc.total)}
                   </td>
                   <td style={{ padding: '14px 16px', textAlign: 'center' }}>

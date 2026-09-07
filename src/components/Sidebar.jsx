@@ -421,14 +421,14 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
             {/* Real-time Date & Time Pill (Matching User Screenshot, placed directly below Settings & above Language) */}
             <div
               style={{
-                background: 'rgba(15, 23, 42, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'var(--bg-surface-elevated, rgba(15, 23, 42, 0.65))',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '12px',
                 padding: '9px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.35)',
+                boxShadow: 'var(--glass-shadow-sm, inset 0 1px 2px rgba(0, 0, 0, 0.35))',
                 userSelect: 'none',
               }}
             >
@@ -437,7 +437,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                 <span
                   style={{
                     fontSize: '0.78rem',
-                    color: '#94a3b8',
+                    color: 'var(--text-secondary)',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
                     letterSpacing: '0.2px',
@@ -452,7 +452,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                   style={{
                     fontSize: '0.80rem',
                     fontWeight: 700,
-                    color: '#ffffff',
+                    color: 'var(--text-primary)',
                     whiteSpace: 'nowrap',
                     letterSpacing: '0.3px',
                   }}
@@ -479,8 +479,8 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    background: isLangOpen ? 'rgba(0, 242, 254, 0.12)' : 'rgba(255, 255, 255, 0.08)',
-                    border: isLangOpen ? '1px solid var(--cyan-glow)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    background: isLangOpen ? 'rgba(0, 242, 254, 0.12)' : 'var(--glass-border)',
+                    border: isLangOpen ? '1px solid var(--cyan-glow)' : '1px solid var(--glass-border)',
                     color: 'var(--text-primary)',
                     fontSize: '0.78rem',
                     fontWeight: 700,
@@ -543,7 +543,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                           transition: 'background 0.15s ease',
                         }}
                         onMouseEnter={(e) => {
-                          if (language !== l.code) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                          if (language !== l.code) e.currentTarget.style.background = 'var(--glass-border)';
                         }}
                         onMouseLeave={(e) => {
                           if (language !== l.code) e.currentTarget.style.background = 'transparent';
@@ -582,8 +582,8 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    background: isCurrOpen ? 'rgba(0, 242, 254, 0.12)' : 'rgba(255, 255, 255, 0.08)',
-                    border: isCurrOpen ? '1px solid var(--cyan-glow)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    background: isCurrOpen ? 'rgba(0, 242, 254, 0.12)' : 'var(--glass-border)',
+                    border: isCurrOpen ? '1px solid var(--cyan-glow)' : '1px solid var(--glass-border)',
                     color: '#00f2fe',
                     fontFamily: 'var(--font-mono)',
                     fontSize: '0.78rem',
@@ -648,7 +648,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                           transition: 'background 0.15s ease',
                         }}
                         onMouseEnter={(e) => {
-                          if (currency !== c) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                          if (currency !== c) e.currentTarget.style.background = 'var(--glass-border)';
                         }}
                         onMouseLeave={(e) => {
                           if (currency !== c) e.currentTarget.style.background = 'transparent';

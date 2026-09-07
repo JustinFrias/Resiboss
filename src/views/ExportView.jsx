@@ -434,10 +434,10 @@ export const ExportView = () => {
                 setSelectedFormats(['purchases', 'sales', 'csv']);
               }}
               style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                background: 'var(--cyan-subtle)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '8px',
-                color: '#38bdf8',
+                color: 'var(--cyan-glow)',
                 fontSize: '0.78rem',
                 fontWeight: 600,
                 padding: '5px 10px',
@@ -491,23 +491,23 @@ export const ExportView = () => {
                   </div>
 
                   {/* Multi-Select Checkbox Badge */}
-                  <div
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '7px',
-                      border: isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
-                      background: isSelected ? '#00f2fe' : 'rgba(255, 255, 255, 0.05)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      boxShadow: isSelected ? '0 0 10px rgba(0, 242, 254, 0.7)' : 'none',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {isSelected && <Check size={14} color="#090e21" strokeWidth={3} />}
-                  </div>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '7px',
+                        border: isSelected ? 'none' : '2px solid var(--glass-border-bright)',
+                        background: isSelected ? 'var(--cyan-glow)' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: isSelected ? '0 0 10px rgba(0, 242, 254, 0.4)' : 'none',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {isSelected && <Check size={14} color="#090e21" strokeWidth={3} />}
+                    </div>
                 </div>
 
                 <div
@@ -613,7 +613,7 @@ export const ExportView = () => {
             <thead>
               <tr
                 style={{
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderBottom: '1px solid var(--glass-border)',
                   color: 'var(--text-secondary)',
                   textAlign: 'left',
                 }}
@@ -656,8 +656,8 @@ export const ExportView = () => {
                       key={doc.id}
                       onClick={() => handleToggleDoc(doc.id)}
                       style={{
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                        background: isChecked ? 'rgba(0, 242, 254, 0.04)' : 'transparent',
+                        borderBottom: '1px solid var(--glass-border)',
+                        background: isChecked ? 'var(--cyan-subtle)' : 'transparent',
                         cursor: 'pointer',
                         transition: 'background 0.15s ease',
                       }}
@@ -678,8 +678,8 @@ export const ExportView = () => {
                             width: '18px',
                             height: '18px',
                             borderRadius: '5px',
-                            border: isChecked ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
-                            background: isChecked ? '#00f2fe' : 'transparent',
+                            border: isChecked ? 'none' : '2px solid var(--glass-border-bright)',
+                            background: isChecked ? 'var(--cyan-glow)' : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -719,7 +719,7 @@ export const ExportView = () => {
                           padding: '12px',
                           textAlign: 'right',
                           fontWeight: 700,
-                          color: '#ffffff',
+                          color: 'var(--text-primary)',
                           fontFamily: 'var(--font-mono)',
                         }}
                       >
