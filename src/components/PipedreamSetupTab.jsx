@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const PIPEDREAM_NODE_CODE = `// Pipedream Node.js step for Resiboss Sign In & Registration
-import { crypto } from "crypto";
+import { createHash } from "crypto";
 
 export default defineComponent({
   props: {
@@ -49,7 +49,7 @@ export default defineComponent({
 
     // Helper: I-hash ang password gamit ang SHA-256
     const hashPassword = (pwd) => {
-      return crypto.createHash("sha256").update(pwd).digest("hex");
+      return createHash("sha256").update(pwd).digest("hex");
     };
 
     const passwordHash = hashPassword(password);

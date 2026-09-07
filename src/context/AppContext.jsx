@@ -289,11 +289,17 @@ export const AppProvider = ({ children }) => {
   };
 
   // Pipedream Authentication Webhook Integration
+  const DEFAULT_PIPEDREAM_URL = 'https://eoihgfgvur5v27v.m.pipedream.net';
+
   const [pipedreamAuthUrl, setPipedreamAuthUrlState] = useState(() => {
     try {
-      return localStorage.getItem('resiboss_pipedream_auth_url') || import.meta.env.VITE_PIPEDREAM_AUTH_URL || '';
+      return (
+        localStorage.getItem('resiboss_pipedream_auth_url') ||
+        import.meta.env.VITE_PIPEDREAM_AUTH_URL ||
+        DEFAULT_PIPEDREAM_URL
+      );
     } catch (e) {
-      return '';
+      return DEFAULT_PIPEDREAM_URL;
     }
   });
 
