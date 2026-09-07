@@ -53,8 +53,10 @@ jobs:
           cd android
           ./gradlew assembleDebug --stacktrace
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Resiboss.apk
+          cd app/build/outputs/apk/debug
+          zip Resiboss-APK.zip Resiboss.apk
 
-      - name: Upload Debug APK Artifact
+      - name: Upload Debug APK Artifact (ZIP)
         uses: actions/upload-artifact@v4
         with:
           name: Resiboss-Debug-APK
@@ -66,8 +68,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "Resiboss Android App (Latest APK)"
-          body: "Direct download of Resiboss APK with Pipedream Auth."
-          files: android/app/build/outputs/apk/debug/Resiboss.apk
+          name: "Resiboss Android App (Latest APK & ZIP)"
+          body: "Download Resiboss APK in .apk or .zip format."
+          files: |
+            android/app/build/outputs/apk/debug/Resiboss.apk
+            android/app/build/outputs/apk/debug/Resiboss-APK.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
