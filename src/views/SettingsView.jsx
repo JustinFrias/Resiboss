@@ -302,7 +302,7 @@ export const SettingsView = () => {
   ];
 
   return (
-    <div className="view-page" style={{ width: '100%', padding: '0 4px', maxWidth: '1080px', margin: '0 auto' }}>
+    <div className="view-page settings-page" style={{ width: '100%', padding: '0 4px', maxWidth: '1080px', margin: '0 auto' }}>
       {/* Top Header Row */}
       <div
         style={{
@@ -310,9 +310,10 @@ export const SettingsView = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '16px',
+          gap: '10px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
           <div
             style={{
               width: '42px',
@@ -330,8 +331,9 @@ export const SettingsView = () => {
           >
             <Sliders size={20} />
           </div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1
+              className="settings-header-title"
               style={{
                 fontSize: '1.4rem',
                 fontWeight: 800,
@@ -343,6 +345,7 @@ export const SettingsView = () => {
               Preferences & Settings
             </h1>
             <p
+              className="settings-header-sub"
               style={{
                 fontSize: '0.82rem',
                 color: 'var(--text-secondary)',
@@ -389,7 +392,7 @@ export const SettingsView = () => {
 
       {/* Main Container Card (Two Columns) */}
       <div
-        className="glass-panel"
+        className="glass-panel settings-card"
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -405,6 +408,7 @@ export const SettingsView = () => {
       >
         {/* Left Side Navigation Menu */}
         <div
+          className="settings-sidebar"
           style={{
             width: '235px',
             borderRight: '1px solid var(--glass-border)',
@@ -461,6 +465,7 @@ export const SettingsView = () => {
 
         {/* Right Main Content Area */}
         <div
+          className="settings-content"
           style={{
             flex: 1,
             padding: '24px 28px',
@@ -1303,9 +1308,10 @@ export const SettingsView = () => {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '540px' }}>
+                <div className="settings-email-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '540px' }}>
                   <input
                     type="email"
+                    className="settings-email-input"
                     value={testEmailRecipient}
                     onChange={(e) => setTestEmailRecipient(e.target.value)}
                     placeholder="recipient@company.com"
@@ -1375,6 +1381,7 @@ export const SettingsView = () => {
               >
                 {/* 3 Metric Columns */}
                 <div
+                  className="settings-metrics"
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',

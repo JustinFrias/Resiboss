@@ -1792,3 +1792,82 @@ html, body {
 [data-theme="light"] .resiboss-logo-container svg path[stroke="#ffffff"] {
   stroke: #0284c7 !important;
 }
+
+/* ========== Settings View Responsive ========== */
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 0 !important;
+  }
+
+  .settings-header-title {
+    font-size: 1.12rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .settings-header-sub {
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .settings-card {
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+
+  .settings-sidebar {
+    width: 100% !important;
+    flex-direction: row !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settings-sidebar button {
+    width: auto !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .settings-content {
+    padding: 18px 14px !important;
+    overflow: visible !important;
+  }
+
+  .settings-email-row {
+    flex-wrap: wrap !important;
+  }
+
+  .settings-email-input {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .settings-metrics {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-header-sub {
+    max-width: 66vw !important;
+  }
+
+  .settings-email-row button {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+
+  .settings-email-row button span {
+    display: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .settings-metrics {
+    grid-template-columns: 1fr !important;
+  }
+}
