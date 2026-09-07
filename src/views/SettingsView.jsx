@@ -4,7 +4,6 @@ import { TiltCard } from '../components/TiltCard';
 import { soundFx } from '../utils/soundEffects';
 import { PipedreamAuthCard } from '../components/PipedreamAuthCard';
 import {
-  Settings,
   Upload,
   X,
   CheckCircle2,
@@ -226,11 +225,6 @@ export const SettingsView = () => {
     <div className="view-page" style={{ width: '100%', padding: 0 }}>
       {/* 1. Header Section */}
       <div style={{ marginBottom: '14px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-          <span className="liquid-badge liquid-badge-violet">
-            <Settings size={13} /> {t.settings?.title || 'Settings'}
-          </span>
-        </div>
         <h1
           style={{
             fontSize: '1.75rem',

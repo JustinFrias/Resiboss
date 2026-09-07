@@ -2,7 +2,6 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components/TiltCard';
 import {
-  BarChart3,
   TrendingUp,
   PieChart,
   ShieldCheck,
@@ -52,11 +51,6 @@ export const AnalyticView = () => {
     <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
       {/* Title Header */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-          <span className="liquid-badge liquid-badge-emerald">
-            <BarChart3 size={13} /> {t.analytic.title}
-          </span>
-        </div>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
           {t.analytic.predictiveTitle}
         </h1>
