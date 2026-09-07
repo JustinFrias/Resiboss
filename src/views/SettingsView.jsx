@@ -868,7 +868,7 @@ export const SettingsView = () => {
                       Windows PC • Chrome Browser
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      Localhost:3000 • Current Session Active
+                      Cloud Live • Current Session Active
                     </div>
                   </div>
                 </div>
