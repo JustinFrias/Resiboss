@@ -19,7 +19,6 @@ import {
   ChevronRight,
   ChevronDown,
   X,
-  Smartphone,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 
@@ -277,57 +276,6 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               );
             })}
           </nav>
-
-          {/* Direct Android APK Download Button (1-Click .APK) */}
-          <div style={{ marginTop: '16px' }}>
-            {sidebarCollapsed ? (
-              <a
-                href="https://github.com/JustinFrias/Resiboss/releases/download/latest/Resiboss.apk"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(168, 85, 247, 0.15))',
-                  border: '1px solid rgba(0, 242, 254, 0.35)',
-                  color: '#00f2fe',
-                  textDecoration: 'none',
-                }}
-                title="Direct Download Resiboss.apk (No extraction needed!)"
-              >
-                <Smartphone size={18} />
-              </a>
-            ) : (
-              <a
-                href="https://github.com/JustinFrias/Resiboss/releases/download/latest/Resiboss.apk"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.12), rgba(168, 85, 247, 0.12))',
-                  border: '1px solid rgba(0, 242, 254, 0.3)',
-                  color: '#00f2fe',
-                  textDecoration: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  transition: 'all 0.2s ease',
-                }}
-                title="Direct Download Resiboss.apk (No extraction needed!)"
-              >
-                <Smartphone size={17} />
-                <span>Get Android APK</span>
-                <Download size={14} style={{ marginLeft: 'auto', opacity: 0.8 }} />
-              </a>
-            )}
-          </div>
         </div>
 
         {/* Bottom Section: Controls & Vault Status */}
