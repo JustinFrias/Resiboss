@@ -399,9 +399,71 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
           </div>
         ) : (
           /* Expanded Bottom Controls */
-          <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {/* Quick Language & Currency Row */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+          <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Settings Nav Item (Placed at the top of bottom section, above Language & Currency) */}
+            <button
+              key="settings"
+              onClick={() => handleNavClick('settings')}
+              className={`sidebar-nav-btn ${activeTab === 'settings' ? 'active' : ''}`}
+              style={{ width: '100%', margin: 0 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {activeTab === 'settings' && <div className="sidebar-active-indicator" />}
+                <Settings
+                  size={18}
+                  className="sidebar-nav-icon"
+                  strokeWidth={activeTab === 'settings' ? 2.4 : 2}
+                />
+                <span style={{ fontSize: '0.92rem' }}>{t.nav.settings || 'Settings'}</span>
+              </div>
+            </button>
+
+            {/* Real-time Date & Time Pill (Matching User Screenshot, placed directly below Settings & above Language) */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '9px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.35)',
+                userSelect: 'none',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={14} color="#3b82f6" strokeWidth={2} />
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    color: '#94a3b8',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.2px',
+                  }}
+                >
+                  {formattedDate}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Clock size={14} color="#3b82f6" strokeWidth={2} />
+                <span
+                  style={{
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  {formattedTime}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Language & Currency Row (Now below Settings & Date/Time) */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between', position: 'relative', marginTop: '2px' }}>
               {/* Custom Liquid Glass Language Dropdown */}
               <div ref={langRef} style={{ position: 'relative', flex: 1 }}>
                 <button
@@ -630,68 +692,6 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               >
                 {settings.soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
               </button>
-            </div>
-
-            {/* Settings Nav Item (Moved to bottom above Date/Time) */}
-            <button
-              key="settings"
-              onClick={() => handleNavClick('settings')}
-              className={`sidebar-nav-btn ${activeTab === 'settings' ? 'active' : ''}`}
-              style={{ width: '100%', margin: 0 }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {activeTab === 'settings' && <div className="sidebar-active-indicator" />}
-                <Settings
-                  size={18}
-                  className="sidebar-nav-icon"
-                  strokeWidth={activeTab === 'settings' ? 2.4 : 2}
-                />
-                <span style={{ fontSize: '0.92rem' }}>{t.nav.settings || 'Settings'}</span>
-              </div>
-            </button>
-
-            {/* Real-time Date & Time Pill (Matching User Screenshot) */}
-            <div
-              style={{
-                background: 'rgba(15, 23, 42, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '12px',
-                padding: '9px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.35)',
-                userSelect: 'none',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calendar size={14} color="#3b82f6" strokeWidth={2} />
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    color: '#94a3b8',
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                    letterSpacing: '0.2px',
-                  }}
-                >
-                  {formattedDate}
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Clock size={14} color="#3b82f6" strokeWidth={2} />
-                <span
-                  style={{
-                    fontSize: '0.80rem',
-                    fontWeight: 700,
-                    color: '#ffffff',
-                    whiteSpace: 'nowrap',
-                    letterSpacing: '0.3px',
-                  }}
-                >
-                  {formattedTime}
-                </span>
-              </div>
             </div>
 
             {/* Legal / Terms Link */}
