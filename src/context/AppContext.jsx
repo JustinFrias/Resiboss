@@ -312,53 +312,73 @@ export const AppProvider = ({ children }) => {
   };
 
   const signInWithPipedream = async (email, password) => {
-    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL;
+    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL || DEFAULT_PIPEDREAM_URL;
     if (!url) {
       throw new Error('Pipedream Webhook URL is not configured. Pakilagay ang iyong Pipedream Auth Webhook URL sa Settings.');
     }
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'login',
-        email: email.trim().toLowerCase(),
-        password,
-        timestamp: new Date().toISOString(),
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Invalid email or password.');
-    }
-
-    const user = data.user || {};
-    const profile = {
-      id: user.id || `user_${Date.now()}`,
-      firstName: user.firstName || user.fullName?.split(' ')[0] || email.split('@')[0],
-      lastName: user.lastName || user.fullName?.split(' ').slice(1).join(' ') || '',
-      email: user.email || email.trim().toLowerCase(),
-      photo: user.photo || null,
-      authProvider: 'pipedream',
-      isAuthSession: true,
-      token: data.token || null,
-    };
-
-    setCurrentUser({ id: profile.id, email: profile.email });
-    setUserProfile(profile);
     try {
-      localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
-    } catch (e) {}
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          email: email.trim().toLowerCase(),
+          password,
+          timestamp: new Date().toISOString(),
+        }),
+        signal: controller.signal,
+      });
 
-    return profile;
+      clearTimeout(timeoutId);
+
+      const text = await response.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = { message: text };
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Maling email o password.');
+      }
+
+      const user = data.user || {};
+      const profile = {
+        id: user.id || `user_${Date.now()}`,
+        firstName: user.firstName || user.fullName?.split(' ')[0] || email.split('@')[0],
+        lastName: user.lastName || user.fullName?.split(' ').slice(1).join(' ') || '',
+        email: user.email || email.trim().toLowerCase(),
+        photo: user.photo || null,
+        authProvider: 'pipedream',
+        isAuthSession: true,
+        token: data.token || null,
+      };
+
+      setCurrentUser({ id: profile.id, email: profile.email });
+      setUserProfile(profile);
+      try {
+        localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+      } catch (e) {}
+
+      return profile;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Nag-timeout ang server. Pakisubukang muli o tingnan ang internet.');
+      }
+      throw err;
+    }
   };
 
   const registerWithPipedream = async (fullName, email, password) => {
-    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL;
+    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL || DEFAULT_PIPEDREAM_URL;
     if (!url) {
       throw new Error('Pipedream Webhook URL is not configured. Pakilagay ang iyong Pipedream Auth Webhook URL sa Settings.');
     }
@@ -368,47 +388,67 @@ export const AppProvider = ({ children }) => {
     const firstName = parts[0] || 'User';
     const lastName = parts.slice(1).join(' ') || '';
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'register',
-        fullName: trimmedName,
-        firstName,
-        lastName,
-        email: email.trim().toLowerCase(),
-        password,
-        timestamp: new Date().toISOString(),
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Failed to register account.');
-    }
-
-    const user = data.user || {};
-    const profile = {
-      id: user.id || `user_${Date.now()}`,
-      firstName: user.firstName || firstName,
-      lastName: user.lastName || lastName,
-      email: user.email || email.trim().toLowerCase(),
-      photo: null,
-      authProvider: 'pipedream',
-      isAuthSession: true,
-      token: data.token || null,
-    };
-
-    setCurrentUser({ id: profile.id, email: profile.email });
-    setUserProfile(profile);
     try {
-      localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
-    } catch (e) {}
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({
+          action: 'register',
+          fullName: trimmedName,
+          firstName,
+          lastName,
+          email: email.trim().toLowerCase(),
+          password,
+          timestamp: new Date().toISOString(),
+        }),
+        signal: controller.signal,
+      });
 
-    return profile;
+      clearTimeout(timeoutId);
+
+      const text = await response.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = { message: text };
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Nabigo ang pag-register. Pakisubukang muli.');
+      }
+
+      const user = data.user || {};
+      const profile = {
+        id: user.id || `user_${Date.now()}`,
+        firstName: user.firstName || firstName,
+        lastName: user.lastName || lastName,
+        email: user.email || email.trim().toLowerCase(),
+        photo: null,
+        authProvider: 'pipedream',
+        isAuthSession: true,
+        token: data.token || null,
+      };
+
+      setCurrentUser({ id: profile.id, email: profile.email });
+      setUserProfile(profile);
+      try {
+        localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+      } catch (e) {}
+
+      return profile;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Nag-timeout ang server. Pakisubukang muli o tingnan ang internet.');
+      }
+      throw err;
+    }
   };
 
   const updateUserProfile = (updatedProfile) => {
