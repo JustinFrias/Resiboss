@@ -826,7 +826,13 @@ export const TopBar = ({ onOpenMobile }) => {
               height: '36px',
               borderRadius: '50%',
               padding: 0,
-              border: '2px solid #00f2fe',
+              border: `2px solid ${
+                userProfile?.borderStyle === 'purple' ? '#a855f7' :
+                userProfile?.borderStyle === 'emerald' ? '#10b981' :
+                userProfile?.borderStyle === 'amber' ? '#f59e0b' :
+                userProfile?.borderStyle === 'rose' ? '#f43f5e' :
+                userProfile?.borderStyle === 'slate' ? '#94a3b8' : '#00f2fe'
+              }`,
               background: 'linear-gradient(135deg, #0284c7, #7c3aed)',
               cursor: 'pointer',
               display: 'flex',
@@ -834,8 +840,20 @@ export const TopBar = ({ onOpenMobile }) => {
               justifyContent: 'center',
               overflow: 'hidden',
               boxShadow: isProfileOpen
-                ? '0 0 18px rgba(0, 242, 254, 0.7), 0 0 8px #00f2fe'
-                : '0 0 10px rgba(0, 242, 254, 0.4)',
+                ? `0 0 18px ${
+                    userProfile?.borderStyle === 'purple' ? '#a855f7' :
+                    userProfile?.borderStyle === 'emerald' ? '#10b981' :
+                    userProfile?.borderStyle === 'amber' ? '#f59e0b' :
+                    userProfile?.borderStyle === 'rose' ? '#f43f5e' :
+                    userProfile?.borderStyle === 'slate' ? '#94a3b8' : '#00f2fe'
+                  }`
+                : `0 0 10px ${
+                    userProfile?.borderStyle === 'purple' ? 'rgba(168, 85, 247, 0.5)' :
+                    userProfile?.borderStyle === 'emerald' ? 'rgba(16, 185, 129, 0.5)' :
+                    userProfile?.borderStyle === 'amber' ? 'rgba(245, 158, 11, 0.5)' :
+                    userProfile?.borderStyle === 'rose' ? 'rgba(244, 63, 94, 0.5)' :
+                    userProfile?.borderStyle === 'slate' ? 'rgba(148, 163, 184, 0.4)' : 'rgba(0, 242, 254, 0.4)'
+                  }`,
               transition: 'all 0.2s ease',
               outline: 'none',
               flexShrink: 0,
