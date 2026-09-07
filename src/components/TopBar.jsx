@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ArrowRight,
   LogIn,
+  LogOut,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 
@@ -33,6 +34,7 @@ export const TopBar = ({ onOpenMobile }) => {
     markAllNotificationsAsRead,
     clearNotifications,
     userProfile,
+    signOut,
   } = useApp();
 
   // Search Bar State
@@ -805,8 +807,9 @@ export const TopBar = ({ onOpenMobile }) => {
         {/* User Profile Pill / Button */}
         {/* 5. User Profile Button OR Sign In Button */}
         {userProfile ? (
-          <div
-            onClick={() => {
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              onClick={() => {
               soundFx.playClick();
               setActiveTab('settings');
             }}
@@ -881,6 +884,41 @@ export const TopBar = ({ onOpenMobile }) => {
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={async (e) => {
+              e.stopPropagation();
+              soundFx?.playClick?.();
+              if (signOut) {
+                await signOut();
+              }
+            }}
+            title="Sign Out to Login Screen"
+            style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#f87171',
+              borderRadius: '9px',
+              padding: '6px 10px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+            }}
+          >
+            <LogOut size={13} />
+            <span>Logout</span>
+          </button>
+        </div>
         ) : (
           <button
             onClick={() => {
