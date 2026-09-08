@@ -244,24 +244,18 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
           lastName: meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
           email: session.user.email,
           photo: meta.avatar_url || meta.picture || null,
+          authProvider: 'google',
           isAuthSession: true,
         };
         setUserProfile(profile);
         try {
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
-          localStorage.removeItem('resiboss_user_profile_v1');
-        } catch (e) {}
-      } else {
-        setCurrentUser(null);
-        setUserProfile(null);
-        try {
-          sessionStorage.removeItem(SESSION_PROFILE_KEY);
-          localStorage.removeItem('resiboss_user_profile_v1');
         } catch (e) {}
       }
+      // Note: If session is null, do NOT wipe userProfile because user may be logged in via Pipedream or Guest mode.
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setCurrentUser(session.user);
         const meta = session.user.user_metadata || {};
@@ -271,20 +265,25 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
           lastName: meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
           email: session.user.email,
           photo: meta.avatar_url || meta.picture || null,
+          authProvider: 'google',
           isAuthSession: true,
         };
         setUserProfile(profile);
         try {
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
-          localStorage.removeItem('resiboss_user_profile_v1');
         } catch (e) {}
-      } else {
+      } else if (event === 'SIGNED_OUT') {
+        // Only clear if explicitly signed out from Supabase (and was a Google auth session)
+        setUserProfile((prev) => {
+          if (prev?.authProvider === 'google') {
+            try {
+              sessionStorage.removeItem(SESSION_PROFILE_KEY);
+            } catch (e) {}
+            return null;
+          }
+          return prev;
+        });
         setCurrentUser(null);
-        setUserProfile(null);
-        try {
-          sessionStorage.removeItem(SESSION_PROFILE_KEY);
-          localStorage.removeItem('resiboss_user_profile_v1');
-        } catch (e) {}
       }
     });
 
