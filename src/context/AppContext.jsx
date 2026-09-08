@@ -243,6 +243,13 @@ export const AppProvider = ({ children }) => {
   };
   const [inspectingDoc, setInspectingDoc] = useState(null);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [isTermsAccepted, setIsTermsAccepted] = useState(() => {
+    try {
+      return localStorage.getItem('resiboss_terms_accepted_v1') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
 
@@ -520,6 +527,15 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const signInWithGoogle = async () => {
+    if (!isTermsAccepted) {
+      setIsTermsOpen(true);
+      throw new Error(
+        language === 'fil'
+          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in gamit ang Google.'
+          : 'Please read and accept the Terms & Conditions before continuing with Google.'
+      );
+    }
+
     if (!supabase) {
       throw new Error('Supabase is not configured.');
     }
@@ -968,6 +984,8 @@ export const AppProvider = ({ children }) => {
         soundFx,
         isTermsOpen,
         setIsTermsOpen,
+        isTermsAccepted,
+        setIsTermsAccepted,
         isPrivacyOpen,
         setIsPrivacyOpen,
         isCookieModalOpen,

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const TermsModal = () => {
-  const { isTermsOpen, setIsTermsOpen, language, soundFx, setIsPrivacyOpen, setIsCookieModalOpen } = useApp();
+  const { isTermsOpen, setIsTermsOpen, isTermsAccepted, setIsTermsAccepted, language, soundFx, setIsPrivacyOpen, setIsCookieModalOpen } = useApp();
   const [modalLang, setModalLang] = useState(language === 'fil' ? 'fil' : 'en');
   const [activeSection, setActiveSection] = useState('acceptance');
   const [isAccepted, setIsAccepted] = useState(false);
@@ -26,12 +26,12 @@ export const TermsModal = () => {
     else setModalLang('en');
   }, [language]);
 
-  // Reset acceptance checkbox whenever modal opens
+  // Sync acceptance checkbox with app state whenever modal opens
   useEffect(() => {
     if (isTermsOpen) {
-      setIsAccepted(false);
+      setIsAccepted(Boolean(isTermsAccepted));
     }
-  }, [isTermsOpen]);
+  }, [isTermsOpen, isTermsAccepted]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -54,6 +54,7 @@ export const TermsModal = () => {
   const handleAccept = () => {
     if (!isAccepted) return;
     soundFx?.playSuccessChime?.();
+    setIsTermsAccepted?.(true);
     try {
       localStorage.setItem('resiboss_terms_accepted_v1', 'true');
     } catch (e) {}

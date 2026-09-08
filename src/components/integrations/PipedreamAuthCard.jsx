@@ -11,9 +11,19 @@ import {
 } from 'lucide-react';
 
 export const PipedreamAuthCard = () => {
-  const { signInWithGoogle, soundFx, setIsTermsOpen, setIsPrivacyOpen } = useApp();
+  const {
+    signInWithGoogle,
+    soundFx,
+    setIsTermsOpen,
+    isTermsAccepted,
+    setIsTermsAccepted,
+    setIsPrivacyOpen,
+    language,
+  } = useApp();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  const isFil = language === 'fil';
 
   // Auto-reset loading if app comes back to foreground, browser finishes, or user returns
   useEffect(() => {
@@ -53,6 +63,20 @@ export const PipedreamAuthCard = () => {
 
   const handleGoogleAuth = async () => {
     if (isLoading) return;
+
+    // Check if user has read and accepted the Terms and Conditions
+    if (!isTermsAccepted) {
+      soundFx?.playClick?.();
+      setErrorMsg(
+        isFil
+          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in gamit ang Google.'
+          : 'Please read and accept the Terms & Conditions before continuing with Google.'
+      );
+      // Automatically pop up the Terms Modal so they can review and accept
+      setIsTermsOpen(true);
+      return;
+    }
+
     setErrorMsg(null);
     setIsLoading(true);
     soundFx?.playClick?.();
@@ -153,11 +177,172 @@ export const PipedreamAuthCard = () => {
         </div>
       )}
 
+      {/* Terms & Conditions Agreement Checkbox */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '12px 14px',
+          borderRadius: '12px',
+          background: isTermsAccepted
+            ? 'rgba(0, 242, 254, 0.08)'
+            : 'rgba(255, 255, 255, 0.03)',
+          border: isTermsAccepted
+            ? '1px solid rgba(0, 242, 254, 0.35)'
+            : '1px solid rgba(255, 255, 255, 0.1)',
+          marginBottom: '18px',
+          textAlign: 'left',
+          transition: 'all 0.2s ease',
+          cursor: 'pointer',
+        }}
+        onClick={() => {
+          const nextVal = !isTermsAccepted;
+          setIsTermsAccepted?.(nextVal);
+          try {
+            if (nextVal) {
+              localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+              soundFx?.playSuccessChime?.();
+              if (errorMsg) setErrorMsg(null);
+            } else {
+              localStorage.removeItem('resiboss_terms_accepted_v1');
+              soundFx?.playClick?.();
+            }
+          } catch (e) {}
+        }}
+      >
+        <div
+          style={{
+            width: '22px',
+            height: '22px',
+            borderRadius: '6px',
+            border: isTermsAccepted
+              ? '2px solid #00f2fe'
+              : '2px solid rgba(255, 255, 255, 0.35)',
+            background: isTermsAccepted ? '#00f2fe' : 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'all 0.18s ease',
+            boxShadow: isTermsAccepted ? '0 0 10px rgba(0, 242, 254, 0.4)' : 'none',
+          }}
+        >
+          {isTermsAccepted && (
+            <CheckCircle2 size={16} color="#050b14" strokeWidth={3} />
+          )}
+        </div>
+        <div style={{ fontSize: '0.8rem', lineHeight: 1.45, color: 'var(--text-secondary)' }}>
+          {isFil ? (
+            <>
+              Nabasa at sumasang-ayon ako sa{' '}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFx?.playClick?.();
+                  setIsTermsOpen(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#00f2fe',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  outline: 'none',
+                }}
+              >
+                Terms and Conditions
+              </button>{' '}
+              at{' '}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFx?.playClick?.();
+                  setIsPrivacyOpen(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#00f2fe',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  outline: 'none',
+                }}
+              >
+                Privacy Policy
+              </button>
+            </>
+          ) : (
+            <>
+              I have read and agree to the{' '}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFx?.playClick?.();
+                  setIsTermsOpen(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#00f2fe',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  outline: 'none',
+                }}
+              >
+                Terms & Conditions
+              </button>{' '}
+              and{' '}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFx?.playClick?.();
+                  setIsPrivacyOpen(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#00f2fe',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  outline: 'none',
+                }}
+              >
+                Privacy Policy
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Primary Action: Continue with Google Button */}
       <button
         type="button"
         onClick={handleGoogleAuth}
         disabled={isLoading}
+        title={
+          !isTermsAccepted
+            ? (isFil
+                ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions'
+                : 'Please read and accept the Terms & Conditions before continuing')
+            : ''
+        }
         style={{
           width: '100%',
           padding: '14px 18px',
@@ -172,19 +357,27 @@ export const PipedreamAuthCard = () => {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '12px',
-          boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)',
-          transition: 'transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s ease',
+          boxShadow: isTermsAccepted
+            ? '0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)'
+            : '0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.8)',
+          opacity: isTermsAccepted ? 1 : 0.78,
+          filter: isTermsAccepted ? 'none' : 'grayscale(0.2)',
+          transition: 'transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s ease, opacity 0.2s ease, filter 0.2s ease',
           userSelect: 'none',
         }}
         onMouseEnter={(e) => {
           if (!isLoading) {
             e.currentTarget.style.transform = 'translateY(-1.5px)';
-            e.currentTarget.style.boxShadow = '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)';
+            e.currentTarget.style.boxShadow = isTermsAccepted
+              ? '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)'
+              : '0 6px 18px rgba(0, 0, 0, 0.35)';
           }
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)';
+          e.currentTarget.style.boxShadow = isTermsAccepted
+            ? '0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)'
+            : '0 4px 14px rgba(0, 0, 0, 0.3)';
         }}
         onMouseDown={(e) => {
           if (!isLoading) {
@@ -195,7 +388,6 @@ export const PipedreamAuthCard = () => {
         onMouseUp={(e) => {
           if (!isLoading) {
             e.currentTarget.style.transform = 'translateY(-1.5px)';
-            e.currentTarget.style.boxShadow = '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)';
           }
         }}
       >
@@ -229,50 +421,25 @@ export const PipedreamAuthCard = () => {
         )}
       </button>
 
-      {/* Terms & Privacy Policy Agreement Link */}
-      <div style={{ marginTop: '16px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-        By continuing, you agree to our{' '}
-        <button
-          type="button"
-          onClick={() => {
-            soundFx?.playClick?.();
-            setIsTermsOpen(true);
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#00f2fe',
-            cursor: 'pointer',
-            padding: 0,
-            fontSize: '0.74rem',
-            fontWeight: 600,
-            textDecoration: 'underline',
-            outline: 'none',
-          }}
-        >
-          Terms of Service
-        </button>
-        {' & '}
-        <button
-          type="button"
-          onClick={() => {
-            soundFx?.playClick?.();
-            setIsPrivacyOpen(true);
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#00f2fe',
-            cursor: 'pointer',
-            padding: 0,
-            fontSize: '0.74rem',
-            fontWeight: 600,
-            textDecoration: 'underline',
-            outline: 'none',
-          }}
-        >
-          Privacy Policy
-        </button>
+      {/* Security and Privacy Assurance Note */}
+      <div
+        style={{
+          marginTop: '16px',
+          fontSize: '0.74rem',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          opacity: 0.85,
+        }}
+      >
+        <ShieldCheck size={14} color="#00f2fe" />
+        <span>
+          {isFil
+            ? 'Protektado at pribado ang data sa iyong sariling account'
+            : 'Encrypted & strictly private to your own account'}
+        </span>
       </div>
     </div>
   );
