@@ -568,6 +568,7 @@ export const AppProvider = ({ children }) => {
           await Browser.open({
             url: data.url,
             windowName: '_blank',
+            toolbarColor: '#070c1a',
           });
           return data;
         } catch (browserErr) {
@@ -576,8 +577,27 @@ export const AppProvider = ({ children }) => {
       }
     }
 
-    // Direct redirection for web & fallback environments
-    window.location.assign(data.url);
+    // Direct popup or redirection for web & fallback environments
+    if (typeof window !== 'undefined') {
+      const width = 500;
+      const height = 650;
+      const left = Math.max(0, (window.screen.width - width) / 2);
+      const top = Math.max(0, (window.screen.height - height) / 2);
+      try {
+        const popup = window.open(
+          data.url,
+          'google_signin_popup',
+          `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
+        );
+        if (popup && !popup.closed) {
+          popup.focus();
+          return data;
+        }
+      } catch (popupErr) {
+        console.warn('Popup blocked, falling back to window.location:', popupErr);
+      }
+      window.location.assign(data.url);
+    }
     return data;
   };
 

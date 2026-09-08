@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  ArrowLeft,
 } from 'lucide-react';
 
 export const PipedreamAuthCard = () => {
@@ -458,6 +459,44 @@ export const PipedreamAuthCard = () => {
           </>
         )}
       </button>
+
+      {/* Dedicated Back / Cancel Button */}
+      {isLoading && (
+        <button
+          type="button"
+          onClick={() => {
+            soundFx?.playClick?.();
+            setIsLoading(false);
+          }}
+          style={{
+            marginTop: '12px',
+            width: '100%',
+            padding: '11px 16px',
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(0, 242, 254, 0.35)',
+            color: '#00f2fe',
+            fontSize: '0.86rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 242, 254, 0.12)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+          }}
+        >
+          <ArrowLeft size={16} />
+          <span>{isFil ? 'Bumalik sa Resiboss (Kanselahin)' : 'Back to Resiboss (Cancel)'}</span>
+        </button>
+      )}
 
       {/* Security and Privacy Assurance Note */}
       <div

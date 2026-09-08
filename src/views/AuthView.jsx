@@ -1,13 +1,14 @@
-import React from 'react';
 import {
   LiquidBackground3D,
   PipedreamAuthCard,
   ResibossLogo,
 } from '../components';
 import { useApp } from '../context/AppContext';
+import { ArrowLeft } from 'lucide-react';
 
 export const AuthView = () => {
-  const { setUserProfile, soundFx } = useApp();
+  const { setUserProfile, soundFx, language } = useApp();
+  const isFil = language === 'fil';
 
   const handleContinueAsGuest = () => {
     soundFx?.playClick?.();
@@ -44,6 +45,43 @@ export const AuthView = () => {
     >
       {/* 3D Liquid Canvas Background */}
       <LiquidBackground3D />
+
+      {/* Top Floating Back Button */}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '420px',
+          display: 'flex',
+          justifyContent: 'flex-start',
+          marginBottom: '16px',
+          zIndex: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleContinueAsGuest}
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            color: '#00f2fe',
+            padding: '8px 16px',
+            borderRadius: '12px',
+            fontSize: '0.84rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            backdropFilter: 'blur(10px)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0, 242, 254, 0.12)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)')}
+        >
+          <ArrowLeft size={16} />
+          <span>{isFil ? 'Bumalik sa App' : 'Back to App'}</span>
+        </button>
+      </div>
 
       {/* Brand Header */}
       <div
@@ -98,26 +136,39 @@ export const AuthView = () => {
         <PipedreamAuthCard />
       </div>
 
-      {/* Subtle Guest Access Link */}
+      {/* Back / Guest Access Link */}
       <div style={{ marginTop: '20px', zIndex: 10, textAlign: 'center' }}>
         <button
           type="button"
           onClick={handleContinueAsGuest}
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            color: 'var(--text-secondary)',
             fontSize: '0.82rem',
             cursor: 'pointer',
-            padding: '8px 14px',
-            borderRadius: '8px',
-            transition: 'color 0.2s ease',
-            textDecoration: 'underline',
+            padding: '8px 16px',
+            borderRadius: '10px',
+            transition: 'all 0.2s ease',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
           }}
-          onMouseEnter={(e) => (e.target.style.color = '#00f2fe')}
-          onMouseLeave={(e) => (e.target.style.color = 'var(--text-muted)')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#00f2fe';
+            e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--text-secondary)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          }}
         >
-          Explore as Guest (Offline Mode)
+          <ArrowLeft size={14} />
+          <span>
+            {isFil
+              ? 'Bumalik sa App (Magpatuloy bilang Guest / Offline)'
+              : 'Back to App (Continue as Guest / Offline)'}
+          </span>
         </button>
       </div>
     </div>
