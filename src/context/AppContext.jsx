@@ -295,7 +295,9 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
 
         // Auto close in-app browser immediately upon receiving deep link
         try {
-          await Browser.close();
+          if (Capacitor.isPluginAvailable('Browser')) {
+            await Browser.close();
+          }
         } catch (e) {}
 
         if (url.includes('com.resiboss.app://') || url.includes('resiboss.vercel.app')) {
@@ -389,10 +391,7 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
       throw new Error('Supabase is not configured.');
     }
 
-    const isNative = Boolean(
-      Capacitor.isNativePlatform() ||
-      (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent))
-    );
+    const isNative = Capacitor.isNativePlatform();
 
     // On native mobile app, request deep link return to com.resiboss.app
     const redirectTo = isNative
@@ -409,15 +408,25 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
 
     if (error) throw error;
 
-    if (isNative && data?.url) {
-      await Browser.open({
-        url: data.url,
-        windowName: '_blank',
-      });
-    } else if (!isNative && data?.url) {
-      window.location.href = data.url;
+    if (!data?.url) {
+      throw new Error('Walang natanggap na Google sign-in URL.');
     }
 
+    // Try in-app Browser plugin if available in native runtime
+    if (isNative && Capacitor.isPluginAvailable('Browser')) {
+      try {
+        await Browser.open({
+          url: data.url,
+          windowName: '_blank',
+        });
+        return data;
+      } catch (browserErr) {
+        console.warn('Browser.open failed, falling back to window.location:', browserErr);
+      }
+    }
+
+    // Reliable fallback for web and environments without Browser plugin
+    window.location.href = data.url;
     return data;
   };
 
