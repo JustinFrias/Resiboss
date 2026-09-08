@@ -213,6 +213,15 @@
   -webkit-text-fill-color: transparent !important;
 }
 
+[data-theme="light"] .resiboss-text-resi {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .resiboss-text-boss {
+  color: #059669 !important;
+  text-shadow: none !important;
+}
+
 /* Sidebar in light mode */
 [data-theme="light"] .sidebar {
   box-shadow: 0 16px 45px rgba(15, 23, 42, 0.08), 0 0 25px rgba(2, 132, 199, 0.06);

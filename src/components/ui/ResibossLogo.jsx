@@ -7,8 +7,6 @@ export const ResibossLogo = ({
   className = '',
   onClick,
 }) => {
-  const borderRadius = Math.max(8, Math.round(size * 0.22));
-
   return (
     <div
       onClick={onClick}
@@ -21,7 +19,7 @@ export const ResibossLogo = ({
         userSelect: 'none',
       }}
     >
-      {/* Official 2D Picture Emblem */}
+      {/* Official 2D Picture Emblem (Pure Transparent Background) */}
       <div
         className="resiboss-app-icon-wrap"
         style={{
@@ -32,11 +30,8 @@ export const ResibossLogo = ({
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'transform 0.22s ease',
-          borderRadius: `${borderRadius}px`,
-          overflow: 'hidden',
-          background: '#000000',
-          boxShadow: '0 4px 14px rgba(0, 242, 254, 0.25), 0 0 20px rgba(0, 242, 254, 0.1)',
-          border: '1px solid rgba(0, 242, 254, 0.3)',
+          background: 'transparent',
+          filter: 'drop-shadow(0 4px 14px rgba(32, 248, 161, 0.35))',
         }}
       >
         <img
@@ -45,13 +40,13 @@ export const ResibossLogo = ({
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
             display: 'block',
           }}
         />
       </div>
 
-      {/* Brand Wordmark: "Resi" + "boss" */}
+      {/* Brand Wordmark: "Resi" (white) + "boss" (matched mint-emerald #20f8a1) */}
       {showText && !collapsed && (
         <span
           style={{
@@ -75,8 +70,9 @@ export const ResibossLogo = ({
           <span
             className="resiboss-text-boss"
             style={{
-              color: '#00f2fe',
+              color: '#20f8a1',
               fontWeight: 900,
+              textShadow: '0 0 16px rgba(32, 248, 161, 0.45)',
             }}
           >
             boss
