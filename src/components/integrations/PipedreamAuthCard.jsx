@@ -25,15 +25,34 @@ export const PipedreamAuthCard = () => {
 
   const isFil = language === 'fil';
 
-  // Auto-reset loading if app comes back to foreground, browser finishes, or user returns
+  // Auto-reset loading if app comes back to foreground, browser finishes, or user returns/navigates back
   useEffect(() => {
+    const resetLoading = () => {
+      setIsLoading(false);
+    };
+
+    // Web & mobile browser events
+    window.addEventListener('pageshow', resetLoading);
+    window.addEventListener('popstate', resetLoading);
+    window.addEventListener('focus', resetLoading);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resetLoading();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Capacitor Native Android / iOS events
     let browserSub = null;
     let appStateSub = null;
+    let backSub = null;
+    let resumeSub = null;
 
     try {
       if (Capacitor.isPluginAvailable('Browser')) {
         browserSub = Browser.addListener('browserFinished', () => {
-          setIsLoading(false);
+          resetLoading();
         });
       }
     } catch (e) {}
@@ -41,28 +60,45 @@ export const PipedreamAuthCard = () => {
     try {
       appStateSub = App.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
-          setIsLoading(false);
+          resetLoading();
         }
+      });
+      backSub = App.addListener('backButton', () => {
+        resetLoading();
+      });
+      resumeSub = App.addListener('resume', () => {
+        resetLoading();
       });
     } catch (e) {}
 
-    const handleFocusOrPageShow = () => {
-      setIsLoading(false);
-    };
-
-    window.addEventListener('focus', handleFocusOrPageShow);
-    window.addEventListener('pageshow', handleFocusOrPageShow);
-
     return () => {
+      window.removeEventListener('pageshow', resetLoading);
+      window.removeEventListener('popstate', resetLoading);
+      window.removeEventListener('focus', resetLoading);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       browserSub?.then?.((h) => h.remove?.());
       appStateSub?.then?.((h) => h.remove?.());
-      window.removeEventListener('focus', handleFocusOrPageShow);
-      window.removeEventListener('pageshow', handleFocusOrPageShow);
+      backSub?.then?.((h) => h.remove?.());
+      resumeSub?.then?.((h) => h.remove?.());
     };
   }, []);
 
+  // Auto-release loading after 2.5 seconds max so user is NEVER permanently stuck
+  useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   const handleGoogleAuth = async () => {
-    if (isLoading) return;
+    // If user clicked while it was in loading state, immediately cancel/reset it!
+    if (isLoading) {
+      soundFx?.playClick?.();
+      setIsLoading(false);
+      return;
+    }
 
     // Check if user has read and accepted the Terms and Conditions
     if (!isTermsAccepted) {
@@ -81,17 +117,11 @@ export const PipedreamAuthCard = () => {
     setIsLoading(true);
     soundFx?.playClick?.();
 
-    // Auto-release loading after 4.5 seconds so the button never stays stuck indefinitely
-    const safetyTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 4500);
-
     try {
       if (signInWithGoogle) {
         await signInWithGoogle();
       }
     } catch (err) {
-      clearTimeout(safetyTimer);
       console.error('Google Auth error:', err);
       setErrorMsg(err.message || 'Nabigo ang Google Sign-In. Pakisubukang muli.');
       setIsLoading(false);
@@ -335,13 +365,14 @@ export const PipedreamAuthCard = () => {
       <button
         type="button"
         onClick={handleGoogleAuth}
-        disabled={isLoading}
         title={
-          !isTermsAccepted
-            ? (isFil
-                ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions'
-                : 'Please read and accept the Terms & Conditions before continuing')
-            : ''
+          isLoading
+            ? (isFil ? 'Pindutin para kanselahin' : 'Tap to cancel')
+            : (!isTermsAccepted
+                ? (isFil
+                    ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions'
+                    : 'Please read and accept the Terms & Conditions before continuing')
+                : '')
         }
         style={{
           width: '100%',
@@ -352,7 +383,7 @@ export const PipedreamAuthCard = () => {
           color: '#111827',
           fontSize: '0.96rem',
           fontWeight: 700,
-          cursor: isLoading ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -366,12 +397,10 @@ export const PipedreamAuthCard = () => {
           userSelect: 'none',
         }}
         onMouseEnter={(e) => {
-          if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-1.5px)';
-            e.currentTarget.style.boxShadow = isTermsAccepted
-              ? '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)'
-              : '0 6px 18px rgba(0, 0, 0, 0.35)';
-          }
+          e.currentTarget.style.transform = 'translateY(-1.5px)';
+          e.currentTarget.style.boxShadow = isTermsAccepted
+            ? '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)'
+            : '0 6px 18px rgba(0, 0, 0, 0.35)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
@@ -380,21 +409,30 @@ export const PipedreamAuthCard = () => {
             : '0 4px 14px rgba(0, 0, 0, 0.3)';
         }}
         onMouseDown={(e) => {
-          if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(2px)';
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -1px 0 rgba(255, 255, 255, 0.5)';
-          }
+          e.currentTarget.style.transform = 'translateY(2px)';
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -1px 0 rgba(255, 255, 255, 0.5)';
         }}
         onMouseUp={(e) => {
-          if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-1.5px)';
-          }
+          e.currentTarget.style.transform = 'translateY(-1.5px)';
         }}
       >
         {isLoading ? (
           <>
-            <Loader2 size={20} className="animate-spin" color="#1f2937" />
+            <Loader2 size={19} className="animate-spin" color="#1f2937" />
             <span>Connecting to Google...</span>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                opacity: 0.65,
+                marginLeft: '4px',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                background: 'rgba(0,0,0,0.07)',
+              }}
+            >
+              {isFil ? 'Kanselahin' : 'Cancel'}
+            </span>
           </>
         ) : (
           <>
