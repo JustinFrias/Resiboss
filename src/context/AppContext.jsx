@@ -535,7 +535,7 @@ export const AppProvider = ({ children }) => {
       provider: 'google',
       options: {
         redirectTo,
-        skipBrowserRedirect: true,
+        skipBrowserRedirect: isNative,
       },
     });
 
@@ -545,21 +545,23 @@ export const AppProvider = ({ children }) => {
       throw new Error('Walang natanggap na Google sign-in URL.');
     }
 
-    // Try in-app Browser plugin if available in native runtime
-    if (isNative && Capacitor.isPluginAvailable('Browser')) {
-      try {
-        await Browser.open({
-          url: data.url,
-          windowName: '_blank',
-        });
-        return data;
-      } catch (browserErr) {
-        console.warn('Browser.open failed, falling back to window.location:', browserErr);
+    if (isNative) {
+      // Try in-app Browser plugin if available in native runtime
+      if (Capacitor.isPluginAvailable('Browser')) {
+        try {
+          await Browser.open({
+            url: data.url,
+            windowName: '_blank',
+          });
+          return data;
+        } catch (browserErr) {
+          console.warn('Browser.open failed, falling back to window.location:', browserErr);
+        }
       }
     }
 
-    // Reliable fallback for web and environments without Browser plugin
-    window.location.href = data.url;
+    // Direct redirection for web & fallback environments
+    window.location.assign(data.url);
     return data;
   };
 

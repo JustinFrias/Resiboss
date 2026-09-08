@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import {
   ShieldCheck,
   AlertCircle,
@@ -12,15 +15,59 @@ export const PipedreamAuthCard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
+  // Auto-reset loading if app comes back to foreground, browser finishes, or user returns
+  useEffect(() => {
+    let browserSub = null;
+    let appStateSub = null;
+
+    try {
+      if (Capacitor.isPluginAvailable('Browser')) {
+        browserSub = Browser.addListener('browserFinished', () => {
+          setIsLoading(false);
+        });
+      }
+    } catch (e) {}
+
+    try {
+      appStateSub = App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      });
+    } catch (e) {}
+
+    const handleFocusOrPageShow = () => {
+      setIsLoading(false);
+    };
+
+    window.addEventListener('focus', handleFocusOrPageShow);
+    window.addEventListener('pageshow', handleFocusOrPageShow);
+
+    return () => {
+      browserSub?.then?.((h) => h.remove?.());
+      appStateSub?.then?.((h) => h.remove?.());
+      window.removeEventListener('focus', handleFocusOrPageShow);
+      window.removeEventListener('pageshow', handleFocusOrPageShow);
+    };
+  }, []);
+
   const handleGoogleAuth = async () => {
+    if (isLoading) return;
     setErrorMsg(null);
     setIsLoading(true);
     soundFx?.playClick?.();
+
+    // Auto-release loading after 4.5 seconds so the button never stays stuck indefinitely
+    const safetyTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 4500);
+
     try {
       if (signInWithGoogle) {
         await signInWithGoogle();
       }
     } catch (err) {
+      clearTimeout(safetyTimer);
       console.error('Google Auth error:', err);
       setErrorMsg(err.message || 'Nabigo ang Google Sign-In. Pakisubukang muli.');
       setIsLoading(false);
