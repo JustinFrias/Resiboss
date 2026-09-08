@@ -3,7 +3,14 @@ import { initialReceipts } from '../utils/initialData';
 import { translations } from '../utils/i18n';
 import { soundFx } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import {
+  supabase,
+  isSupabaseConfigured,
+  syncReceiptToSupabase,
+  deleteReceiptFromSupabase,
+  fetchReceiptsFromSupabase,
+  mapSupabaseToDoc,
+} from '../lib/supabase';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
@@ -272,26 +279,50 @@ export const AppProvider = ({ children }) => {
     });
 
     let appUrlListener;
-    if (Capacitor.isNativePlatform()) {
+    if (Capacitor.isNativePlatform() || typeof window !== 'undefined') {
       appUrlListener = App.addListener('appUrlOpen', async (event) => {
         const url = event.url;
-        if (!url || !url.includes('com.resiboss.app://')) return;
+        if (!url) return;
 
-        const params = new URLSearchParams(url.split('#')[1] || '');
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        const expiresIn = params.get('expires_in');
+        // Auto close in-app browser immediately upon receiving deep link
+        try {
+          await Browser.close();
+        } catch (e) {}
 
-        if (accessToken && refreshToken) {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            expires_in: Number(expiresIn) || 3600,
-            token_type: 'bearer',
-          });
-          try {
-            await Browser.close();
-          } catch (e) {}
+        if (url.includes('com.resiboss.app://') || url.includes('resiboss.vercel.app')) {
+          // 1. PKCE Code Exchange Flow (?code=...)
+          const queryPart = url.includes('?') ? url.split('?')[1].split('#')[0] : '';
+          const queryParams = new URLSearchParams(queryPart);
+          const code = queryParams.get('code');
+
+          if (code && supabase) {
+            try {
+              const { data } = await supabase.auth.exchangeCodeForSession(code);
+              if (data?.session?.user) return;
+            } catch (err) {
+              console.warn('PKCE exchange error:', err);
+            }
+          }
+
+          // 2. Implicit Access Token Flow (#access_token=...)
+          const hashPart = url.includes('#') ? url.split('#')[1] : queryPart;
+          const params = new URLSearchParams(hashPart);
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          const expiresIn = params.get('expires_in');
+
+          if (accessToken && refreshToken && supabase) {
+            try {
+              await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+                expires_in: Number(expiresIn) || 3600,
+                token_type: 'bearer',
+              });
+            } catch (err) {
+              console.warn('Set session error:', err);
+            }
+          }
         }
       });
     }
@@ -302,15 +333,62 @@ export const AppProvider = ({ children }) => {
     };
   }, []);
 
+  // Real-time Database Sync & Live Supabase Subscriptions
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured) return;
+
+    // 1. Fetch live receipts from Supabase on mount
+    fetchReceiptsFromSupabase().then(({ data }) => {
+      if (Array.isArray(data) && data.length > 0) {
+        const liveDocs = data.map(mapSupabaseToDoc);
+        setDocuments(liveDocs);
+      }
+    });
+
+    // 2. Subscribe to REALTIME changes (INSERT, UPDATE, DELETE) across all devices
+    const channel = supabase
+      .channel('public:receipts_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'receipts' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newDoc = mapSupabaseToDoc(payload.new);
+            setDocuments((prev) => {
+              if (prev.some((d) => d.id === newDoc.id)) return prev;
+              return [newDoc, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedDoc = mapSupabaseToDoc(payload.new);
+            setDocuments((prev) =>
+              prev.map((d) => (d.id === updatedDoc.id ? { ...d, ...updatedDoc } : d))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setDocuments((prev) => prev.filter((d) => d.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const signInWithGoogle = async () => {
     if (!supabase) {
       throw new Error('Supabase is not configured.');
     }
 
-    const isNative = Capacitor.isNativePlatform();
+    const isNative = Boolean(
+      Capacitor.isNativePlatform() ||
+      (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent))
+    );
+
+    // On native mobile app, request deep link return to com.resiboss.app
     const redirectTo = isNative
-      ? 'com.resiboss.app://auth/google'
-      : 'https://resiboss.vercel.app';
+      ? 'com.resiboss.app://auth/callback'
+      : (typeof window !== 'undefined' ? window.location.origin : 'https://resiboss.vercel.app');
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -322,9 +400,12 @@ export const AppProvider = ({ children }) => {
 
     if (error) throw error;
 
-    if (isNative && data.url) {
-      await Browser.open({ url: data.url });
-    } else if (!isNative && data.url) {
+    if (isNative && data?.url) {
+      await Browser.open({
+        url: data.url,
+        windowName: '_blank',
+      });
+    } else if (!isNative && data?.url) {
       window.location.href = data.url;
     }
 
@@ -561,6 +642,9 @@ export const AppProvider = ({ children }) => {
     setDocuments((prev) => [completeDoc, ...prev]);
     soundFx.playSuccessChime();
 
+    // Sync to Supabase in real-time
+    syncReceiptToSupabase(completeDoc);
+
     // Trigger celebratory particle blast
     try {
       confetti({
@@ -575,10 +659,22 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateDocument = (id, updatedFields) => {
+    let updatedTarget = null;
     setDocuments((prev) =>
-      prev.map((doc) => (doc.id === id ? { ...doc, ...updatedFields } : doc))
+      prev.map((doc) => {
+        if (doc.id === id) {
+          updatedTarget = { ...doc, ...updatedFields };
+          return updatedTarget;
+        }
+        return doc;
+      })
     );
     soundFx.playClick();
+
+    // Sync edited document to Supabase in real-time
+    if (updatedTarget) {
+      syncReceiptToSupabase(updatedTarget);
+    }
   };
 
   const deleteDocument = (id) => {
@@ -587,6 +683,9 @@ export const AppProvider = ({ children }) => {
       setInspectingDoc(null);
     }
     soundFx.playClick();
+
+    // Delete from Supabase in real-time
+    deleteReceiptFromSupabase(id);
   };
 
   const resetDemoData = () => {

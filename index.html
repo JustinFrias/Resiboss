@@ -21,6 +21,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    
+    <script>
+      // Native Android APK OAuth Deep Link Forwarder:
+      // If external Chrome tab receives Google OAuth callback, bounce immediately into Resiboss APK!
+      (function() {
+        try {
+          var h = window.location.hash || '';
+          var s = window.location.search || '';
+          if (h.includes('access_token=') || s.includes('code=')) {
+            var isNative = Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+            if (!isNative && /Android/i.test(navigator.userAgent)) {
+              window.location.replace('com.resiboss.app://auth/callback' + s + h);
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

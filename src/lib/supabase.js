@@ -11,17 +11,46 @@ export const isSupabaseConfigured = Boolean(
   !supabaseAnonKey.includes('your-supabase-anon-key')
 );
 
-// Create Supabase Client instance (with safe dummy fallback if not configured yet)
+// Create Supabase Client instance with robust Auth & Realtime settings
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    })
   : null;
 
 /**
- * Syncs a receipt document with the Supabase 'receipts' table.
+ * Maps a Supabase row back to our frontend receipt document model.
+ */
+export const mapSupabaseToDoc = (row) => ({
+  id: row.id,
+  merchant: row.merchant,
+  date: row.date,
+  time: row.time || '12:00 PM',
+  tin: row.tin || '000-000-000-000',
+  category: row.category || 'Food',
+  paymentMethod: row.payment_method || 'Cash',
+  subtotal: Number(row.subtotal) || 0,
+  vat: Number(row.vat) || 0,
+  total: Number(row.total) || 0,
+  currency: row.currency || 'PHP',
+  confidence: Number(row.confidence) || 99.8,
+  rawOcrText: row.raw_ocr_text || '',
+  items: Array.isArray(row.items) ? row.items : [],
+  status: row.status || 'Verified',
+  imageUri: row.image_uri || null,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+/**
+ * Syncs a receipt document with the Supabase 'receipts' table in real-time.
  */
 export const syncReceiptToSupabase = async (receiptDoc) => {
   if (!supabase || !isSupabaseConfigured) {
-    console.info('Supabase not configured yet. Receipt stored in local storage.');
     return { data: null, error: null, isLocal: true };
   }
 
@@ -64,6 +93,22 @@ export const syncReceiptToSupabase = async (receiptDoc) => {
 };
 
 /**
+ * Deletes a receipt from Supabase 'receipts' table in real-time.
+ */
+export const deleteReceiptFromSupabase = async (id) => {
+  if (!supabase || !isSupabaseConfigured) return;
+
+  try {
+    const { error } = await supabase.from('receipts').delete().eq('id', id);
+    if (error) {
+      console.warn('Supabase delete error:', error.message);
+    }
+  } catch (err) {
+    console.error('Unexpected Supabase delete error:', err);
+  }
+};
+
+/**
  * Fetches all receipts from Supabase 'receipts' table.
  */
 export const fetchReceiptsFromSupabase = async () => {
@@ -75,7 +120,7 @@ export const fetchReceiptsFromSupabase = async () => {
     const { data, error } = await supabase
       .from('receipts')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('date', { ascending: false });
 
     if (error) throw error;
     return { data, error: null };

@@ -60,3 +60,18 @@ CREATE TRIGGER trg_receipts_updated_at
 BEFORE UPDATE ON public.receipts
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- 6. Enable Supabase Realtime Broadcasting for receipts table
+-- This allows instant multi-device live sync whenever receipts are inserted, updated, or deleted
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND schemaname = 'public' 
+        AND tablename = 'receipts'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.receipts;
+    END IF;
+END $$;
+
