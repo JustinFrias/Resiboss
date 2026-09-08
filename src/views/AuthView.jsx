@@ -13,7 +13,7 @@ export const AuthView = () => {
   const handleContinueAsGuest = () => {
     soundFx?.playClick?.();
     const guestProfile = {
-      id: `guest_${Date.now()}`,
+      id: 'guest_user_account',
       firstName: 'Guest',
       lastName: 'User',
       email: 'guest@resiboss.local',

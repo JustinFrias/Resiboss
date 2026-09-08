@@ -131,7 +131,7 @@ export const buildUserProfile = (user, fallbackProvider = 'google') => {
  * Returns a user-partitioned local storage key for receipts so accounts never share data.
  */
 export const getUserReceiptsStorageKey = (profile) => {
-  if (!profile) return 'resiboss_receipts_guest_v1';
+  if (!profile || profile.isGuest) return 'resiboss_receipts_guest_v1';
   const tag = (profile.email || profile.id || 'guest')
     .toString()
     .toLowerCase()
@@ -143,7 +143,7 @@ export const getUserReceiptsStorageKey = (profile) => {
  * Returns a user-partitioned local storage key for notifications so accounts never share notifications.
  */
 export const getUserNotificationsStorageKey = (profile) => {
-  if (!profile) return 'resiboss_notifications_guest_v1';
+  if (!profile || profile.isGuest) return 'resiboss_notifications_guest_v1';
   const tag = (profile.email || profile.id || 'guest')
     .toString()
     .toLowerCase()
@@ -226,12 +226,30 @@ export const AppProvider = ({ children }) => {
 
     if (supabase && isSupabaseConfigured) {
       fetchReceiptsFromSupabase(userProfile).then(({ data }) => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           const liveDocs = data.map(mapSupabaseToDoc);
-          setDocuments(liveDocs);
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(liveDocs));
-          } catch (e) {}
+          setDocuments((prev) => {
+            const map = new Map();
+            liveDocs.forEach((d) => map.set(d.id, d));
+            prev.forEach((d) => {
+              if (!map.has(d.id)) {
+                map.set(d.id, d);
+                // Back up local receipts to Supabase
+                syncReceiptToSupabase(d, userProfile);
+              }
+            });
+            const merged = Array.from(map.values());
+            try {
+              localStorage.setItem(storageKey, JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        } else if (cached.length > 0) {
+          // Cloud returned 0 receipts (new cloud account or offline), but we have local cache.
+          // NEVER wipe out local cache! Sync local cache up to Supabase cloud instead!
+          cached.forEach((d) => {
+            syncReceiptToSupabase(d, userProfile);
+          });
         }
       });
     }
@@ -671,6 +689,14 @@ export const AppProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    // 1. Ensure current user's documents are safely saved to localStorage before clearing session
+    if (userProfile && documents.length > 0) {
+      try {
+        const storageKey = getUserReceiptsStorageKey(userProfile);
+        localStorage.setItem(storageKey, JSON.stringify(documents));
+      } catch (e) {}
+    }
+
     if (supabase) {
       try {
         await supabase.auth.signOut();
@@ -921,9 +947,10 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   }, [settings]);
 
+  // Safe auto-save: Only save if documents has items. Never overwrite cache with empty array during transitions!
   useEffect(() => {
     try {
-      if (userProfile) {
+      if (userProfile && documents.length > 0) {
         const storageKey = getUserReceiptsStorageKey(userProfile);
         localStorage.setItem(storageKey, JSON.stringify(documents));
       }
@@ -956,7 +983,17 @@ export const AppProvider = ({ children }) => {
       color: newDoc.color || '#00f2fe'
     };
 
-    setDocuments((prev) => [completeDoc, ...prev]);
+    setDocuments((prev) => {
+      const next = [completeDoc, ...prev];
+      if (userProfile) {
+        const storageKey = getUserReceiptsStorageKey(userProfile);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
+
     soundFx.playSuccessChime();
 
     // Sync to Supabase in real-time with user account isolation
@@ -977,15 +1014,22 @@ export const AppProvider = ({ children }) => {
 
   const updateDocument = (id, updatedFields) => {
     let updatedTarget = null;
-    setDocuments((prev) =>
-      prev.map((doc) => {
+    setDocuments((prev) => {
+      const next = prev.map((doc) => {
         if (doc.id === id) {
           updatedTarget = { ...doc, ...updatedFields };
           return updatedTarget;
         }
         return doc;
-      })
-    );
+      });
+      if (userProfile) {
+        const storageKey = getUserReceiptsStorageKey(userProfile);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
     soundFx.playClick();
 
     // Sync edited document to Supabase in real-time with user account isolation
@@ -995,7 +1039,16 @@ export const AppProvider = ({ children }) => {
   };
 
   const deleteDocument = (id) => {
-    setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+    setDocuments((prev) => {
+      const next = prev.filter((doc) => doc.id !== id);
+      if (userProfile) {
+        const storageKey = getUserReceiptsStorageKey(userProfile);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch (e) {}
+      }
+      return next;
+    });
     if (inspectingDoc && inspectingDoc.id === id) {
       setInspectingDoc(null);
     }
@@ -1012,6 +1065,12 @@ export const AppProvider = ({ children }) => {
 
   const clearAllData = () => {
     setDocuments([]);
+    if (userProfile) {
+      const storageKey = getUserReceiptsStorageKey(userProfile);
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (e) {}
+    }
     soundFx.playClick();
   };
 
