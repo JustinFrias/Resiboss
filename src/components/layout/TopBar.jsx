@@ -993,8 +993,8 @@ export const TopBar = ({ onOpenMobile }) => {
                   textAlign: 'left',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 242, 254, 0.1)';
-                  e.currentTarget.style.color = '#00f2fe';
+                  e.currentTarget.style.background = theme === 'light' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(0, 242, 254, 0.1)';
+                  e.currentTarget.style.color = theme === 'light' ? '#059669' : '#00f2fe';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'none';

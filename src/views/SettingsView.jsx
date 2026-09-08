@@ -69,6 +69,8 @@ export const SettingsView = () => {
     clearAllData,
   } = useApp();
 
+  const isLight = theme === 'light';
+
   const [activeSettingTab, setActiveSettingTab] = useState('profile');
   const [showZoom, setShowZoom] = useState(false);
 
@@ -335,13 +337,13 @@ export const SettingsView = () => {
               width: '42px',
               height: '42px',
               borderRadius: '12px',
-              background: 'rgba(37, 99, 235, 0.16)',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
+              background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(37, 99, 235, 0.16)',
+              border: isLight ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(59, 130, 246, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#38bdf8',
-              boxShadow: '0 0 16px rgba(56, 189, 248, 0.25)',
+              color: isLight ? '#059669' : '#38bdf8',
+              boxShadow: isLight ? '0 2px 10px rgba(16, 185, 129, 0.2)' : '0 0 16px rgba(56, 189, 248, 0.25)',
               flexShrink: 0,
             }}
           >
@@ -427,12 +429,12 @@ export const SettingsView = () => {
           className="settings-sidebar"
           style={{
             width: '235px',
-            borderRight: '1px solid var(--glass-border)',
+            borderRight: isLight ? '1px solid rgba(15, 23, 42, 0.08)' : '1px solid var(--glass-border)',
             padding: '18px 12px',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
-            background: 'var(--bg-surface, rgba(0, 0, 0, 0.22))',
+            background: isLight ? 'rgba(248, 250, 252, 0.85)' : 'var(--bg-surface, rgba(0, 0, 0, 0.22))',
             flexShrink: 0,
           }}
         >
@@ -454,26 +456,43 @@ export const SettingsView = () => {
                   padding: '11px 14px',
                   borderRadius: '12px',
                   border: isActive
-                    ? '1px solid rgba(56, 189, 248, 0.35)'
-                    : '1px solid transparent',
-                  background: isActive ? 'rgba(30, 58, 138, 0.38)' : 'transparent',
-                  color: isActive ? '#38bdf8' : 'var(--text-secondary)',
+                    ? (isLight ? '1.5px solid #10b981' : '1px solid rgba(32, 248, 161, 0.45)')
+                    : '1.5px solid transparent',
+                  background: isActive
+                    ? (isLight ? '#d1fae5' : 'rgba(16, 185, 129, 0.2)')
+                    : 'transparent',
+                  color: isActive
+                    ? (isLight ? '#065f46' : '#20f8a1')
+                    : (isLight ? '#334155' : 'var(--text-secondary)'),
                   fontSize: '0.88rem',
-                  fontWeight: isActive ? 700 : 500,
+                  fontWeight: isActive ? 750 : 550,
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.18s ease',
                   width: '100%',
+                  boxShadow: isActive
+                    ? (isLight ? '0 2px 8px rgba(16, 185, 129, 0.22)' : '0 0 16px rgba(32, 248, 161, 0.25)')
+                    : 'none',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                  if (!isActive) {
+                    e.currentTarget.style.background = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.color = isLight ? '#0f172a' : 'var(--text-primary)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'transparent';
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = isLight ? '#334155' : 'var(--text-secondary)';
+                  }
                 }}
               >
-                <Icon size={17} strokeWidth={isActive ? 2.3 : 1.8} />
-                <span>{tab.label}</span>
+                <Icon
+                  size={17}
+                  strokeWidth={isActive ? 2.4 : 1.9}
+                  color={isActive ? (isLight ? '#047857' : '#20f8a1') : (isLight ? '#475569' : 'currentColor')}
+                />
+                <span style={{ letterSpacing: isLight ? '-0.01em' : 'normal' }}>{tab.label}</span>
               </button>
             );
           })}
@@ -520,8 +539,8 @@ export const SettingsView = () => {
                   {/* Profile Photo Box */}
                   <div
                     style={{
-                      background: 'rgba(255, 255, 255, 0.025)',
-                      border: '1px solid rgba(255, 255, 255, 0.07)',
+                      background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.025)',
+                      border: isLight ? '1px solid rgba(15, 23, 42, 0.09)' : '1px solid rgba(255, 255, 255, 0.07)',
                       borderRadius: '16px',
                       padding: '18px 20px',
                       marginBottom: '20px',
@@ -607,13 +626,19 @@ export const SettingsView = () => {
                               setShowZoom(!showZoom);
                             }}
                             style={{
-                              background: showZoom ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-                              border: showZoom ? '1px solid #00f2fe' : '1px solid rgba(255, 255, 255, 0.12)',
+                              background: showZoom
+                                ? (isLight ? '#d1fae5' : 'rgba(0, 242, 254, 0.15)')
+                                : (isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.06)'),
+                              border: showZoom
+                                ? (isLight ? '1.5px solid #10b981' : '1px solid #00f2fe')
+                                : (isLight ? '1px solid rgba(15, 23, 42, 0.16)' : '1px solid rgba(255, 255, 255, 0.12)'),
                               borderRadius: '10px',
                               padding: '8px 14px',
-                              color: showZoom ? '#00f2fe' : 'var(--text-primary)',
+                              color: showZoom
+                                ? (isLight ? '#065f46' : '#00f2fe')
+                                : (isLight ? '#0f172a' : 'var(--text-primary)'),
                               fontSize: '0.84rem',
-                              fontWeight: 500,
+                              fontWeight: showZoom ? 700 : 500,
                               display: 'flex',
                               alignItems: 'center',
                               gap: '8px',
@@ -779,6 +804,8 @@ export const SettingsView = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       {BORDER_PRESETS.map((bp) => {
                         const isSelected = form.borderStyle === bp.id;
+                        const lightColor = bp.id === 'cyan' ? '#0284c7' : bp.id === 'amber' ? '#b45309' : bp.color;
+                        const activeColor = isLight ? lightColor : bp.color;
                         return (
                           <button
                             key={bp.id}
@@ -791,16 +818,18 @@ export const SettingsView = () => {
                               padding: '7px 14px',
                               borderRadius: '10px',
                               border: isSelected
-                                ? `1.5px solid ${bp.color}`
-                                : '1px solid rgba(255, 255, 255, 0.1)',
+                                ? `1.5px solid ${activeColor}`
+                                : (isLight ? '1px solid rgba(15, 23, 42, 0.14)' : '1px solid rgba(255, 255, 255, 0.1)'),
                               background: isSelected
-                                ? `rgba(${bp.id === 'cyan' ? '0, 242, 254' : bp.id === 'purple' ? '168, 85, 247' : bp.id === 'emerald' ? '16, 185, 129' : bp.id === 'amber' ? '245, 158, 11' : bp.id === 'rose' ? '244, 63, 94' : '148, 163, 184'}, 0.14)`
-                                : 'rgba(255, 255, 255, 0.03)',
-                              color: isSelected ? bp.color : 'var(--text-secondary)',
+                                ? (isLight ? `${activeColor}18` : `rgba(${bp.id === 'cyan' ? '0, 242, 254' : bp.id === 'purple' ? '168, 85, 247' : bp.id === 'emerald' ? '16, 185, 129' : bp.id === 'amber' ? '245, 158, 11' : bp.id === 'rose' ? '244, 63, 94' : '148, 163, 184'}, 0.14)`)
+                                : (isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.03)'),
+                              color: isSelected
+                                ? activeColor
+                                : (isLight ? '#334155' : 'var(--text-secondary)'),
                               fontSize: '0.8rem',
                               fontWeight: isSelected ? 700 : 500,
                               cursor: 'pointer',
-                              boxShadow: isSelected ? `0 0 12px ${bp.glow}` : 'none',
+                              boxShadow: isSelected ? (isLight ? `0 2px 8px ${activeColor}30` : `0 0 12px ${bp.glow}`) : 'none',
                               transition: 'all 0.2s ease',
                             }}
                           >
@@ -809,12 +838,12 @@ export const SettingsView = () => {
                                 width: '10px',
                                 height: '10px',
                                 borderRadius: '50%',
-                                background: bp.color,
-                                boxShadow: `0 0 6px ${bp.color}`,
+                                background: activeColor,
+                                boxShadow: `0 0 6px ${activeColor}`,
                               }}
                             />
                             <span>{bp.label}</span>
-                            {isSelected && <Check size={13} color={bp.color} />}
+                            {isSelected && <Check size={13} color={activeColor} strokeWidth={2.5} />}
                           </button>
                         );
                       })}
@@ -824,8 +853,8 @@ export const SettingsView = () => {
                   {/* Profile Details Inputs */}
                   <div
                     style={{
-                      background: 'rgba(255, 255, 255, 0.025)',
-                      border: '1px solid rgba(255, 255, 255, 0.07)',
+                      background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.025)',
+                      border: isLight ? '1px solid rgba(15, 23, 42, 0.09)' : '1px solid rgba(255, 255, 255, 0.07)',
                       borderRadius: '16px',
                       padding: '18px 20px',
                       marginBottom: '20px',
@@ -1000,19 +1029,24 @@ export const SettingsView = () => {
                         style={{
                           background: savedNotice
                             ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                            : 'linear-gradient(135deg, #00f2fe 0%, #0284c7 100%)',
-                          border: 'none',
+                            : (isLight
+                                ? 'linear-gradient(180deg, #10b981 0%, #059669 100%)'
+                                : 'linear-gradient(180deg, #3df8b0 0%, #15d688 48%, #0eb370 52%, #088b55 100%)'),
+                          border: isLight ? '1px solid #059669' : 'none',
                           color: '#ffffff',
                           padding: '9px 24px',
                           borderRadius: '10px',
                           fontSize: '0.88rem',
                           fontWeight: 700,
                           cursor: isSaving ? 'not-allowed' : 'pointer',
+                          boxShadow: isLight
+                            ? '0 4px 14px rgba(5, 150, 105, 0.35), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.65)'
+                            : '0 5px 16px rgba(0, 0, 0, 0.45), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.65)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',
-                          boxShadow: '0 4px 18px rgba(0, 242, 254, 0.45)',
                           transition: 'all 0.2s ease',
+                          opacity: isSaving ? 0.7 : 1,
                         }}
                       >
                         {isSaving ? (
@@ -1107,9 +1141,15 @@ export const SettingsView = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      background: settings.soundEnabled ? 'rgba(0, 242, 254, 0.14)' : 'rgba(255, 255, 255, 0.05)',
-                      border: settings.soundEnabled ? '1px solid #00f2fe' : '1px solid rgba(255, 255, 255, 0.12)',
-                      color: settings.soundEnabled ? '#00f2fe' : 'var(--text-muted)',
+                      background: settings.soundEnabled
+                        ? (isLight ? '#d1fae5' : 'rgba(0, 242, 254, 0.14)')
+                        : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.05)'),
+                      border: settings.soundEnabled
+                        ? (isLight ? '1.5px solid #10b981' : '1px solid #00f2fe')
+                        : (isLight ? '1px solid rgba(15, 23, 42, 0.12)' : '1px solid rgba(255, 255, 255, 0.12)'),
+                      color: settings.soundEnabled
+                        ? (isLight ? '#065f46' : '#00f2fe')
+                        : (isLight ? '#64748b' : 'var(--text-muted)'),
                       padding: '8px 16px',
                       borderRadius: '10px',
                       cursor: 'pointer',
@@ -1314,10 +1354,11 @@ export const SettingsView = () => {
                       marginBottom: '10px',
                       padding: '8px 14px',
                       borderRadius: '10px',
-                      background: 'rgba(0, 242, 254, 0.12)',
-                      border: '1px solid rgba(0, 242, 254, 0.35)',
-                      color: '#38bdf8',
+                      background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(0, 242, 254, 0.12)',
+                      border: isLight ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(0, 242, 254, 0.35)',
+                      color: isLight ? '#065f46' : '#38bdf8',
                       fontSize: '0.82rem',
+                      fontWeight: isLight ? 600 : 400,
                     }}
                   >
                     {emailNotice}
