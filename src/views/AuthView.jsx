@@ -59,10 +59,10 @@ export const AuthView = () => {
         <div
           style={{
             marginBottom: '14px',
-            filter: 'drop-shadow(0 0 25px rgba(0, 242, 254, 0.45))',
+            filter: 'drop-shadow(0 0 28px rgba(32, 248, 161, 0.5))',
           }}
         >
-          <ResibossLogo size={72} showText={false} />
+          <ResibossLogo size={80} showText={false} />
         </div>
 
         <h1
@@ -71,10 +71,10 @@ export const AuthView = () => {
             fontWeight: 900,
             letterSpacing: '0.04em',
             margin: '0 0 6px 0',
-            background: 'linear-gradient(135deg, #ffffff 30%, #00f2fe 100%)',
+            background: 'linear-gradient(135deg, #ffffff 25%, #20f8a1 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            textShadow: '0 0 30px rgba(0, 242, 254, 0.4)',
+            textShadow: '0 0 30px rgba(32, 248, 161, 0.4)',
           }}
         >
           RESIBOSS
