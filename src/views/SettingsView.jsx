@@ -69,6 +69,7 @@ export const SettingsView = () => {
     notifications,
     clearNotifications,
     clearAllData,
+    deleteAccount,
   } = useApp();
 
   const isLight = theme === 'light';
@@ -301,15 +302,20 @@ export const SettingsView = () => {
     if (!confirmed) return;
 
     try {
-      localStorage.clear();
-      clearAllData?.();
-      clearNotifications?.();
-      if (signOut) {
-        await signOut();
+      if (deleteAccount) {
+        await deleteAccount();
+      } else {
+        localStorage.clear();
+        clearAllData?.();
+        clearNotifications?.();
+        if (signOut) {
+          await signOut();
+        }
       }
-      alert('Account and local data wiped successfully.');
+      alert('Account and all cloud data permanently deleted.');
     } catch (err) {
       console.error(err);
+      alert(err.message || 'Encountered an issue deleting account. Please check your connection.');
     }
   };
 

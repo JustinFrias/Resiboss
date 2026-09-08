@@ -369,8 +369,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const clearNotifications = () => {
-    soundFx.playClick();
+    soundFx?.playClick?.();
     setNotifications([]);
+    try {
+      localStorage.removeItem('resiboss_notifications_v1');
+    } catch (e) {}
   };
 
   // Listen for Supabase Authentication State (Google OAuth)
@@ -597,6 +600,64 @@ export const AppProvider = ({ children }) => {
       sessionStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem('resiboss_user_profile_v1');
     } catch (e) {}
+  };
+
+  const deleteAccount = async () => {
+    const targetUserId = currentUser?.id || userProfile?.id;
+    const targetEmail = currentUser?.email || userProfile?.email;
+
+    if (supabase && (targetUserId || currentUser)) {
+      // 1. Attempt token refresh if session exists
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session && supabase.auth.refreshSession) {
+          await supabase.auth.refreshSession();
+        }
+      } catch (e) {
+        console.warn('Session refresh check note:', e);
+      }
+
+      // 2. Call delete_user_account RPC
+      let rpcError = null;
+      try {
+        // Try with user_id_to_delete parameter first
+        const res = await supabase.rpc('delete_user_account', {
+          user_id_to_delete: targetUserId || '',
+        });
+
+        if (res.error) {
+          // If the parameter wasn't found (older SQL version), try zero-param call
+          if (res.error.code === 'PGRST202') {
+            const fallbackRes = await supabase.rpc('delete_user_account');
+            if (fallbackRes.error) {
+              rpcError = fallbackRes.error;
+            }
+          } else {
+            rpcError = res.error;
+          }
+        }
+      } catch (callErr) {
+        rpcError = callErr;
+      }
+
+      if (rpcError) {
+        console.error('Supabase delete_user_account failed:', rpcError);
+        throw new Error(
+          rpcError.message ||
+          'Hindi mabura ang account sa Supabase. Pakitiyak na maayos ang koneksyon o na-execute ang delete_user_account SQL sa Supabase SQL Editor.'
+        );
+      }
+    }
+
+    clearNotifications();
+    clearAllData();
+
+    try {
+      sessionStorage.clear();
+      localStorage.clear();
+    } catch (e) {}
+
+    await signOut();
   };
 
   // Pipedream Authentication Webhook Integration
@@ -959,6 +1020,7 @@ export const AppProvider = ({ children }) => {
         signInWithPipedream,
         registerWithPipedream,
         signOut,
+        deleteAccount,
         inspectingDoc,
         setInspectingDoc,
         t,

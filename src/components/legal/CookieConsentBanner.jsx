@@ -21,6 +21,7 @@ export const CookieConsentBanner = () => {
     setIsTermsOpen,
     isCookieModalOpen,
     setIsCookieModalOpen,
+    userProfile,
   } = useApp();
 
   const isFil = language === 'fil';
@@ -73,15 +74,16 @@ export const CookieConsentBanner = () => {
 
   return (
     <>
-      {/* Floating Bottom Cookie Banner (Shown when no consent is recorded yet) */}
-      {!cookieConsent && (
+      {/* Floating Bottom Cookie Banner (Only shown on initial Auth/Landing screen when user is not logged in) */}
+      {!cookieConsent && !userProfile && (
         <div
           className="cookie-banner-container"
           style={{
             position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            bottom: '18px',
+            left: '16px',
+            right: '16px',
+            margin: '0 auto',
             width: 'calc(100% - 32px)',
             maxWidth: '840px',
             zIndex: 9998,

@@ -19,6 +19,8 @@ export const PipedreamAuthCard = () => {
     setIsTermsAccepted,
     setIsPrivacyOpen,
     language,
+    cookieConsent,
+    saveCookieConsent,
   } = useApp();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -116,6 +118,17 @@ export const PipedreamAuthCard = () => {
     setErrorMsg(null);
     setIsLoading(true);
     soundFx?.playClick?.();
+
+    // Auto-record consent upon explicit sign-in agreement
+    if (!cookieConsent) {
+      saveCookieConsent?.({
+        essential: true,
+        functional: true,
+        analytics: true,
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      });
+    }
 
     try {
       if (signInWithGoogle) {

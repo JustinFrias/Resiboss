@@ -4,27 +4,8 @@ import {
   PipedreamAuthCard,
   ResibossLogo,
 } from '../components';
-import { useApp } from '../context/AppContext';
 
 export const AuthView = () => {
-  const { setUserProfile, soundFx } = useApp();
-
-  const handleContinueAsGuest = () => {
-    soundFx?.playClick?.();
-    const guestProfile = {
-      id: `guest_${Date.now()}`,
-      firstName: 'Guest',
-      lastName: 'User',
-      email: 'guest@resiboss.local',
-      isAuthSession: true,
-      isGuest: true,
-    };
-    setUserProfile(guestProfile);
-    try {
-      sessionStorage.setItem('resiboss_session_profile_v1', JSON.stringify(guestProfile));
-      localStorage.removeItem('resiboss_user_profile_v1');
-    } catch (e) {}
-  };
 
   return (
     <div
@@ -96,29 +77,6 @@ export const AuthView = () => {
       {/* Main Authentication Card */}
       <div style={{ width: '100%', maxWidth: '420px', zIndex: 10 }}>
         <PipedreamAuthCard />
-      </div>
-
-      {/* Subtle Guest Access Link */}
-      <div style={{ marginTop: '20px', zIndex: 10, textAlign: 'center' }}>
-        <button
-          type="button"
-          onClick={handleContinueAsGuest}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            fontSize: '0.82rem',
-            cursor: 'pointer',
-            padding: '8px 14px',
-            borderRadius: '8px',
-            transition: 'color 0.2s ease',
-            textDecoration: 'underline',
-          }}
-          onMouseEnter={(e) => (e.target.style.color = '#00f2fe')}
-          onMouseLeave={(e) => (e.target.style.color = 'var(--text-muted)')}
-        >
-          Explore as Guest (Offline Mode)
-        </button>
       </div>
     </div>
   );

@@ -13,6 +13,9 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+    env:
+      OUTPUT_DIR: 'android/app/build/outputs/apk/release'
+
 
     steps:
       - name: Checkout Repository
