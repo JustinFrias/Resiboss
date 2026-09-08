@@ -24,10 +24,11 @@ import {
 } from 'lucide-react';
 
 export const ScannerView = () => {
-  const { addDocument, setInspectingDoc, formatCurrency, t } = useApp();
+  const { addDocument, addNotification, formatCurrency, t } = useApp();
 
   // Mode: 'idle' (Clean Scan Buddy) | 'camera' (taking live photo) | 'scanned' (extracted results)
   const [scanMode, setScanMode] = useState('idle');
+  const [savedNotice, setSavedNotice] = useState(false);
 
   // File & Scanned receipt state
   const [selectedFileImage, setSelectedFileImage] = useState(null);
@@ -345,11 +346,26 @@ export const ScannerView = () => {
   const handleSaveDocument = () => {
     if (!currentReceipt) return;
     const saved = addDocument(currentReceipt);
-    setInspectingDoc(saved);
+    if (addNotification) {
+      addNotification({
+        title: 'Receipt Saved to Vault',
+        desc: `${saved?.merchant || 'Receipt'} (${saved?.id || 'Doc'}) has been saved.`,
+        type: 'scanner',
+        targetTab: 'documents',
+      });
+    }
+    // Automatically clear current receipt and reset to idle mode for scanning new receipts
+    handleResetToIdle();
+    setSavedNotice(true);
+    setTimeout(() => {
+      setSavedNotice(false);
+    }, 4500);
   };
 
   const handleResetToIdle = () => {
     stopWebcam();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
     setSelectedFileImage(null);
     setSelectedFileName('');
     setCurrentReceipt(null);
@@ -469,6 +485,30 @@ export const ScannerView = () => {
               {t.scanner.resibossScanDesc}
             </p>
           </div>
+
+          {/* Success Banner when receipt is saved */}
+          {savedNotice && (
+            <div
+              style={{
+                marginBottom: '18px',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                background: 'rgba(32, 248, 161, 0.12)',
+                border: '1px solid rgba(32, 248, 161, 0.4)',
+                color: '#20F8A1',
+                fontSize: '0.92rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                boxShadow: '0 4px 16px rgba(32, 248, 161, 0.12)',
+              }}
+            >
+              <CheckCircle2 size={18} />
+              <span>Nai-save na ang resibo sa Document Vault! Handa na para sa bagong resibo.</span>
+            </div>
+          )}
 
           {/* Two Primary Cards: Take Photo & Upload File */}
           <div
