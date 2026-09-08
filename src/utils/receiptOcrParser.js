@@ -514,7 +514,18 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       total: detectedTotal,
       items: items,
       currency: currency,
-      confidence: 99.8,
+      confidence: Math.min(
+        96,
+        Math.max(
+          65,
+          Math.round(
+            (detectedTotal > 0 ? 35 : 0) +
+            (vendor && vendor !== 'Unknown Merchant' ? 25 : 0) +
+            (items.length > 0 ? 25 : 10) +
+            (tin ? 15 : 5)
+          )
+        )
+      ),
       rawOcrText: fullText,
       detectedBoxes: detectedBoxes,
     };

@@ -293,7 +293,7 @@ export const ReceiptViewer3D = () => {
                   {inspectingDoc.date} • {inspectingDoc.time}
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#a8a29e', marginTop: '3px' }}>
-                  OFFICIAL AUDIT RECEIPT #{inspectingDoc.id}
+                  DIGITAL RECEIPT #{inspectingDoc.id}
                 </div>
               </div>
 
@@ -368,20 +368,19 @@ export const ReceiptViewer3D = () => {
             >
               <div>
                 <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#44403c', marginBottom: '8px' }}>
-                  REVERSE AUDIT RECORD
+                  DOCUMENT RECORD
                 </div>
                 <p style={{ fontSize: '0.7rem', lineHeight: '1.4', marginBottom: '12px' }}>
-                  This electronic transcript is registered under the Resiboss Liquid Cloud Ledger. All cryptographic hashes match the original optical scan.
+                  This electronic record is stored in your personal Resiboss Document Vault for expense tracking and bookkeeping reference.
                 </p>
                 <div style={{ padding: '10px', background: '#e7e5e4', borderRadius: '4px', fontSize: '0.68rem', marginBottom: '12px' }}>
                   <div><strong>HASH:</strong> SHA256-7f8a92...</div>
-                  <div><strong>CAPTURE_DEVICE:</strong> RESIBOSS-OPTIC-V2</div>
-                  <div><strong>AUDIT_STATUS:</strong> {inspectingDoc.status}</div>
+                  <div><strong>RECORD_STATUS:</strong> {inspectingDoc.status}</div>
                 </div>
               </div>
               <div style={{ textAlign: 'center', opacity: 0.4 }}>
                 <Receipt size={48} style={{ margin: '0 auto' }} />
-                <div style={{ fontSize: '0.65rem', marginTop: '6px' }}>OFFICIAL REVENUE STAMP</div>
+                <div style={{ fontSize: '0.65rem', marginTop: '6px' }}>VERIFIED DIGITAL ARCHIVE</div>
               </div>
             </div>
           </div>
@@ -453,7 +452,7 @@ export const ReceiptViewer3D = () => {
               <div style={{ background: 'var(--bg-surface, rgba(10, 15, 30, 0.5))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.scanner.confidence}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--emerald-glow)', marginTop: '2px' }}>
-                  {inspectingDoc.confidence || 99.1}%
+                  {inspectingDoc.confidence ? `${inspectingDoc.confidence}%` : 'N/A'}
                 </div>
               </div>
             </div>

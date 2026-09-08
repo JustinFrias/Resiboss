@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const TermsModal = () => {
-  const { isTermsOpen, setIsTermsOpen, language, soundFx } = useApp();
+  const { isTermsOpen, setIsTermsOpen, language, soundFx, setIsPrivacyOpen, setIsCookieModalOpen } = useApp();
   const [modalLang, setModalLang] = useState(language === 'fil' ? 'fil' : 'en');
   const [activeSection, setActiveSection] = useState('acceptance');
   const [isAccepted, setIsAccepted] = useState(false);
@@ -430,9 +430,29 @@ export const TermsModal = () => {
               gap: '12px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
               <Globe size={14} color="var(--cyan-glow)" />
-              <span>Resiboss Legal & Compliance Shield • Philippines</span>
+              <span>Resiboss Legal • Philippines</span>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx?.playClick?.();
+                  setIsTermsOpen(false);
+                  setIsPrivacyOpen(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: '#00f2fe',
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {isFil ? 'Patakaran sa Privacy' : 'Privacy Policy'}
+              </button>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -7,6 +7,8 @@ import {
   ReceiptViewer3D,
   MobileBottomNav,
   TermsModal,
+  PrivacyPolicyModal,
+  CookieConsentBanner,
 } from './components';
 
 import { DashboardView } from './views/DashboardView';
@@ -91,6 +93,8 @@ export default function App() {
     <AppProvider>
       <MainLayout />
       <TermsModal />
+      <PrivacyPolicyModal />
+      <CookieConsentBanner />
     </AppProvider>
   );
 }

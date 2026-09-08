@@ -58,6 +58,8 @@ export const SettingsView = () => {
     signOut,
     t,
     setIsTermsOpen,
+    setIsPrivacyOpen,
+    setIsCookieModalOpen,
     setActiveTab,
     theme,
     toggleTheme,
@@ -1553,6 +1555,69 @@ export const SettingsView = () => {
                     accept=".json"
                     style={{ display: 'none' }}
                   />
+                </div>
+              </div>
+
+              {/* Legal, Privacy & Cookie Preferences Card */}
+              <div
+                style={{
+                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '16px',
+                  padding: '22px 24px',
+                  marginBottom: '24px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <ShieldCheck size={18} color="#00f2fe" />
+                  <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Compliance, Privacy & Cookie Controls
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: '0 0 16px 0' }}>
+                  Resiboss processes receipts in full compliance with Republic Act No. 10173 (Data Privacy Act of 2012)
+                  and international privacy standards. Control your cookie consent and inspect our official policies below.
+                </p>
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx?.playClick?.();
+                      setIsPrivacyOpen(true);
+                    }}
+                    className="liquid-btn liquid-btn-secondary"
+                    style={{ padding: '9px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <ShieldCheck size={15} color="#00f2fe" />
+                    <span>View Privacy Policy</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx?.playClick?.();
+                      setIsTermsOpen(true);
+                    }}
+                    className="liquid-btn liquid-btn-secondary"
+                    style={{ padding: '9px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <FileText size={15} color="#38bdf8" />
+                    <span>View Terms of Service</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx?.playClick?.();
+                      setIsCookieModalOpen(true);
+                    }}
+                    className="liquid-btn liquid-btn-secondary"
+                    style={{ padding: '9px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <Sliders size={15} color="#a855f7" />
+                    <span>Cookie Preferences</span>
+                  </button>
                 </div>
               </div>
 

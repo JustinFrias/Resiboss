@@ -63,13 +63,13 @@ export const ExportView = () => {
     {
       id: 'purchases',
       title: t.export.purchasesJournal || 'Purchases & Expenses Journal',
-      desc: t.export.purchasesDesc || 'Official BIR Monthly Purchases Ledger',
+      desc: t.export.purchasesDesc || 'Monthly Purchases & Input Tax Ledger',
       recordLabel: (count) => `${count} expense records`,
     },
     {
       id: 'sales',
       title: t.export.vatSales || 'VAT Sales to be Reported',
-      desc: t.export.vatSalesDesc || 'Official BIR Monthly VAT Sales Summary',
+      desc: t.export.vatSalesDesc || 'Monthly VAT Sales Summary',
       recordLabel: () => '0 revenue records',
     },
     {

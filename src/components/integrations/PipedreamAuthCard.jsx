@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export const PipedreamAuthCard = () => {
-  const { signInWithGoogle, soundFx, setIsTermsOpen } = useApp();
+  const { signInWithGoogle, soundFx, setIsTermsOpen, setIsPrivacyOpen } = useApp();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -182,7 +182,7 @@ export const PipedreamAuthCard = () => {
         )}
       </button>
 
-      {/* Terms & Conditions Agreement Link */}
+      {/* Terms & Privacy Policy Agreement Link */}
       <div style={{ marginTop: '16px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
         By continuing, you agree to our{' '}
         <button
@@ -203,7 +203,28 @@ export const PipedreamAuthCard = () => {
             outline: 'none',
           }}
         >
-          Terms & Conditions
+          Terms of Service
+        </button>
+        {' & '}
+        <button
+          type="button"
+          onClick={() => {
+            soundFx?.playClick?.();
+            setIsPrivacyOpen(true);
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#00f2fe',
+            cursor: 'pointer',
+            padding: 0,
+            fontSize: '0.74rem',
+            fontWeight: 600,
+            textDecoration: 'underline',
+            outline: 'none',
+          }}
+        >
+          Privacy Policy
         </button>
       </div>
     </div>

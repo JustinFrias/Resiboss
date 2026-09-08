@@ -243,6 +243,24 @@ export const AppProvider = ({ children }) => {
   };
   const [inspectingDoc, setInspectingDoc] = useState(null);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
+
+  const [cookieConsent, setCookieConsentState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('resiboss_cookie_consent_v1');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const saveCookieConsent = (consent) => {
+    setCookieConsentState(consent);
+    try {
+      localStorage.setItem('resiboss_cookie_consent_v1', JSON.stringify(consent));
+    } catch (e) {}
+  };
 
   const [settings, setSettings] = useState(() => {
     try {
@@ -276,39 +294,7 @@ export const AppProvider = ({ children }) => {
       const saved = localStorage.getItem('resiboss_notifications_v1');
       if (saved) return JSON.parse(saved);
     } catch (e) {}
-    return [
-      {
-        id: 'notif-1',
-        title: 'OCR Scanner Ready',
-        desc: 'Receipt #REC-2025-001 scanned with 99.4% accuracy.',
-        time: '5m ago',
-        read: false,
-        type: 'scanner',
-        targetTab: 'scanner',
-        targetLabel: 'Scanner',
-        docId: 'REC-2025-001',
-      },
-      {
-        id: 'notif-2',
-        title: 'Cloud Export Verified',
-        desc: 'Purchases & Expenses Journal synced to vault.',
-        time: '45m ago',
-        read: false,
-        type: 'export',
-        targetTab: 'export',
-        targetLabel: 'Export Journal',
-      },
-      {
-        id: 'notif-3',
-        title: 'VAT Input Tax Sync',
-        desc: 'Computed VAT Exp (P-N)/1.12 formulas saved.',
-        time: '2h ago',
-        read: false,
-        type: 'tax',
-        targetTab: 'export',
-        targetLabel: 'Tax Journal',
-      },
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -980,6 +966,12 @@ export const AppProvider = ({ children }) => {
         soundFx,
         isTermsOpen,
         setIsTermsOpen,
+        isPrivacyOpen,
+        setIsPrivacyOpen,
+        isCookieModalOpen,
+        setIsCookieModalOpen,
+        cookieConsent,
+        saveCookieConsent,
       }}
     >
       {children}

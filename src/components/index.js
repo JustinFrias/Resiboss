@@ -6,6 +6,8 @@ export { MobileBottomNav } from './layout/MobileBottomNav';
 // Modal & Inspection Components
 export { ReceiptViewer3D } from './modals/ReceiptViewer3D';
 export { TermsModal } from './modals/TermsModal';
+export { PrivacyPolicyModal } from './modals/PrivacyPolicyModal';
+export { CookieConsentBanner } from './legal/CookieConsentBanner';
 
 // UI Primitives & Branding
 export { TiltCard } from './ui/TiltCard';

@@ -53,7 +53,7 @@ export const mapSupabaseToDoc = (row) => ({
   vat: Number(row.vat) || 0,
   total: Number(row.total) || 0,
   currency: row.currency || 'PHP',
-  confidence: Number(row.confidence) || 99.8,
+  confidence: row.confidence !== undefined && row.confidence !== null ? Number(row.confidence) : null,
   rawOcrText: row.raw_ocr_text || '',
   items: Array.isArray(row.items) ? row.items : [],
   status: row.status || 'Verified',
