@@ -140,6 +140,18 @@ export const getUserReceiptsStorageKey = (profile) => {
 };
 
 /**
+ * Returns a user-partitioned local storage key for notifications so accounts never share notifications.
+ */
+export const getUserNotificationsStorageKey = (profile) => {
+  if (!profile) return 'resiboss_notifications_guest_v1';
+  const tag = (profile.email || profile.id || 'guest')
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_');
+  return `resiboss_notifications_user_${tag}`;
+};
+
+/**
  * Recovers the active authenticated user profile from sessionStorage if available.
  */
 export const getInitialUserProfile = () => {
@@ -298,11 +310,32 @@ export const AppProvider = ({ children }) => {
 
   const [notifications, setNotifications] = useState(() => {
     try {
-      const saved = localStorage.getItem('resiboss_notifications_v1');
+      // Clean up legacy unpartitioned global notifications so old test alerts never leak
+      localStorage.removeItem('resiboss_notifications_v1');
+      const initialUser = getInitialUserProfile();
+      const notifKey = getUserNotificationsStorageKey(initialUser);
+      const saved = localStorage.getItem(notifKey);
       if (saved) return JSON.parse(saved);
     } catch (e) {}
     return [];
   });
+
+  // Sync notifications with active user account
+  useEffect(() => {
+    try {
+      localStorage.removeItem('resiboss_notifications_v1');
+      const notifKey = getUserNotificationsStorageKey(userProfile);
+      const saved = localStorage.getItem(notifKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setNotifications(parsed);
+          return;
+        }
+      }
+    } catch (e) {}
+    setNotifications([]);
+  }, [userProfile]);
 
   useEffect(() => {
     try {
@@ -311,11 +344,42 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   }, [theme]);
 
+  // Persist notifications per user account
   useEffect(() => {
     try {
-      localStorage.setItem('resiboss_notifications_v1', JSON.stringify(notifications));
+      const notifKey = getUserNotificationsStorageKey(userProfile);
+      localStorage.setItem(notifKey, JSON.stringify(notifications));
     } catch (e) {}
-  }, [notifications]);
+  }, [notifications, userProfile]);
+
+  // Ensure notifications stay consistent with active documents:
+  // If user has NO documents (0 documents), wipe any orphaned "Receipt Saved to Vault" notifications!
+  useEffect(() => {
+    if (documents.length === 0) {
+      setNotifications((prev) =>
+        prev.filter(
+          (n) =>
+            n.type !== 'scanner' &&
+            !n.title?.includes('Receipt Saved') &&
+            !n.desc?.includes('has been saved')
+        )
+      );
+    } else {
+      const existingDocIds = new Set(documents.map((d) => d.id));
+      setNotifications((prev) =>
+        prev.filter((n) => {
+          if (n.type === 'scanner' && n.desc?.includes('(REC-')) {
+            const match = n.desc.match(/\(REC-[^)]+\)/);
+            if (match) {
+              const recId = match[0].replace(/[()]/g, '');
+              return existingDocIds.has(recId);
+            }
+          }
+          return true;
+        })
+      );
+    }
+  }, [documents]);
 
   const toggleTheme = () => {
     soundFx.playClick();
@@ -371,6 +435,11 @@ export const AppProvider = ({ children }) => {
   const clearNotifications = () => {
     soundFx.playClick();
     setNotifications([]);
+    try {
+      const notifKey = getUserNotificationsStorageKey(userProfile);
+      localStorage.removeItem(notifKey);
+      localStorage.removeItem('resiboss_notifications_v1');
+    } catch (e) {}
   };
 
   // Listen for Supabase Authentication State (Google OAuth)
