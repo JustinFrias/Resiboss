@@ -16,8 +16,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (file('resiboss-release.jks').exists()) {
+                storeFile file('resiboss-release.jks')
+                storePassword 'resiboss2026'
+                keyAlias 'resiboss'
+                keyPassword 'resiboss2026'
+            }
+        }
+    }
     buildTypes {
         release {
+            if (file('resiboss-release.jks').exists()) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
