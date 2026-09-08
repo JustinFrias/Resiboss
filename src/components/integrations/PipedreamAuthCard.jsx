@@ -182,23 +182,8 @@ export const PipedreamAuthCard = () => {
         )}
       </button>
 
-      {/* Security & Privacy Badge */}
-      <div
-        style={{
-          marginTop: '22px',
-          fontSize: '0.76rem',
-          color: 'var(--text-muted)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-        }}
-      >
-        <span>🔒 Secure 256-bit OAuth authentication</span>
-      </div>
-
       {/* Terms & Conditions Agreement Link */}
-      <div style={{ marginTop: '12px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+      <div style={{ marginTop: '16px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
         By continuing, you agree to our{' '}
         <button
           type="button"
