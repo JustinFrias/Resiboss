@@ -69,7 +69,9 @@ jobs:
         with:
           tag_name: latest
           name: "Resiboss Android App (Latest APK & ZIP)"
-          body: "Download Resiboss APK in .apk or .zip format."
+          body: "Download Resiboss APK in .apk or .zip format with updated launcher icon."
+          make_latest: true
+          prerelease: false
           files: |
             android/app/build/outputs/apk/debug/Resiboss.apk
             android/app/build/outputs/apk/debug/Resiboss-APK.zip
