@@ -7,6 +7,8 @@ export const ResibossLogo = ({
   className = '',
   onClick,
 }) => {
+  const borderRadius = Math.max(8, Math.round(size * 0.22));
+
   return (
     <div
       onClick={onClick}
@@ -19,7 +21,7 @@ export const ResibossLogo = ({
         userSelect: 'none',
       }}
     >
-      {/* 2D Flat Vector App Icon */}
+      {/* Official 2D Picture Emblem */}
       <div
         className="resiboss-app-icon-wrap"
         style={{
@@ -30,68 +32,26 @@ export const ResibossLogo = ({
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'transform 0.22s ease',
+          borderRadius: `${borderRadius}px`,
+          overflow: 'hidden',
+          background: '#000000',
+          boxShadow: '0 4px 14px rgba(0, 242, 254, 0.25), 0 0 20px rgba(0, 242, 254, 0.1)',
+          border: '1px solid rgba(0, 242, 254, 0.3)',
         }}
       >
-        <svg
-          width={size}
-          height={size}
-          viewBox="0 0 44 44"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ display: 'block', width: '100%', height: '100%' }}
-        >
-          <defs>
-            <linearGradient id="rb-bg" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#0b1120" />
-              <stop offset="1" stopColor="#020617" />
-            </linearGradient>
-            <linearGradient id="rb-cyan" x1="11" y1="10" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#00f2fe" />
-              <stop offset="1" stopColor="#0284c7" />
-            </linearGradient>
-          </defs>
-
-          {/* Clean Flat Squircle */}
-          <rect
-            x="1"
-            y="1"
-            width="42"
-            height="42"
-            rx="12"
-            fill="url(#rb-bg)"
-            stroke="#00f2fe"
-            strokeOpacity="0.4"
-            strokeWidth="1.5"
-          />
-
-          {/* Vertical Receipt Spine */}
-          <rect x="11" y="10.5" width="4.5" height="23" rx="2.25" fill="url(#rb-cyan)" />
-
-          {/* Upper Loop */}
-          <path
-            d="M14 10.5H23.5C27.6421 10.5 31 13.8579 31 18C31 22.1421 27.6421 25.5 23.5 25.5H14"
-            stroke="url(#rb-cyan)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Receipt Data Lines */}
-          <line x1="19.5" y1="16" x2="25.5" y2="16" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-          <line x1="19.5" y1="20" x2="23.5" y2="20" stroke="#00f2fe" strokeWidth="2" strokeLinecap="round" />
-
-          {/* Dynamic Diagonal Kick */}
-          <path
-            d="M20.5 23L29.5 33.5"
-            stroke="#ffffff"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img
+          src="/resiboss-emblem.png"
+          alt="Resiboss"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
       </div>
 
-      {/* Brand Wordmark: "Resiboss" Only */}
+      {/* Brand Wordmark: "Resi" + "boss" */}
       {showText && !collapsed && (
         <span
           style={{
