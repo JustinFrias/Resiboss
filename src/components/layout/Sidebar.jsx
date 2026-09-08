@@ -284,7 +284,6 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                   className={`sidebar-nav-btn ${isActive ? 'active' : ''}`}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {isActive && <div className="sidebar-active-indicator" />}
                     <Icon
                       size={18}
                       className="sidebar-nav-icon"
@@ -408,7 +407,6 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               style={{ width: '100%', margin: 0 }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {activeTab === 'settings' && <div className="sidebar-active-indicator" />}
                 <Settings
                   size={18}
                   className="sidebar-nav-icon"

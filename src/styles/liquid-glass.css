@@ -725,14 +725,7 @@ html, body {
 }
 
 .sidebar-active-indicator {
-  position: absolute;
-  left: 0;
-  top: 18%;
-  bottom: 18%;
-  width: 3.5px;
-  border-radius: 0 4px 4px 0;
-  background: #00f2fe;
-  box-shadow: 0 0 8px #00f2fe;
+  display: none !important;
 }
 
 .sidebar-nav-badge {
@@ -781,10 +774,6 @@ html, body {
   color: #0284c7 !important;
 }
 
-[data-theme="light"] .sidebar-active-indicator {
-  background: #0284c7 !important;
-  box-shadow: 0 0 8px rgba(2, 132, 199, 0.5) !important;
-}
 
 [data-theme="light"] .sidebar-nav-badge {
   background: rgba(2, 132, 199, 0.12) !important;
