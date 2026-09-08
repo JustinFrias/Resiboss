@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { initialReceipts } from '../utils/initialData';
 import { translations } from '../utils/i18n';
 import { soundFx } from '../utils/soundEffects';
@@ -127,19 +127,103 @@ export const buildUserProfile = (user, fallbackProvider = 'google') => {
   };
 };
 
+/**
+ * Returns a user-partitioned local storage key for receipts so accounts never share data.
+ */
+export const getUserReceiptsStorageKey = (profile) => {
+  if (!profile) return 'resiboss_receipts_guest_v1';
+  const tag = (profile.email || profile.id || 'guest')
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_');
+  return `resiboss_receipts_user_${tag}`;
+};
+
+/**
+ * Recovers the active authenticated user profile from sessionStorage if available.
+ */
+export const getInitialUserProfile = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('resiboss_user_profile_v1');
+      const saved = sessionStorage.getItem(SESSION_PROFILE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.isAuthSession) {
+          const email = parsed.email;
+          const custom = (email ? getSavedCustomProfile(email) : null) || (parsed.id ? getSavedCustomProfile(parsed.id) : null);
+          if (custom) {
+            return { ...parsed, ...custom };
+          }
+          return parsed;
+        }
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const AppProvider = ({ children }) => {
+  // Real Supabase User State (null when user is NOT signed in)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(getInitialUserProfile);
+  const userProfileRef = useRef(userProfile);
+
+  useEffect(() => {
+    userProfileRef.current = userProfile;
+  }, [userProfile]);
+
   const [documents, setDocuments] = useState(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const initialUser = getInitialUserProfile();
+      if (!initialUser) return [];
+      const storageKey = getUserReceiptsStorageKey(initialUser);
+      const saved = localStorage.getItem(storageKey);
       if (!saved) return [];
       const parsed = JSON.parse(saved);
       if (!Array.isArray(parsed)) return [];
-      // Automatically purge any previous demo receipts
       return parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id));
     } catch (e) {
       return [];
     }
   });
+
+  // Keep documents in sync with the active authenticated user account
+  useEffect(() => {
+    if (!userProfile) {
+      setDocuments([]);
+      setInspectingDoc(null);
+      return;
+    }
+
+    const storageKey = getUserReceiptsStorageKey(userProfile);
+    let cached = [];
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          cached = parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id));
+        }
+      }
+    } catch (e) {}
+
+    setDocuments(cached);
+
+    if (supabase && isSupabaseConfigured) {
+      fetchReceiptsFromSupabase(userProfile).then(({ data }) => {
+        if (Array.isArray(data)) {
+          const liveDocs = data.map(mapSupabaseToDoc);
+          setDocuments(liveDocs);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(liveDocs));
+          } catch (e) {}
+        }
+      });
+    }
+  }, [userProfile?.id, userProfile?.email]);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currency, setCurrency] = useState('PHP');
@@ -176,33 +260,6 @@ export const AppProvider = ({ children }) => {
         enable3DTilt: true,
         soundEnabled: true,
       };
-    }
-  });
-
-  // Real Supabase User State (null when user is NOT signed in)
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        // Ensure legacy permanent profile is removed so closing the app requires login
-        localStorage.removeItem('resiboss_user_profile_v1');
-        const saved = sessionStorage.getItem(SESSION_PROFILE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          // Only keep if it is a real authenticated session
-          if (parsed && parsed.isAuthSession) {
-            const email = parsed.email;
-            const custom = (email ? getSavedCustomProfile(email) : null) || (parsed.id ? getSavedCustomProfile(parsed.id) : null);
-            if (custom) {
-              return { ...parsed, ...custom };
-            }
-            return parsed;
-          }
-        }
-      }
-      return null;
-    } catch (e) {
-      return null;
     }
   });
 
@@ -360,6 +417,8 @@ export const AppProvider = ({ children }) => {
           return prev;
         });
         setCurrentUser(null);
+        setDocuments([]);
+        setInspectingDoc(null);
       }
     });
 
@@ -420,36 +479,48 @@ export const AppProvider = ({ children }) => {
     };
   }, []);
 
-  // Real-time Database Sync & Live Supabase Subscriptions
+  // Real-time Database Sync & Live Supabase Subscriptions (account-isolated)
   useEffect(() => {
     if (!supabase || !isSupabaseConfigured) return;
 
-    // 1. Fetch live receipts from Supabase on mount
-    fetchReceiptsFromSupabase().then(({ data }) => {
-      if (Array.isArray(data) && data.length > 0) {
-        const liveDocs = data.map(mapSupabaseToDoc);
-        setDocuments(liveDocs);
-      }
-    });
-
-    // 2. Subscribe to REALTIME changes (INSERT, UPDATE, DELETE) across all devices
+    // Subscribe to REALTIME changes (INSERT, UPDATE, DELETE) for the active user account
     const channel = supabase
       .channel('public:receipts_realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'receipts' },
         (payload) => {
+          const currentProf = userProfileRef.current;
+          if (!currentProf) return;
+
+          const currentUserId = currentProf.id;
+          const currentUserEmail = (currentProf.email || '').trim().toLowerCase();
+
+          const isOurDoc = (row) => {
+            if (!row) return false;
+            const rowUserId = row.user_id;
+            const rowEmail = (row.user_email || '').trim().toLowerCase();
+
+            if (rowUserId && currentUserId && rowUserId === currentUserId) return true;
+            if (rowEmail && currentUserEmail && rowEmail === currentUserEmail) return true;
+            return false;
+          };
+
           if (payload.eventType === 'INSERT') {
-            const newDoc = mapSupabaseToDoc(payload.new);
-            setDocuments((prev) => {
-              if (prev.some((d) => d.id === newDoc.id)) return prev;
-              return [newDoc, ...prev];
-            });
+            if (isOurDoc(payload.new)) {
+              const newDoc = mapSupabaseToDoc(payload.new);
+              setDocuments((prev) => {
+                if (prev.some((d) => d.id === newDoc.id)) return prev;
+                return [newDoc, ...prev];
+              });
+            }
           } else if (payload.eventType === 'UPDATE') {
-            const updatedDoc = mapSupabaseToDoc(payload.new);
-            setDocuments((prev) =>
-              prev.map((d) => (d.id === updatedDoc.id ? { ...d, ...updatedDoc } : d))
-            );
+            if (isOurDoc(payload.new)) {
+              const updatedDoc = mapSupabaseToDoc(payload.new);
+              setDocuments((prev) =>
+                prev.map((d) => (d.id === updatedDoc.id ? { ...d, ...updatedDoc } : d))
+              );
+            }
           } else if (payload.eventType === 'DELETE') {
             setDocuments((prev) => prev.filter((d) => d.id !== payload.old.id));
           }
@@ -516,6 +587,8 @@ export const AppProvider = ({ children }) => {
     }
     setCurrentUser(null);
     setUserProfile(null);
+    setDocuments([]);
+    setInspectingDoc(null);
     try {
       sessionStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem('resiboss_user_profile_v1');
@@ -757,9 +830,12 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+      if (userProfile) {
+        const storageKey = getUserReceiptsStorageKey(userProfile);
+        localStorage.setItem(storageKey, JSON.stringify(documents));
+      }
     } catch (e) {}
-  }, [documents]);
+  }, [documents, userProfile]);
 
   const t = translations[language] || translations.en;
 
@@ -778,6 +854,8 @@ export const AppProvider = ({ children }) => {
     const completeDoc = {
       ...newDoc,
       id: newDoc.id || `REC-${new Date().getFullYear()}-${String(documents.length + 1).padStart(3, '0')}`,
+      userId: userProfile?.id || null,
+      userEmail: userProfile?.email || null,
       date: newDoc.date || new Date().toISOString().split('T')[0],
       time: newDoc.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: newDoc.status || 'Verified',
@@ -788,8 +866,8 @@ export const AppProvider = ({ children }) => {
     setDocuments((prev) => [completeDoc, ...prev]);
     soundFx.playSuccessChime();
 
-    // Sync to Supabase in real-time
-    syncReceiptToSupabase(completeDoc);
+    // Sync to Supabase in real-time with user account isolation
+    syncReceiptToSupabase(completeDoc, userProfile);
 
     // Trigger celebratory particle blast
     try {
@@ -817,9 +895,9 @@ export const AppProvider = ({ children }) => {
     );
     soundFx.playClick();
 
-    // Sync edited document to Supabase in real-time
+    // Sync edited document to Supabase in real-time with user account isolation
     if (updatedTarget) {
-      syncReceiptToSupabase(updatedTarget);
+      syncReceiptToSupabase(updatedTarget, userProfile);
     }
   };
 

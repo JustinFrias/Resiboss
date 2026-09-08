@@ -58,43 +58,65 @@ export const mapSupabaseToDoc = (row) => ({
   items: Array.isArray(row.items) ? row.items : [],
   status: row.status || 'Verified',
   imageUri: row.image_uri || null,
+  userId: row.user_id || row.userId || null,
+  userEmail: row.user_email || row.userEmail || null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
 
 /**
- * Syncs a receipt document with the Supabase 'receipts' table in real-time.
+ * Syncs a receipt document with the Supabase 'receipts' table with account isolation.
  */
-export const syncReceiptToSupabase = async (receiptDoc) => {
+export const syncReceiptToSupabase = async (receiptDoc, userProfile) => {
   if (!supabase || !isSupabaseConfigured) {
     return { data: null, error: null, isLocal: true };
   }
 
-  try {
-    const payload = {
-      id: receiptDoc.id,
-      merchant: receiptDoc.merchant,
-      date: receiptDoc.date,
-      time: receiptDoc.time,
-      tin: receiptDoc.tin,
-      category: receiptDoc.category,
-      payment_method: receiptDoc.paymentMethod,
-      subtotal: receiptDoc.subtotal,
-      vat: receiptDoc.vat,
-      total: receiptDoc.total,
-      currency: receiptDoc.currency || 'PHP',
-      confidence: receiptDoc.confidence,
-      raw_ocr_text: receiptDoc.rawOcrText,
-      items: receiptDoc.items || [],
-      status: receiptDoc.status || 'Verified',
-      image_uri: receiptDoc.imageUri || null,
-      updated_at: new Date().toISOString(),
-    };
+  const userId = userProfile?.id || receiptDoc.userId || null;
+  const userEmail = (userProfile?.email || receiptDoc.userEmail || '').trim().toLowerCase() || null;
 
-    const { data, error } = await supabase
+  const basePayload = {
+    id: receiptDoc.id,
+    merchant: receiptDoc.merchant,
+    date: receiptDoc.date,
+    time: receiptDoc.time,
+    tin: receiptDoc.tin,
+    category: receiptDoc.category,
+    payment_method: receiptDoc.paymentMethod,
+    subtotal: receiptDoc.subtotal,
+    vat: receiptDoc.vat,
+    total: receiptDoc.total,
+    currency: receiptDoc.currency || 'PHP',
+    confidence: receiptDoc.confidence,
+    raw_ocr_text: receiptDoc.rawOcrText,
+    items: receiptDoc.items || [],
+    status: receiptDoc.status || 'Verified',
+    image_uri: receiptDoc.imageUri || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const payloadWithUser = {
+    ...basePayload,
+    user_id: userId,
+    user_email: userEmail,
+  };
+
+  try {
+    // Attempt upsert with user isolation columns
+    let { data, error } = await supabase
       .from('receipts')
-      .upsert([payload], { onConflict: 'id' })
+      .upsert([payloadWithUser], { onConflict: 'id' })
       .select();
+
+    // Fallback if table doesn't have user_id / user_email columns yet
+    if (error && (error.message?.includes('user_id') || error.message?.includes('user_email') || error.code === 'PGRST204')) {
+      const retry = await supabase
+        .from('receipts')
+        .upsert([basePayload], { onConflict: 'id' })
+        .select();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.warn('Supabase sync error:', error.message);
@@ -125,18 +147,46 @@ export const deleteReceiptFromSupabase = async (id) => {
 };
 
 /**
- * Fetches all receipts from Supabase 'receipts' table.
+ * Fetches only the receipts belonging to the authenticated user account.
  */
-export const fetchReceiptsFromSupabase = async () => {
+export const fetchReceiptsFromSupabase = async (userProfile) => {
   if (!supabase || !isSupabaseConfigured) {
     return { data: null, error: null };
   }
 
+  const userId = userProfile?.id || null;
+  const userEmail = (userProfile?.email || '').trim().toLowerCase() || null;
+
+  // Unauthenticated or Guest sessions should not pull cloud receipts of other accounts
+  if (!userId && !userEmail) {
+    return { data: [], error: null };
+  }
+
   try {
-    const { data, error } = await supabase
-      .from('receipts')
-      .select('*')
-      .order('date', { ascending: false });
+    let query = supabase.from('receipts').select('*').order('date', { ascending: false });
+
+    if (userId && userEmail) {
+      query = query.or(`user_id.eq.${userId},user_email.eq.${userEmail}`);
+    } else if (userId) {
+      query = query.eq('user_id', userId);
+    } else if (userEmail) {
+      query = query.eq('user_email', userEmail);
+    }
+
+    let { data, error } = await query;
+
+    // Fallback if columns don't exist yet on remote schema
+    if (error && (error.message?.includes('user_id') || error.message?.includes('user_email') || error.code === 'PGRST204')) {
+      const fallback = await supabase.from('receipts').select('*').order('date', { ascending: false });
+      if (fallback.error) throw fallback.error;
+      // Client-side privacy filter: only include receipts tagged for this user
+      const filtered = (fallback.data || []).filter((row) => {
+        if (row.user_id && row.user_id === userId) return true;
+        if (row.user_email && row.user_email.toLowerCase() === userEmail) return true;
+        return false;
+      });
+      return { data: filtered, error: null };
+    }
 
     if (error) throw error;
     return { data, error: null };
