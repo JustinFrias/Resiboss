@@ -48,13 +48,13 @@ export const PipedreamAuthCard = () => {
           width: '64px',
           height: '64px',
           borderRadius: '20px',
-          background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.18), rgba(168, 85, 247, 0.18))',
-          border: '1px solid rgba(0, 242, 254, 0.35)',
+          background: 'linear-gradient(180deg, rgba(32, 248, 161, 0.22) 0%, rgba(16, 185, 129, 0.08) 100%)',
+          border: '1px solid rgba(32, 248, 161, 0.45)',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#00f2fe',
-          boxShadow: '0 0 24px rgba(0, 242, 254, 0.25)',
+          color: '#20f8a1',
+          boxShadow: '0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.4), inset 0 -1.5px 0.5px rgba(0, 0, 0, 0.35)',
           marginBottom: '16px',
         }}
       >
@@ -115,9 +115,9 @@ export const PipedreamAuthCard = () => {
           width: '100%',
           padding: '14px 18px',
           borderRadius: '14px',
-          background: '#ffffff',
-          border: '1px solid rgba(255, 255, 255, 0.4)',
-          color: '#1f2937',
+          background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 48%, #f3f4f6 52%, #e5e7eb 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.8)',
+          color: '#111827',
           fontSize: '0.96rem',
           fontWeight: 700,
           cursor: isLoading ? 'not-allowed' : 'pointer',
@@ -125,18 +125,31 @@ export const PipedreamAuthCard = () => {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '12px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.2)',
-          transition: 'all 0.2s ease',
+          boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)',
+          transition: 'transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s ease',
+          userSelect: 'none',
         }}
         onMouseEnter={(e) => {
           if (!isLoading) {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.4), 0 0 25px rgba(255, 255, 255, 0.3)';
+            e.currentTarget.style.transform = 'translateY(-1.5px)';
+            e.currentTarget.style.boxShadow = '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)';
           }
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.2)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)';
+        }}
+        onMouseDown={(e) => {
+          if (!isLoading) {
+            e.currentTarget.style.transform = 'translateY(2px)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -1px 0 rgba(255, 255, 255, 0.5)';
+          }
+        }}
+        onMouseUp={(e) => {
+          if (!isLoading) {
+            e.currentTarget.style.transform = 'translateY(-1.5px)';
+            e.currentTarget.style.boxShadow = '0 10px 26px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.2), inset 0 1.5px 0.5px rgba(255, 255, 255, 1), inset 0 -2px 1px rgba(0, 0, 0, 0.12)';
+          }
         }}
       >
         {isLoading ? (
