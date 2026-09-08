@@ -18,12 +18,20 @@ export const TermsModal = () => {
   const { isTermsOpen, setIsTermsOpen, language, soundFx } = useApp();
   const [modalLang, setModalLang] = useState(language === 'fil' ? 'fil' : 'en');
   const [activeSection, setActiveSection] = useState('acceptance');
+  const [isAccepted, setIsAccepted] = useState(false);
 
   // Sync initial language if language context changes
   useEffect(() => {
     if (language === 'fil') setModalLang('fil');
     else setModalLang('en');
   }, [language]);
+
+  // Reset acceptance checkbox whenever modal opens
+  useEffect(() => {
+    if (isTermsOpen) {
+      setIsAccepted(false);
+    }
+  }, [isTermsOpen]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -44,6 +52,7 @@ export const TermsModal = () => {
   };
 
   const handleAccept = () => {
+    if (!isAccepted) return;
     soundFx?.playSuccessChime?.();
     try {
       localStorage.setItem('resiboss_terms_accepted_v1', 'true');
@@ -366,37 +375,94 @@ export const TermsModal = () => {
           style={{
             padding: '16px 28px',
             borderTop: '1px solid var(--glass-border)',
-            background: 'var(--bg-surface, rgba(10, 16, 36, 0.65))',
+            background: 'var(--bg-surface, rgba(10, 16, 36, 0.75))',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
+            flexDirection: 'column',
+            gap: '14px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <Globe size={14} color="var(--cyan-glow)" />
-            <span>Resiboss Legal & Compliance Shield • Philippines</span>
-          </div>
+          {/* Agreement Checkbox */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              fontSize: '0.84rem',
+              color: isAccepted ? 'var(--cyan-glow, #00f2fe)' : 'var(--text-secondary, #94a3b8)',
+              transition: 'all 0.2s ease',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              background: isAccepted ? 'rgba(0, 242, 254, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+              border: `1px solid ${isAccepted ? 'rgba(0, 242, 254, 0.35)' : 'rgba(255, 255, 255, 0.08)'}`,
+            }}
+          >
+            <input
+              type="checkbox"
+              id="terms-accept-checkbox"
+              checked={isAccepted}
+              onChange={(e) => {
+                soundFx?.playClick?.();
+                setIsAccepted(e.target.checked);
+              }}
+              style={{
+                width: '18px',
+                height: '18px',
+                cursor: 'pointer',
+                accentColor: '#00f2fe',
+                borderRadius: '4px',
+              }}
+            />
+            <span style={{ fontWeight: isAccepted ? 600 : 400 }}>
+              {isFil
+                ? 'Nabasa, naunawaan, at sumasang-ayon ako sa mga Tuntunin at Patakaran sa Privacy ng Resiboss.'
+                : 'I have read, understood, and accept the Resiboss Terms of Service and Privacy Policy.'}
+            </span>
+          </label>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="liquid-btn liquid-btn-secondary"
-              style={{ padding: '8px 18px', fontSize: '0.86rem' }}
-            >
-              {isFil ? 'Isara' : 'Close'}
-            </button>
-            <button
-              type="button"
-              onClick={handleAccept}
-              className="liquid-btn liquid-btn-primary"
-              style={{ padding: '8px 22px', fontSize: '0.86rem' }}
-            >
-              <CheckCircle2 size={16} />
-              <span>{isFil ? 'Nauunawaan at Tinatanggap Ko' : 'I Understand & Accept'}</span>
-            </button>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              <Globe size={14} color="var(--cyan-glow)" />
+              <span>Resiboss Legal & Compliance Shield • Philippines</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="liquid-btn liquid-btn-secondary"
+                style={{ padding: '8px 18px', fontSize: '0.86rem' }}
+              >
+                {isFil ? 'Isara' : 'Close'}
+              </button>
+              <button
+                type="button"
+                disabled={!isAccepted}
+                onClick={handleAccept}
+                className="liquid-btn liquid-btn-primary"
+                style={{
+                  padding: '8px 22px',
+                  fontSize: '0.86rem',
+                  opacity: isAccepted ? 1 : 0.42,
+                  cursor: isAccepted ? 'pointer' : 'not-allowed',
+                  filter: isAccepted ? 'none' : 'grayscale(0.7)',
+                  pointerEvents: isAccepted ? 'auto' : 'none',
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>{isFil ? 'Nauunawaan at Tinatanggap Ko' : 'I Understand & Accept'}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
