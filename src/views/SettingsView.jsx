@@ -151,7 +151,8 @@ export const SettingsView = () => {
       }
 
       try {
-        localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(form));
+        sessionStorage.setItem('resiboss_session_profile_v1', JSON.stringify(form));
+        localStorage.removeItem('resiboss_user_profile_v1');
       } catch (err) {}
 
       soundFx?.playSuccessChime?.();

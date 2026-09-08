@@ -21,7 +21,8 @@ export const AuthView = () => {
     };
     setUserProfile(guestProfile);
     try {
-      localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(guestProfile));
+      sessionStorage.setItem('resiboss_session_profile_v1', JSON.stringify(guestProfile));
+      localStorage.removeItem('resiboss_user_profile_v1');
     } catch (e) {}
   };
 

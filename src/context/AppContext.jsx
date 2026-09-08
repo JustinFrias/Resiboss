@@ -88,16 +88,22 @@ export const AppProvider = ({ children }) => {
     }
   });
 
+const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
+
   // Real Supabase User State (null when user is NOT signed in)
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(() => {
     try {
-      const saved = localStorage.getItem('resiboss_user_profile_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Only keep if it is a real authenticated session
-        if (parsed && parsed.isAuthSession) {
-          return parsed;
+      if (typeof window !== 'undefined') {
+        // Ensure legacy permanent profile is removed so closing the app requires login
+        localStorage.removeItem('resiboss_user_profile_v1');
+        const saved = sessionStorage.getItem(SESSION_PROFILE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Only keep if it is a real authenticated session
+          if (parsed && parsed.isAuthSession) {
+            return parsed;
+          }
         }
       }
       return null;
@@ -242,12 +248,14 @@ export const AppProvider = ({ children }) => {
         };
         setUserProfile(profile);
         try {
-          localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+          sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+          localStorage.removeItem('resiboss_user_profile_v1');
         } catch (e) {}
       } else {
         setCurrentUser(null);
         setUserProfile(null);
         try {
+          sessionStorage.removeItem(SESSION_PROFILE_KEY);
           localStorage.removeItem('resiboss_user_profile_v1');
         } catch (e) {}
       }
@@ -267,12 +275,14 @@ export const AppProvider = ({ children }) => {
         };
         setUserProfile(profile);
         try {
-          localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+          sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+          localStorage.removeItem('resiboss_user_profile_v1');
         } catch (e) {}
       } else {
         setCurrentUser(null);
         setUserProfile(null);
         try {
+          sessionStorage.removeItem(SESSION_PROFILE_KEY);
           localStorage.removeItem('resiboss_user_profile_v1');
         } catch (e) {}
       }
@@ -423,6 +433,7 @@ export const AppProvider = ({ children }) => {
     setCurrentUser(null);
     setUserProfile(null);
     try {
+      sessionStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem('resiboss_user_profile_v1');
     } catch (e) {}
   };
@@ -503,7 +514,8 @@ export const AppProvider = ({ children }) => {
       setCurrentUser({ id: profile.id, email: profile.email });
       setUserProfile(profile);
       try {
-        localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+        sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+        localStorage.removeItem('resiboss_user_profile_v1');
       } catch (e) {}
 
       return profile;
@@ -577,7 +589,8 @@ export const AppProvider = ({ children }) => {
       setCurrentUser({ id: profile.id, email: profile.email });
       setUserProfile(profile);
       try {
-        localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(profile));
+        sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+        localStorage.removeItem('resiboss_user_profile_v1');
       } catch (e) {}
 
       return profile;
@@ -594,9 +607,10 @@ export const AppProvider = ({ children }) => {
     setUserProfile((prev) => {
       const merged = { ...prev, ...updatedProfile, isAuthSession: true };
       try {
-        localStorage.setItem('resiboss_user_profile_v1', JSON.stringify(merged));
+        sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(merged));
+        localStorage.removeItem('resiboss_user_profile_v1');
       } catch (err) {
-        console.warn('LocalStorage quota warning for profile:', err);
+        console.warn('SessionStorage warning for profile:', err);
       }
       return merged;
     });

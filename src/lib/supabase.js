@@ -11,12 +11,28 @@ export const isSupabaseConfigured = Boolean(
   !supabaseAnonKey.includes('your-supabase-anon-key')
 );
 
-// Create Supabase Client instance with robust Auth & Realtime settings
+// Ensure old permanent sessions stored in localStorage are purged so closing the app resets session
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    localStorage.removeItem('resiboss_user_profile_v1');
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('sb-') && k.endsWith('-auth-token'))) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {}
+}
+
+// Create Supabase Client instance with session-only storage (cleared when app is closed)
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
+        storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
         detectSessionInUrl: true,
       },
     })
