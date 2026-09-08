@@ -1,11 +1,11 @@
 import React from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../context/AppContext';
 import {
   FolderArchive,
   BarChart3,
   Settings,
 } from 'lucide-react';
-import { soundFx } from '../utils/soundEffects';
+import { soundFx } from '../../utils/soundEffects';
 
 export const MobileBottomNav = () => {
   const { activeTab, setActiveTab, documents, t } = useApp();

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../context/AppContext';
 import {
   Menu,
   Search,
@@ -16,7 +16,7 @@ import {
   User,
   LogOut,
 } from 'lucide-react';
-import { soundFx } from '../utils/soundEffects';
+import { soundFx } from '../../utils/soundEffects';
 
 export const TopBar = ({ onOpenMobile }) => {
   const {

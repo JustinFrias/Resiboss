@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { LiquidBackground3D } from './components/LiquidBackground3D';
-import { Sidebar } from './components/Sidebar';
-import { TopBar } from './components/TopBar';
-import { ReceiptViewer3D } from './components/ReceiptViewer3D';
-import { MobileBottomNav } from './components/MobileBottomNav';
-import { TermsModal } from './components/TermsModal';
+import {
+  LiquidBackground3D,
+  Sidebar,
+  TopBar,
+  ReceiptViewer3D,
+  MobileBottomNav,
+  TermsModal,
+} from './components';
 
 import { DashboardView } from './views/DashboardView';
 import { ScannerView } from './views/ScannerView';

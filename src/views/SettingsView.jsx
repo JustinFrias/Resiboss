@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { PipedreamAuthCard } from '../components/PipedreamAuthCard';
+import { PipedreamAuthCard } from '../components';
 import {
   Sliders,
   User,

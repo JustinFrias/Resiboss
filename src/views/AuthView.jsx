@@ -1,7 +1,9 @@
 import React from 'react';
-import { LiquidBackground3D } from '../components/LiquidBackground3D';
-import { PipedreamAuthCard } from '../components/PipedreamAuthCard';
-import { ResibossLogo } from '../components/ResibossLogo';
+import {
+  LiquidBackground3D,
+  PipedreamAuthCard,
+  ResibossLogo,
+} from '../components';
 import { useApp } from '../context/AppContext';
 
 export const AuthView = () => {

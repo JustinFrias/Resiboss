@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
-import { ResibossLogo } from './ResibossLogo';
+import { useApp } from '../../context/AppContext';
+import { ResibossLogo } from '../ui/ResibossLogo';
 import {
   LayoutDashboard,
   ScanLine,
@@ -23,7 +23,7 @@ import {
   Calendar,
   Clock,
 } from 'lucide-react';
-import { soundFx } from '../utils/soundEffects';
+import { soundFx } from '../../utils/soundEffects';
 
 export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
   const {

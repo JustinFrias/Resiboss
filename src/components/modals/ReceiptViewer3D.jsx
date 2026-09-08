@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../context/AppContext';
 import { X, RotateCw, Sparkles, CheckCircle2, ShieldCheck, Download, Trash2, Tag, Calendar, Building2, Receipt } from 'lucide-react';
 
 export const ReceiptViewer3D = () => {

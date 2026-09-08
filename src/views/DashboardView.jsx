@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { TiltCard } from '../components/TiltCard';
+import { TiltCard } from '../components';
 import {
   Wallet,
   Receipt,

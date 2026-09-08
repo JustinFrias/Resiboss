@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../context/AppContext';
 
 export const TiltCard = ({ children, className = '', style = {}, maxRotation = 3, scale = 1.005, onClick }) => {
   const cardRef = useRef(null);
