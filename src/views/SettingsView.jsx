@@ -54,6 +54,7 @@ export const SettingsView = () => {
     userProfile,
     setUserProfile,
     updateUserProfile,
+    saveCustomProfileToStorage,
     signOut,
     t,
     setIsTermsOpen,
@@ -150,8 +151,22 @@ export const SettingsView = () => {
         setUserProfile(form);
       }
 
+      // Persist directly to account storage so it remains permanently saved across log out & log in
+      const targetEmail = (form.email || userProfile?.email || '').trim().toLowerCase();
+      const targetId = userProfile?.id;
+      if (targetEmail && saveCustomProfileToStorage) {
+        saveCustomProfileToStorage(targetEmail, form);
+      }
+      if (targetId && saveCustomProfileToStorage) {
+        saveCustomProfileToStorage(targetId, form);
+      }
+
       try {
-        sessionStorage.setItem('resiboss_session_profile_v1', JSON.stringify(form));
+        sessionStorage.setItem('resiboss_session_profile_v1', JSON.stringify({
+          ...(userProfile || {}),
+          ...form,
+          isAuthSession: true,
+        }));
         localStorage.removeItem('resiboss_user_profile_v1');
       } catch (err) {}
 

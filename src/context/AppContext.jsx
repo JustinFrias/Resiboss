@@ -36,6 +36,97 @@ const DEMO_RECEIPT_IDS = new Set([
   'REC-2026-005',
 ]);
 
+export const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
+export const CUSTOM_PROFILES_MAP_KEY = 'resiboss_saved_custom_profiles_v1';
+
+/**
+ * Retrieve saved profile customizations (First Name, Last Name, Avatar Photo, Border Style, Zoom)
+ * keyed by the user's email or account ID.
+ */
+export const getSavedCustomProfile = (emailOrId) => {
+  if (!emailOrId || typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(CUSTOM_PROFILES_MAP_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    const key = String(emailOrId).trim().toLowerCase();
+    return map[key] || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
+ * Persists user's customized profile data to localStorage keyed by email and/or ID,
+ * ensuring saved changes survive log out and log in cycles.
+ */
+export const saveCustomProfileToStorage = (emailOrId, customData) => {
+  if (!emailOrId || !customData || typeof window === 'undefined') return;
+  try {
+    const key = String(emailOrId).trim().toLowerCase();
+    const raw = localStorage.getItem(CUSTOM_PROFILES_MAP_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    
+    // Merge only defined profile custom preferences
+    const existing = map[key] || {};
+    const updated = {
+      ...existing,
+      firstName: customData.firstName !== undefined ? customData.firstName : existing.firstName,
+      lastName: customData.lastName !== undefined ? customData.lastName : existing.lastName,
+      photo: customData.photo !== undefined ? customData.photo : existing.photo,
+      borderStyle: customData.borderStyle || existing.borderStyle || 'cyan',
+      zoom: typeof customData.zoom === 'number' ? customData.zoom : (existing.zoom || 1),
+      savedAt: Date.now(),
+    };
+    map[key] = updated;
+    localStorage.setItem(CUSTOM_PROFILES_MAP_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.warn('Failed to persist custom profile to localStorage:', e);
+  }
+};
+
+/**
+ * Merges raw auth session user data with user-saved customizations.
+ */
+export const buildUserProfile = (user, fallbackProvider = 'google') => {
+  if (!user) return null;
+  const meta = user.user_metadata || {};
+  const email = (user.email || meta.email || '').trim().toLowerCase();
+  const id = user.id;
+
+  // Retrieve saved customizations for this account
+  const localSaved = (email ? getSavedCustomProfile(email) : null) || (id ? getSavedCustomProfile(id) : null) || {};
+  const cloudSaved = meta.custom_profile || {};
+  const custom = { ...cloudSaved, ...localSaved };
+
+  const firstName = custom.firstName !== undefined && custom.firstName !== ''
+    ? custom.firstName
+    : (meta.given_name || meta.full_name?.split(' ')[0] || email.split('@')[0] || 'User');
+
+  const lastName = custom.lastName !== undefined && custom.lastName !== ''
+    ? custom.lastName
+    : (meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '');
+
+  const photo = custom.photo !== undefined
+    ? custom.photo
+    : (meta.avatar_url || meta.picture || null);
+
+  const borderStyle = custom.borderStyle || 'cyan';
+  const zoom = typeof custom.zoom === 'number' ? custom.zoom : 1;
+
+  return {
+    id: id || `user_${Date.now()}`,
+    firstName,
+    lastName,
+    email: email || user.email || '',
+    photo,
+    borderStyle,
+    zoom,
+    authProvider: fallbackProvider,
+    isAuthSession: true,
+  };
+};
+
 export const AppProvider = ({ children }) => {
   const [documents, setDocuments] = useState(() => {
     try {
@@ -88,8 +179,6 @@ export const AppProvider = ({ children }) => {
     }
   });
 
-const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
-
   // Real Supabase User State (null when user is NOT signed in)
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(() => {
@@ -102,6 +191,11 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
           const parsed = JSON.parse(saved);
           // Only keep if it is a real authenticated session
           if (parsed && parsed.isAuthSession) {
+            const email = parsed.email;
+            const custom = (email ? getSavedCustomProfile(email) : null) || (parsed.id ? getSavedCustomProfile(parsed.id) : null);
+            if (custom) {
+              return { ...parsed, ...custom };
+            }
             return parsed;
           }
         }
@@ -237,16 +331,7 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setCurrentUser(session.user);
-        const meta = session.user.user_metadata || {};
-        const profile = {
-          id: session.user.id,
-          firstName: meta.given_name || meta.full_name?.split(' ')[0] || session.user.email?.split('@')[0] || 'User',
-          lastName: meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
-          email: session.user.email,
-          photo: meta.avatar_url || meta.picture || null,
-          authProvider: 'google',
-          isAuthSession: true,
-        };
+        const profile = buildUserProfile(session.user, 'google');
         setUserProfile(profile);
         try {
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
@@ -258,16 +343,7 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setCurrentUser(session.user);
-        const meta = session.user.user_metadata || {};
-        const profile = {
-          id: session.user.id,
-          firstName: meta.given_name || meta.full_name?.split(' ')[0] || session.user.email?.split('@')[0] || 'User',
-          lastName: meta.family_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
-          email: session.user.email,
-          photo: meta.avatar_url || meta.picture || null,
-          authProvider: 'google',
-          isAuthSession: true,
-        };
+        const profile = buildUserProfile(session.user, 'google');
         setUserProfile(profile);
         try {
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
@@ -508,12 +584,21 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
       }
 
       const user = data.user || {};
+      const userEmail = (user.email || email || '').trim().toLowerCase();
+      const localSaved = (userEmail ? getSavedCustomProfile(userEmail) : null) || (user.id ? getSavedCustomProfile(user.id) : null) || {};
+
       const profile = {
         id: user.id || `user_${Date.now()}`,
-        firstName: user.firstName || user.fullName?.split(' ')[0] || email.split('@')[0],
-        lastName: user.lastName || user.fullName?.split(' ').slice(1).join(' ') || '',
-        email: user.email || email.trim().toLowerCase(),
-        photo: user.photo || null,
+        firstName: localSaved.firstName !== undefined && localSaved.firstName !== ''
+          ? localSaved.firstName
+          : (user.firstName || user.fullName?.split(' ')[0] || userEmail.split('@')[0]),
+        lastName: localSaved.lastName !== undefined && localSaved.lastName !== ''
+          ? localSaved.lastName
+          : (user.lastName || user.fullName?.split(' ').slice(1).join(' ') || ''),
+        email: userEmail,
+        photo: localSaved.photo !== undefined ? localSaved.photo : (user.photo || null),
+        borderStyle: localSaved.borderStyle || 'cyan',
+        zoom: typeof localSaved.zoom === 'number' ? localSaved.zoom : 1,
         authProvider: 'pipedream',
         isAuthSession: true,
         token: data.token || null,
@@ -583,12 +668,21 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
       }
 
       const user = data.user || {};
+      const userEmail = (user.email || email || '').trim().toLowerCase();
+      const localSaved = (userEmail ? getSavedCustomProfile(userEmail) : null) || (user.id ? getSavedCustomProfile(user.id) : null) || {};
+
       const profile = {
         id: user.id || `user_${Date.now()}`,
-        firstName: user.firstName || firstName,
-        lastName: user.lastName || lastName,
-        email: user.email || email.trim().toLowerCase(),
-        photo: null,
+        firstName: localSaved.firstName !== undefined && localSaved.firstName !== ''
+          ? localSaved.firstName
+          : (user.firstName || firstName),
+        lastName: localSaved.lastName !== undefined && localSaved.lastName !== ''
+          ? localSaved.lastName
+          : (user.lastName || lastName),
+        email: userEmail,
+        photo: localSaved.photo !== undefined ? localSaved.photo : null,
+        borderStyle: localSaved.borderStyle || 'cyan',
+        zoom: typeof localSaved.zoom === 'number' ? localSaved.zoom : 1,
         authProvider: 'pipedream',
         isAuthSession: true,
         token: data.token || null,
@@ -614,12 +708,42 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
   const updateUserProfile = (updatedProfile) => {
     setUserProfile((prev) => {
       const merged = { ...prev, ...updatedProfile, isAuthSession: true };
+      const targetEmail = (merged.email || prev?.email || currentUser?.email || '').trim().toLowerCase();
+      const targetId = merged.id || prev?.id || currentUser?.id;
+
+      const customPayload = {
+        firstName: merged.firstName,
+        lastName: merged.lastName,
+        photo: merged.photo,
+        borderStyle: merged.borderStyle,
+        zoom: merged.zoom,
+      };
+
+      if (targetEmail) {
+        saveCustomProfileToStorage(targetEmail, customPayload);
+      }
+      if (targetId) {
+        saveCustomProfileToStorage(targetId, customPayload);
+      }
+
       try {
         sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(merged));
         localStorage.removeItem('resiboss_user_profile_v1');
       } catch (err) {
         console.warn('SessionStorage warning for profile:', err);
       }
+
+      // Sync to Supabase user_metadata if available
+      if (supabase && (currentUser || merged.id)) {
+        try {
+          supabase.auth.updateUser({
+            data: {
+              custom_profile: customPayload,
+            },
+          }).catch((e) => console.warn('Supabase profile sync warning:', e));
+        } catch (e) {}
+      }
+
       return merged;
     });
   };
@@ -745,6 +869,8 @@ const SESSION_PROFILE_KEY = 'resiboss_session_profile_v1';
         userProfile,
         setUserProfile,
         updateUserProfile,
+        saveCustomProfileToStorage,
+        getSavedCustomProfile,
         signInWithGoogle,
         pipedreamAuthUrl,
         setPipedreamAuthUrl,
