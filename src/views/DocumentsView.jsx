@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components';
 import { soundFx } from '../utils/soundEffects';
-import { downloadFile } from '../utils/fileDownloader';
 import {
   FolderArchive,
   Search,
@@ -18,7 +17,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Download,
 } from 'lucide-react';
 
 export const DocumentsView = () => {
@@ -45,47 +43,6 @@ export const DocumentsView = () => {
   const totalVaultValue = filteredDocs.reduce((acc, d) => acc + (d.total || 0), 0);
   const totalDeductibleVat = filteredDocs.reduce((acc, d) => acc + (d.vat || 0), 0);
   const approxStorageMB = Math.max(documents.length * 0.2, 0.5).toFixed(1);
-
-  const handleDownloadDoc = async (doc) => {
-    if (!doc) return;
-    soundFx.playLaserHum();
-    const csvContent = '\uFEFF' + [
-      'Field,Value',
-      `"Receipt ID","${doc.id || ''}"`,
-      `"Merchant Name","${(doc.merchant || '').replace(/"/g, '""')}"`,
-      `"TIN","${doc.tin || ''}"`,
-      `"Date","${doc.date || ''}"`,
-      `"Category","${doc.category || ''}"`,
-      `"Payment Method","${doc.paymentMethod || ''}"`,
-      `"Status","${doc.status || ''}"`,
-      `"Subtotal (Net of VAT)","${((doc.subtotal || 0)).toFixed(2)}"`,
-      `"VAT Amount (12%)","${((doc.vat || 0)).toFixed(2)}"`,
-      `"Total Amount (PHP)","${((doc.total || 0)).toFixed(2)}"`,
-      '',
-      'Item Name,Quantity,Unit Price,Total Price',
-      ...(doc.items || []).map(
-        (it) => `"${(it.name || '').replace(/"/g, '""')}",${it.qty || 1},${((it.price || it.total || 0)).toFixed(2)},${((it.total || 0)).toFixed(2)}`
-      ),
-    ].join('\r\n');
-
-    await downloadFile({
-      content: csvContent,
-      filename: `Receipt_${(doc.merchant || 'Record').replace(/[^a-zA-Z0-9_-]/g, '_')}_${doc.id}.csv`,
-      mimeType: 'text/csv;charset=utf-8;',
-    });
-
-    if (doc.imageUri && doc.imageUri.startsWith('data:image')) {
-      const ext = doc.imageUri.includes('png') ? 'png' : 'jpg';
-      await downloadFile({
-        content: doc.imageUri,
-        filename: `Receipt_Image_${doc.id}.${ext}`,
-        mimeType: ext === 'png' ? 'image/png' : 'image/jpeg',
-        isBase64: true,
-      });
-    }
-
-    soundFx.playSuccessChime();
-  };
 
   return (
     <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
@@ -387,14 +344,6 @@ export const DocumentsView = () => {
                       <span>{t.documents.inspect3D}</span>
                     </button>
                     <button
-                      onClick={() => handleDownloadDoc(doc)}
-                      className="liquid-btn liquid-btn-secondary"
-                      style={{ padding: '8px 12px', color: 'var(--cyan-glow)', borderColor: 'rgba(0, 242, 254, 0.3)' }}
-                      title="Download receipt to phone/computer"
-                    >
-                      <Download size={14} />
-                    </button>
-                    <button
                       onClick={() => deleteDocument(doc.id)}
                       className="liquid-btn liquid-btn-secondary"
                       style={{ padding: '8px 12px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.25)' }}
@@ -469,14 +418,6 @@ export const DocumentsView = () => {
                         title="Inspect Receipt"
                       >
                         <Eye size={13} />
-                      </button>
-                      <button
-                        onClick={() => handleDownloadDoc(doc)}
-                        className="liquid-btn liquid-btn-secondary"
-                        style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--cyan-glow)' }}
-                        title="Download Receipt"
-                      >
-                        <Download size={13} />
                       </button>
                       <button
                         onClick={() => deleteDocument(doc.id)}
