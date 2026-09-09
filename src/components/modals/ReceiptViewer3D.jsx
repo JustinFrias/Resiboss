@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { X, RotateCw, Sparkles, CheckCircle2, ShieldCheck, Download, Trash2, Tag, Calendar, Building2, Receipt } from 'lucide-react';
+import { downloadReceiptAsCsv, downloadReceiptImage } from '../../utils/fileDownloader';
+import { soundFx } from '../../utils/soundEffects';
 
 export const ReceiptViewer3D = () => {
   const { inspectingDoc, setInspectingDoc, updateDocument, deleteDocument, formatCurrency, t } = useApp();
@@ -484,6 +486,30 @@ export const ReceiptViewer3D = () => {
 
           {/* Action Footer */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--glass-border)' }}>
+            <button
+              onClick={async () => {
+                soundFx.playLaserHum();
+                await downloadReceiptAsCsv(inspectingDoc);
+                if (inspectingDoc.imageUri) {
+                  await downloadReceiptImage(inspectingDoc);
+                }
+                soundFx.playSuccessChime();
+              }}
+              className="liquid-btn liquid-btn-primary"
+              style={{
+                flex: 1.2,
+                justifyContent: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+                fontSize: '0.88rem',
+              }}
+              title="Download receipt to device"
+            >
+              <Download size={16} />
+              <span>Download Receipt</span>
+            </button>
             <button
               onClick={() => {
                 deleteDocument(inspectingDoc.id);

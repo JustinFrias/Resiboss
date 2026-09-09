@@ -16,12 +16,12 @@ const preprocessImage = (imageUri) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        // High-resolution scaling for small fonts
+        // Optimal scaling: target 1400px - 1800px max dimension for best LSTM accuracy and fast mobile memory
         let scale = 1;
-        if (img.width < 2000) {
-          scale = Math.min(3.5, 2400 / img.width);
-        } else if (img.width > 3400) {
-          scale = 2600 / img.width;
+        if (img.width > 2000) {
+          scale = 1800 / img.width;
+        } else if (img.width < 900) {
+          scale = Math.min(2.0, 1400 / img.width);
         }
 
         canvas.width = Math.round(img.width * scale);
@@ -30,35 +30,12 @@ const preprocessImage = (imageUri) => {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        // High contrast grayscale pass
-        ctx.filter = 'grayscale(100%) contrast(145%) brightness(104%)';
+        // Grayscale with natural contrast boost without destroying font glyph edges
+        ctx.filter = 'grayscale(100%) contrast(125%) brightness(105%)';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // Pixel-level adaptive text sharpening & dot-matrix edge enhancement
-        try {
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imgData.data;
-
-          for (let i = 0; i < data.length; i += 4) {
-            const v = data[i];
-            let out;
-            if (v < 115) {
-              out = Math.max(0, Math.round(v * 0.65)); // Darken text
-            } else if (v > 165) {
-              out = Math.min(255, Math.round(v * 1.2)); // Push paper background to white
-            } else {
-              out = v;
-            }
-            data[i] = out;
-            data[i + 1] = out;
-            data[i + 2] = out;
-          }
-          ctx.putImageData(imgData, 0, 0);
-        } catch (pxErr) {
-          console.warn('Pixel processing fallback:', pxErr);
-        }
-
-        resolve(canvas.toDataURL('image/png'));
+        // Fast high-quality JPEG export (small size, avoid mobile out-of-memory crash)
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
       } catch (err) {
         console.warn('Preprocessing canvas fallback:', err);
         resolve(imageUri);
@@ -207,21 +184,37 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     let fullText = '';
     let confidenceVal = 85;
 
-    // Try Tesseract createWorker with PSM 6 for optimal receipt columns & spacing
+    // Try Tesseract worker with PSM 6 (uniform block of text, best for itemized receipts)
     try {
-      const worker = await Tesseract.createWorker('eng', 1, {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            const pct = Math.floor(25 + (m.progress || 0) * 65);
-            onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
-          }
-        },
-      });
+      let worker;
+      try {
+        const localLangPath = `${window.location.origin}/tessdata`;
+        worker = await Tesseract.createWorker('eng', 1, {
+          langPath: localLangPath,
+          gzip: false,
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              const pct = Math.floor(25 + (m.progress || 0) * 65);
+              onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+            }
+          },
+        });
+      } catch (localWorkerErr) {
+        console.warn('Local traineddata notice, falling back to CDN worker:', localWorkerErr);
+        worker = await Tesseract.createWorker('eng', 1, {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              const pct = Math.floor(25 + (m.progress || 0) * 65);
+              onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+            }
+          },
+        });
+      }
 
-      // PSM 4: Assume a single column of text of variable sizes (ideal for receipts with tiny line items and large totals)
+      // PSM 6: Uniform block of text - optimal for receipts with store header, items, totals
       try {
         await worker.setParameters({
-          tessedit_pageseg_mode: '4',
+          tessedit_pageseg_mode: '6',
           preserve_interword_spaces: '1',
         });
       } catch (paramErr) {
@@ -232,15 +225,15 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       fullText = (res?.data?.text || '').trim();
       confidenceVal = Math.round(res?.data?.confidence || 85);
 
-      // If PSM 4 yielded very few lines, try PSM 6 (uniform block)
-      if (fullText.length < 50) {
+      // If PSM 6 yielded minimal characters, try PSM 4
+      if (fullText.length < 25) {
         try {
-          await worker.setParameters({ tessedit_pageseg_mode: '6' });
-          const psm6Res = await worker.recognize(processedImageUri);
-          const psm6Text = (psm6Res?.data?.text || '').trim();
-          if (psm6Text.length > fullText.length) {
-            fullText = psm6Text;
-            confidenceVal = Math.round(psm6Res?.data?.confidence || confidenceVal);
+          await worker.setParameters({ tessedit_pageseg_mode: '4' });
+          const psm4Res = await worker.recognize(processedImageUri);
+          const psm4Text = (psm4Res?.data?.text || '').trim();
+          if (psm4Text.length > fullText.length) {
+            fullText = psm4Text;
+            confidenceVal = Math.round(psm4Res?.data?.confidence || confidenceVal);
           }
         } catch (e) {}
       }
@@ -248,21 +241,24 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       await worker.terminate();
     } catch (workerErr) {
       console.warn('createWorker fallback to recognize:', workerErr);
-      // Fallback to standard Tesseract.recognize
-      const directRes = await Tesseract.recognize(processedImageUri, 'eng', {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            const pct = Math.floor(25 + (m.progress || 0) * 65);
-            onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
-          }
-        },
-      });
-      fullText = (directRes?.data?.text || '').trim();
-      confidenceVal = Math.round(directRes?.data?.confidence || 80);
+      try {
+        const directRes = await Tesseract.recognize(processedImageUri, 'eng', {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              const pct = Math.floor(25 + (m.progress || 0) * 65);
+              onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+            }
+          },
+        });
+        fullText = (directRes?.data?.text || '').trim();
+        confidenceVal = Math.round(directRes?.data?.confidence || 80);
+      } catch (directErr) {
+        console.error('Direct recognize note:', directErr);
+      }
     }
 
-    // Secondary fallback: if preprocessed image yielded very little text, try raw image directly
-    if (fullText.length < 30) {
+    // Secondary fallback: if processed image yielded little text, try raw image directly
+    if (fullText.length < 25) {
       try {
         const rawRes = await Tesseract.recognize(imageUri, 'eng');
         const rawText = (rawRes?.data?.text || '').trim();
@@ -283,8 +279,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       .filter((l) => l.length > 0);
 
     // =========================================================================
-    // RECEIPT VALIDATION CHECK
-    // Ensure the image actually represents a valid receipt, bill, or invoice
+    // FORGIVING & INTELLIGENT RECEIPT VALIDATION CHECK
+    // Ensure the image has readable content; do not falsely reject user receipts!
     // =========================================================================
     const cleanWords = fullText
       .toLowerCase()
@@ -293,13 +289,17 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       .filter((w) => w.length >= 2);
 
     const receiptKeywords = [
-      'total', 'subtotal', 'sub-total', 'sub total', 'amount', 'vat', 'tax', 'tin', 'receipt', 'invoice',
-      'sales invoice', 'official receipt', 'cash receipt', 'or#', 'si#', 'cash', 'change',
-      'tendered', 'balance', 'due', 'payment', 'card', 'visa', 'mastercard', 'qty', 'price',
-      'items', 'transaction', 'trans', 'kiosk', 'terminal', 'store', 'branch', 'bir', 'order',
-      'dine in', 'take out', 'drive thru', 'eat in', 'discount', 'net of vat', 'vatable', 'vat-exempt',
-      'zero rated', 'input tax', 'merchant', 'peso', 'pesos', 'php', 'burger', 'king', 'bk',
-      'bites', 'royal', 'perks', 'crowns', 'cust', 'mcdonald', 'hamburger', 'tel#', 'thank you', 'tel'
+      'total', 'subtotal', 'sub-total', 'sub total', 'amount', 'amt', 'amout', 'tot', 'ttl', 'due', 'bal', 'balance',
+      'vat', 'tax', 'tin', 'receipt', 'invoice', 'sales invoice', 'official receipt', 'cash receipt',
+      'or#', 'si#', 'ci#', 'dr#', 'inv', 'order', 'bill', 'billing', 'statement', 'cash', 'change',
+      'tendered', 'tend', 'payment', 'paid', 'card', 'visa', 'mastercard', 'qty', 'price',
+      'items', 'item', 'transaction', 'trans', 'kiosk', 'terminal', 'store', 'branch', 'bir',
+      'dine in', 'take out', 'drive thru', 'eat in', 'discount', 'disc', 'net of vat', 'vatable',
+      'vat-exempt', 'zero rated', 'input tax', 'output tax', 'merchant', 'peso', 'pesos', 'php', 'pso',
+      'burger', 'king', 'bk', 'royal', 'perks', 'crowns', 'cust', 'mcdonald', 'hamburger',
+      'tel#', 'thank you', 'tel', 'salamat', 'table', 'tbl', 'cashier', 'cshr', 'server', 'chk', 'check',
+      'food', 'market', 'pharmacy', 'express', 'supermarket', 'mall', 'cafe', 'resto', 'coffee',
+      'bakery', 'bakeshop', 'petron', 'shell', 'caltex', 'mercury', 'watsons', '7-eleven', 'alfamart'
     ];
 
     const matchedKeywords = receiptKeywords.filter((kw) => {
@@ -314,21 +314,22 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     const foundPrices = fullText.match(priceRegex) || [];
 
     const hasKnownBrand = knownBrands.some((b) => b.match.test(fullText));
-    const hasStrongKeywords = matchedKeywords.some((kw) =>
-      ['total', 'subtotal', 'sub total', 'vat', 'tax', 'tin', 'invoice', 'receipt', 'official receipt', 'sales invoice', 'or#', 'si#', 'dine in', 'eat in', 'order', 'cash', 'tendered', 'mcdonald', 'burger', 'meralco', 'electric', 'bill', 'due', 'amount'].includes(kw)
-    );
+    const hasAnyPrice = foundPrices.length > 0;
+    const hasAnyKeyword = matchedKeywords.length > 0;
+    const hasNumbers = /\d{2,}/.test(fullText);
 
     let isValidReceipt = false;
     let invalidReason = '';
 
-    if (cleanWords.length < 2) {
+    // If the image contains ANY legible text, numbers, or prices, accept it as a valid receipt!
+    if (fullText.trim().length < 3) {
       isValidReceipt = false;
-      invalidReason = 'No readable text detected in image. Please ensure the receipt is clearly visible.';
-    } else if (hasKnownBrand || hasStrongKeywords || foundPrices.length >= 1 || matchedKeywords.length >= 1 || cleanWords.length >= 4) {
+      invalidReason = 'No readable characters found in this photo. Please ensure the receipt is well-lit, in focus, and flat.';
+    } else if (hasKnownBrand || hasAnyKeyword || hasAnyPrice || hasNumbers || cleanWords.length >= 1) {
       isValidReceipt = true;
     } else {
       isValidReceipt = false;
-      invalidReason = 'The uploaded photo does not appear to be an official receipt or sales invoice. No itemized prices, store name, or total amount found.';
+      invalidReason = 'The uploaded photo does not appear to contain legible text or price amounts. Please capture a clearer photo.';
     }
 
     if (!isValidReceipt) {

@@ -16,7 +16,10 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
+  Download,
 } from 'lucide-react';
+import { downloadReceiptAsCsv, downloadReceiptImage } from '../utils/fileDownloader';
+import { soundFx } from '../utils/soundEffects';
 
 export const DocumentsView = () => {
   const { documents, setInspectingDoc, deleteDocument, formatCurrency, t } = useApp();
@@ -42,6 +45,17 @@ export const DocumentsView = () => {
   const totalVaultValue = filteredDocs.reduce((acc, d) => acc + (d.total || 0), 0);
   const totalDeductibleVat = filteredDocs.reduce((acc, d) => acc + (d.vat || 0), 0);
   const approxStorageMB = Math.max(documents.length * 0.2, 0.5).toFixed(1);
+
+  const handleDownloadDoc = async (doc, e) => {
+    if (e) e.stopPropagation();
+    if (!doc) return;
+    soundFx.playLaserHum();
+    await downloadReceiptAsCsv(doc);
+    if (doc.imageUri) {
+      await downloadReceiptImage(doc);
+    }
+    soundFx.playSuccessChime();
+  };
 
   return (
     <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
@@ -343,6 +357,14 @@ export const DocumentsView = () => {
                       <span>{t.documents.inspect3D}</span>
                     </button>
                     <button
+                      onClick={(e) => handleDownloadDoc(doc, e)}
+                      className="liquid-btn liquid-btn-secondary"
+                      style={{ padding: '8px 12px', color: 'var(--cyan-glow)', borderColor: 'rgba(0, 242, 254, 0.3)' }}
+                      title="Download receipt to device"
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
                       onClick={() => deleteDocument(doc.id)}
                       className="liquid-btn liquid-btn-secondary"
                       style={{ padding: '8px 12px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.25)' }}
@@ -414,13 +436,23 @@ export const DocumentsView = () => {
                         onClick={() => setInspectingDoc(doc)}
                         className="liquid-btn liquid-btn-secondary"
                         style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                        title="View 3D Receipt"
                       >
                         <Eye size={13} />
+                      </button>
+                      <button
+                        onClick={(e) => handleDownloadDoc(doc, e)}
+                        className="liquid-btn liquid-btn-secondary"
+                        style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--cyan-glow)' }}
+                        title="Download Receipt"
+                      >
+                        <Download size={13} />
                       </button>
                       <button
                         onClick={() => deleteDocument(doc.id)}
                         className="liquid-btn liquid-btn-secondary"
                         style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f87171' }}
+                        title="Delete Receipt"
                       >
                         <Trash2 size={13} />
                       </button>

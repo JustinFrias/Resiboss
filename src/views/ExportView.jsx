@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
+import { downloadFile } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 import {
   Download,
@@ -135,7 +136,7 @@ export const ExportView = () => {
     const timestamp = new Date().toISOString().split('T')[0];
 
     selectedFormats.forEach((fmt, index) => {
-      setTimeout(() => {
+      setTimeout(async () => {
         let csvHeaders = [];
         let csvRows = [];
 
@@ -216,16 +217,12 @@ export const ExportView = () => {
         }
 
         const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', downloadUrl);
-        link.setAttribute('download', `Resiboss_${fmt}_Journal_${timestamp}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(downloadUrl);
-      }, index * 300);
+        await downloadFile({
+          content: csvContent,
+          filename: `Resiboss_${fmt}_Journal_${timestamp}.csv`,
+          mimeType: 'text/csv;charset=utf-8;',
+        });
+      }, index * 400);
     });
 
     setTimeout(() => {

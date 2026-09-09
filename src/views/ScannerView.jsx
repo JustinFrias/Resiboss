@@ -195,6 +195,7 @@ export const ScannerView = () => {
           tip: 'Ensure the image is clear, flat, and focused on a receipt containing a store name and prices.',
           imageUri: imageUri,
           filename: filename,
+          rawOcrText: ocrResult.rawOcrText || '',
         });
         soundFx.playWarning();
         return;
@@ -318,13 +319,48 @@ export const ScannerView = () => {
     }
   };
 
+  const handleUsePhotoAnyway = () => {
+    soundFx.playClick();
+    const photoUri = scanError?.imageUri || selectedFileImage || null;
+    const photoName = scanError?.filename || selectedFileName || 'Receipt_Capture.jpg';
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const photoDoc = {
+      id: `REC-${now.getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      merchant: 'Scanned Receipt',
+      date: dateStr,
+      time: timeStr,
+      tin: '000-000-000-000',
+      category: 'Food',
+      paymentMethod: 'Cash',
+      subtotal: 0.0,
+      vat: 0.0,
+      total: 0.0,
+      items: [{ name: 'Scanned Item', qty: 1, price: 0.0, total: 0.0 }],
+      currency: 'PHP',
+      confidence: 75,
+      rawOcrText: scanError?.rawOcrText || 'Manual Photo Upload',
+      detectedBoxes: [],
+      imageUri: photoUri,
+      fileName: photoName,
+      status: 'Pending',
+    };
+
+    setScanError(null);
+    setCurrentReceipt(photoDoc);
+  };
+
   const handleManualFallback = () => {
     soundFx.playClick();
+    const photoUri = scanError?.imageUri || selectedFileImage || null;
+    const photoName = scanError?.filename || selectedFileName || 'Manual Receipt';
     setScanError(null);
     const manualDoc = {
       id: `REC-2026-${Math.floor(100 + Math.random() * 900)}`,
-      imageUri: selectedFileImage,
-      fileName: selectedFileName || 'Manual Receipt',
+      imageUri: photoUri,
+      fileName: photoName,
       merchant: 'Manual Merchant Entry',
       date: new Date().toISOString().split('T')[0],
       time: '12:00 PM',
@@ -337,7 +373,7 @@ export const ScannerView = () => {
       items: [{ name: 'Custom Item', qty: 1, price: 100.0, total: 100.0 }],
       currency: 'PHP',
       confidence: 100,
-      rawOcrText: 'Manual Document Entry',
+      rawOcrText: scanError?.rawOcrText || 'Manual Document Entry',
       detectedBoxes: [],
     };
     setCurrentReceipt(manualDoc);
@@ -1178,10 +1214,33 @@ export const ScannerView = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '22px' }}>
+                  <button
+                    onClick={handleUsePhotoAnyway}
+                    className="liquid-btn liquid-btn-primary"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      fontSize: '0.88rem',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(59, 130, 246, 0.35))',
+                      borderColor: 'var(--cyan-glow)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontWeight: 650,
+                      boxShadow: '0 4px 16px rgba(0, 242, 254, 0.2)',
+                    }}
+                  >
+                    <FileText size={16} />
+                    <span>Proceed with this Photo / Edit Details</span>
+                  </button>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <button
                       onClick={handleStartCamera}
-                      className="liquid-btn liquid-btn-primary"
+                      className="liquid-btn liquid-btn-secondary"
                       style={{ padding: '12px', fontSize: '0.85rem', borderRadius: '12px' }}
                     >
                       <Camera size={16} />
