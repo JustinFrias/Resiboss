@@ -56,7 +56,7 @@ const MainLayout = () => {
         position: 'relative',
         minHeight: '100vh',
         color: 'var(--text-primary)',
-        overflowX: 'hidden',
+        overflowX: 'clip',
       }}
     >
       {/* 3D Liquid Canvas Background */}

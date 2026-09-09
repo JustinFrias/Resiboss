@@ -227,12 +227,10 @@ export const TopBar = ({ onOpenMobile }) => {
         borderRadius: '16px',
         border: '1px solid var(--glass-border)',
         background: 'var(--bg-surface)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         gap: '16px',
         position: 'sticky',
-        top: 0,
-        zIndex: 200,
+        top: '12px',
+        zIndex: 90,
         overflow: 'visible',
       }}
     >

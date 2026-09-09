@@ -806,6 +806,20 @@ html, body {
   color: #475569 !important;
 }
 
+/* Sticky TopBar Header (Desktop) */
+.topbar-header {
+  position: sticky !important;
+  top: 12px !important;
+  z-index: 90 !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="light"] .topbar-header {
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.04) !important;
+}
+
 /* ==========================================================================
    SCANNER VIEWPORT ZOOM CONTROLS & ERROR NOTIFICATIONS
    ========================================================================== */
@@ -1202,12 +1216,10 @@ html, body {
   padding: 14px 24px 14px 8px;
   max-width: none;
   width: calc(100% - 292px);
-  height: 100vh;
+  min-height: 100vh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
   transition: margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1266,9 +1278,6 @@ html, body {
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
-    height: 100vh !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
     padding: 10px 12px calc(24px + env(safe-area-inset-bottom, 0px)) 12px !important;
   }
   .view-viewport {
@@ -1294,7 +1303,7 @@ html, body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(72px + env(safe-area-inset-bottom, 0px));
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
     padding: 6px 8px env(safe-area-inset-bottom, 8px) 8px;
     background: linear-gradient(180deg, rgba(16, 24, 44, 0.96) 0%, rgba(8, 12, 24, 0.98) 100%);
     backdrop-filter: blur(24px) saturate(200%);
@@ -1303,7 +1312,7 @@ html, body {
     box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     z-index: 120;
     align-items: center;
-    justify-content: center;
+    justify-content: space-around;
   }
 
   [data-theme="light"] .mobile-bottom-nav {
@@ -1394,16 +1403,16 @@ html, body {
   }
 
   .mobile-nav-hero-circle {
-    width: 62px;
-    height: 62px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
-    margin-top: -32px;
+    margin-top: -24px;
     background: linear-gradient(180deg, #3df8b0 0%, #10b981 50%, #047857 100%);
     color: #042416;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 28px rgba(32, 248, 161, 0.45), inset 0 2px 1px rgba(255, 255, 255, 0.75), inset 0 -2px 1px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55), 0 0 20px rgba(32, 248, 161, 0.4), inset 0 2px 1px rgba(255, 255, 255, 0.75), inset 0 -2px 1px rgba(0, 0, 0, 0.5);
     border: 3px solid rgba(8, 14, 30, 0.95);
     transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     animation: mobileScanPulse 3s ease-in-out infinite;
@@ -1559,11 +1568,17 @@ html, body {
 
   /* TopBar Mobile Adaptation */
   .topbar-header {
+    position: sticky !important;
+    top: max(8px, env(safe-area-inset-top, 8px)) !important;
+    z-index: 90 !important;
     padding: 8px 10px !important;
     gap: 6px !important;
     border-radius: 14px !important;
     margin-bottom: 12px !important;
     overflow: visible !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   }
 
   .topbar-right-actions {
