@@ -2,6 +2,7 @@
 export { Sidebar } from './layout/Sidebar';
 export { TopBar } from './layout/TopBar';
 export { MobileBottomNav } from './layout/MobileBottomNav';
+export { MobileAppGatekeeper } from './mobile/MobileAppGatekeeper';
 
 // Modal & Inspection Components
 export { ReceiptViewer3D } from './modals/ReceiptViewer3D';
@@ -13,9 +14,8 @@ export { CookieConsentBanner } from './legal/CookieConsentBanner';
 export { TiltCard } from './ui/TiltCard';
 export { ResibossLogo } from './ui/ResibossLogo';
 
-// Integrations
-export { PipedreamAuthCard } from './integrations/PipedreamAuthCard';
-export { PipedreamSetupTab } from './integrations/PipedreamSetupTab';
+// Authentication
+export { ResibossAuthCard } from './auth/ResibossAuthCard';
 
 // Canvas / Visual Background
 export { LiquidBackground3D } from './canvas/LiquidBackground3D';

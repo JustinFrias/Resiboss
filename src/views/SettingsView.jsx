@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { PipedreamAuthCard } from '../components';
+import { ResibossAuthCard } from '../components';
 import {
   Sliders,
   User,
@@ -519,7 +519,7 @@ export const SettingsView = () => {
           {activeSettingTab === 'profile' && (
             <div>
               {!userProfile ? (
-                <PipedreamAuthCard />
+                <ResibossAuthCard />
               ) : (
                 <form onSubmit={handleSaveProfile}>
                   <div style={{ marginBottom: '18px' }}>

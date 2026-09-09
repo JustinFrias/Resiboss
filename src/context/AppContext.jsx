@@ -396,21 +396,19 @@ export const AppProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setCurrentUser(session.user);
-        const profile = buildUserProfile(session.user, 'google');
+        const provider = session.user.app_metadata?.provider || 'email';
+        const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
         try {
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
         } catch (e) {}
       } else if (event === 'SIGNED_OUT') {
-        // Only clear if explicitly signed out from Supabase (and was a Google auth session)
+        // Clear profile on sign out
         setUserProfile((prev) => {
-          if (prev?.authProvider === 'google') {
-            try {
-              sessionStorage.removeItem(SESSION_PROFILE_KEY);
-            } catch (e) {}
-            return null;
-          }
-          return prev;
+          try {
+            sessionStorage.removeItem(SESSION_PROFILE_KEY);
+          } catch (e) {}
+          return null;
         });
         setCurrentUser(null);
         setDocuments([]);
@@ -584,6 +582,87 @@ export const AppProvider = ({ children }) => {
     return data;
   };
 
+  const signInWithEmail = async (email, password) => {
+    if (!isTermsAccepted) {
+      setIsTermsOpen(true);
+      throw new Error(
+        language === 'fil'
+          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in.'
+          : 'Please read and accept the Terms & Conditions before continuing.'
+      );
+    }
+
+    if (!email || !password) {
+      throw new Error(language === 'fil' ? 'Pakilagay ang email at password.' : 'Please enter your email and password.');
+    }
+
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+
+    if (error) {
+      if (error.message?.includes('Invalid login credentials')) {
+        throw new Error(language === 'fil' ? 'Maling email o password.' : 'Invalid email or password.');
+      }
+      throw error;
+    }
+    return data;
+  };
+
+  const signUpWithEmail = async (email, password) => {
+    if (!isTermsAccepted) {
+      setIsTermsOpen(true);
+      throw new Error(
+        language === 'fil'
+          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in.'
+          : 'Please read and accept the Terms & Conditions before continuing.'
+      );
+    }
+
+    if (!email || !password) {
+      throw new Error(language === 'fil' ? 'Pakilagay ang email at password.' : 'Please enter your email and password.');
+    }
+
+    if (password.length < 6) {
+      throw new Error(language === 'fil' ? 'Ang password ay dapat hindi bababa sa 6 characters.' : 'Password must be at least 6 characters.');
+    }
+
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+      options: {
+        data: {
+          full_name: email.split('@')[0],
+        },
+      },
+    });
+
+    if (error) throw error;
+    return data;
+  };
+
+  const resetPasswordForEmail = async (email) => {
+    if (!email) {
+      throw new Error(language === 'fil' ? 'Pakilagay ang iyong email address.' : 'Please enter your email address.');
+    }
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined,
+    });
+    if (error) throw error;
+  };
+
   const signOut = async () => {
     if (supabase) {
       try {
@@ -660,187 +739,19 @@ export const AppProvider = ({ children }) => {
     await signOut();
   };
 
-  // Pipedream Authentication Webhook Integration
-  const DEFAULT_PIPEDREAM_URL = 'https://eoihgfgvur5v27v.m.pipedream.net';
-
-  const [pipedreamAuthUrl, setPipedreamAuthUrlState] = useState(() => {
-    try {
-      return (
-        localStorage.getItem('resiboss_pipedream_auth_url') ||
-        import.meta.env.VITE_PIPEDREAM_AUTH_URL ||
-        DEFAULT_PIPEDREAM_URL
-      );
-    } catch (e) {
-      return DEFAULT_PIPEDREAM_URL;
+  // Supabase Edge Function Invoker
+  const invokeEdgeFunction = async (functionName, body = {}) => {
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
     }
-  });
-
-  const setPipedreamAuthUrl = (url) => {
-    const trimmed = (url || '').trim();
-    setPipedreamAuthUrlState(trimmed);
-    try {
-      localStorage.setItem('resiboss_pipedream_auth_url', trimmed);
-    } catch (e) {}
-  };
-
-  const signInWithPipedream = async (email, password) => {
-    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL || DEFAULT_PIPEDREAM_URL;
-    if (!url) {
-      throw new Error('Hindi maabot ang authentication server. Pakisubukang muli mamaya.');
+    const { data, error } = await supabase.functions.invoke(functionName, {
+      body,
+    });
+    if (error) {
+      console.warn(`Edge function '${functionName}' error:`, error.message);
+      throw error;
     }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-        body: JSON.stringify({
-          action: 'login',
-          email: email.trim().toLowerCase(),
-          password,
-          timestamp: new Date().toISOString(),
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const text = await response.text();
-      let data = {};
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        data = { message: text };
-      }
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Maling email o password.');
-      }
-
-      const user = data.user || {};
-      const userEmail = (user.email || email || '').trim().toLowerCase();
-      const localSaved = (userEmail ? getSavedCustomProfile(userEmail) : null) || (user.id ? getSavedCustomProfile(user.id) : null) || {};
-
-      const profile = {
-        id: user.id || `user_${Date.now()}`,
-        firstName: localSaved.firstName !== undefined && localSaved.firstName !== ''
-          ? localSaved.firstName
-          : (user.firstName || user.fullName?.split(' ')[0] || userEmail.split('@')[0]),
-        lastName: localSaved.lastName !== undefined && localSaved.lastName !== ''
-          ? localSaved.lastName
-          : (user.lastName || user.fullName?.split(' ').slice(1).join(' ') || ''),
-        email: userEmail,
-        photo: localSaved.photo !== undefined ? localSaved.photo : (user.photo || null),
-        borderStyle: localSaved.borderStyle || 'cyan',
-        zoom: typeof localSaved.zoom === 'number' ? localSaved.zoom : 1,
-        authProvider: 'pipedream',
-        isAuthSession: true,
-        token: data.token || null,
-      };
-
-      setCurrentUser({ id: profile.id, email: profile.email });
-      setUserProfile(profile);
-      try {
-        sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
-        localStorage.removeItem('resiboss_user_profile_v1');
-      } catch (e) {}
-
-      return profile;
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error('Nag-timeout ang server. Pakisubukang muli o tingnan ang internet.');
-      }
-      throw err;
-    }
-  };
-
-  const registerWithPipedream = async (fullName, email, password) => {
-    const url = pipedreamAuthUrl || import.meta.env.VITE_PIPEDREAM_AUTH_URL || DEFAULT_PIPEDREAM_URL;
-    if (!url) {
-      throw new Error('Hindi maabot ang authentication server. Pakisubukang muli mamaya.');
-    }
-
-    const trimmedName = fullName.trim();
-    const parts = trimmedName.split(' ');
-    const firstName = parts[0] || 'User';
-    const lastName = parts.slice(1).join(' ') || '';
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-        body: JSON.stringify({
-          action: 'register',
-          fullName: trimmedName,
-          firstName,
-          lastName,
-          email: email.trim().toLowerCase(),
-          password,
-          timestamp: new Date().toISOString(),
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const text = await response.text();
-      let data = {};
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        data = { message: text };
-      }
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Nabigo ang pag-register. Pakisubukang muli.');
-      }
-
-      const user = data.user || {};
-      const userEmail = (user.email || email || '').trim().toLowerCase();
-      const localSaved = (userEmail ? getSavedCustomProfile(userEmail) : null) || (user.id ? getSavedCustomProfile(user.id) : null) || {};
-
-      const profile = {
-        id: user.id || `user_${Date.now()}`,
-        firstName: localSaved.firstName !== undefined && localSaved.firstName !== ''
-          ? localSaved.firstName
-          : (user.firstName || firstName),
-        lastName: localSaved.lastName !== undefined && localSaved.lastName !== ''
-          ? localSaved.lastName
-          : (user.lastName || lastName),
-        email: userEmail,
-        photo: localSaved.photo !== undefined ? localSaved.photo : null,
-        borderStyle: localSaved.borderStyle || 'cyan',
-        zoom: typeof localSaved.zoom === 'number' ? localSaved.zoom : 1,
-        authProvider: 'pipedream',
-        isAuthSession: true,
-        token: data.token || null,
-      };
-
-      setCurrentUser({ id: profile.id, email: profile.email });
-      setUserProfile(profile);
-      try {
-        sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
-        localStorage.removeItem('resiboss_user_profile_v1');
-      } catch (e) {}
-
-      return profile;
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error('Nag-timeout ang server. Pakisubukang muli o tingnan ang internet.');
-      }
-      throw err;
-    }
+    return data;
   };
 
   const updateUserProfile = (updatedProfile) => {
@@ -1015,10 +926,10 @@ export const AppProvider = ({ children }) => {
         saveCustomProfileToStorage,
         getSavedCustomProfile,
         signInWithGoogle,
-        pipedreamAuthUrl,
-        setPipedreamAuthUrl,
-        signInWithPipedream,
-        registerWithPipedream,
+        signInWithEmail,
+        signUpWithEmail,
+        resetPasswordForEmail,
+        invokeEdgeFunction,
         signOut,
         deleteAccount,
         inspectingDoc,

@@ -397,11 +397,16 @@ export const ScannerView = () => {
     if (field === 'price' || field === 'qty') {
       const qty = parseFloat(updatedItems[index].qty) || 1;
       const price = parseFloat(updatedItems[index].price) || 0;
-      updatedItems[index].total = qty * price;
+      updatedItems[index].total = +(qty * price).toFixed(2);
+    } else if (field === 'total') {
+      const total = parseFloat(value) || 0;
+      const qty = parseFloat(updatedItems[index].qty) || 1;
+      updatedItems[index].price = +(total / qty).toFixed(2);
     }
 
-    const newSubtotal = updatedItems.reduce((acc, it) => acc + (parseFloat(it.total) || 0), 0);
-    const newVat = +(newSubtotal * 0.12).toFixed(2);
+    const newSubtotal = +(updatedItems.reduce((acc, it) => acc + (parseFloat(it.total) || 0), 0)).toFixed(2);
+    const isPhp = currentReceipt.currency !== 'USD';
+    const newVat = +(newSubtotal * (isPhp ? 0.12 : 0.08)).toFixed(2);
     const newTotal = +(newSubtotal + newVat).toFixed(2);
 
     setCurrentReceipt({
@@ -410,6 +415,42 @@ export const ScannerView = () => {
       subtotal: newSubtotal,
       vat: newVat,
       total: newTotal,
+    });
+  };
+
+  const handleTotalChange = (val) => {
+    if (!currentReceipt) return;
+    const num = parseFloat(val) || 0;
+    const isPhp = currentReceipt.currency !== 'USD';
+    const newSubtotal = +(num / (isPhp ? 1.12 : 1.08)).toFixed(2);
+    const newVat = +(num - newSubtotal).toFixed(2);
+    setCurrentReceipt({
+      ...currentReceipt,
+      total: num,
+      subtotal: newSubtotal,
+      vat: newVat,
+    });
+  };
+
+  const handleSubtotalChange = (val) => {
+    if (!currentReceipt) return;
+    const num = parseFloat(val) || 0;
+    const currentVat = parseFloat(currentReceipt.vat) || 0;
+    setCurrentReceipt({
+      ...currentReceipt,
+      subtotal: num,
+      total: +(num + currentVat).toFixed(2),
+    });
+  };
+
+  const handleVatChange = (val) => {
+    if (!currentReceipt) return;
+    const num = parseFloat(val) || 0;
+    const currentSub = parseFloat(currentReceipt.subtotal) || 0;
+    setCurrentReceipt({
+      ...currentReceipt,
+      vat: num,
+      total: +(currentSub + num).toFixed(2),
     });
   };
 
@@ -425,8 +466,9 @@ export const ScannerView = () => {
   const handleRemoveItem = (index) => {
     if (!currentReceipt) return;
     const updatedItems = currentReceipt.items.filter((_, i) => i !== index);
-    const newSubtotal = updatedItems.reduce((acc, it) => acc + (parseFloat(it.total) || 0), 0);
-    const newVat = +(newSubtotal * 0.12).toFixed(2);
+    const newSubtotal = +(updatedItems.reduce((acc, it) => acc + (parseFloat(it.total) || 0), 0)).toFixed(2);
+    const isPhp = currentReceipt.currency !== 'USD';
+    const newVat = +(newSubtotal * (isPhp ? 0.12 : 0.08)).toFixed(2);
     const newTotal = +(newSubtotal + newVat).toFixed(2);
 
     setCurrentReceipt({
@@ -1321,6 +1363,7 @@ export const ScannerView = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
+                                gap: '8px',
                                 background: 'rgba(255, 255, 255, 0.03)',
                                 border: '1px solid var(--glass-border)',
                                 borderRadius: '8px',
@@ -1328,21 +1371,61 @@ export const ScannerView = () => {
                                 fontSize: '0.8rem',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                                <span style={{ color: 'var(--cyan-glow)', fontWeight: 600 }}>{it.qty || 1}x</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  style={{
+                                    width: '36px',
+                                    background: 'rgba(0, 242, 254, 0.08)',
+                                    border: '1px solid rgba(0, 242, 254, 0.25)',
+                                    borderRadius: '6px',
+                                    color: 'var(--cyan-glow)',
+                                    fontWeight: 700,
+                                    fontSize: '0.78rem',
+                                    textAlign: 'center',
+                                    padding: '2px 0',
+                                    outline: 'none',
+                                  }}
+                                  value={it.qty || 1}
+                                  onChange={(e) => handleItemChange(idx, 'qty', parseInt(e.target.value, 10) || 1)}
+                                  title="Quantity"
+                                />
                                 <input
                                   style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
                                   value={it.name || ''}
                                   onChange={(e) => handleItemChange(idx, 'name', e.target.value)}
+                                  placeholder="Item name"
                                 />
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-                                  {currentReceipt.currency === 'USD' ? '$' : '₱'}{(it.total || 0).toFixed(2)}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  {currentReceipt.currency === 'USD' ? '$' : '₱'}
                                 </span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  style={{
+                                    width: '78px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid var(--glass-border)',
+                                    borderRadius: '6px',
+                                    color: 'var(--text-primary)',
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 600,
+                                    textAlign: 'right',
+                                    padding: '3px 6px',
+                                    outline: 'none',
+                                  }}
+                                  value={it.total !== undefined ? it.total : ''}
+                                  onChange={(e) => handleItemChange(idx, 'total', e.target.value)}
+                                  title="Item total price"
+                                />
                                 <button
                                   onClick={() => handleRemoveItem(idx)}
-                                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}
+                                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                                  title="Delete item"
                                 >
                                   <Trash2 size={13} />
                                 </button>
@@ -1376,14 +1459,82 @@ export const ScannerView = () => {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        gap: '12px',
                       }}
                     >
-                      <div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                          {t.scanner.subtotal}: {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.subtotal || 0).toFixed(2)} • {t.scanner.vat}: {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.vat || 0).toFixed(2)}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span>{t.scanner.subtotal}:</span>
+                          <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                            {currentReceipt.currency === 'USD' ? '$' : '₱'}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            style={{
+                              width: '74px',
+                              background: 'rgba(255, 255, 255, 0.06)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              borderRadius: '4px',
+                              color: 'var(--text-primary)',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '0.76rem',
+                              padding: '2px 4px',
+                              outline: 'none',
+                            }}
+                            value={currentReceipt.subtotal !== undefined ? currentReceipt.subtotal : ''}
+                            onChange={(e) => handleSubtotalChange(e.target.value)}
+                            title="Edit subtotal"
+                          />
+                          <span style={{ opacity: 0.5 }}>•</span>
+                          <span>{t.scanner.vat}:</span>
+                          <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                            {currentReceipt.currency === 'USD' ? '$' : '₱'}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            style={{
+                              width: '66px',
+                              background: 'rgba(255, 255, 255, 0.06)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              borderRadius: '4px',
+                              color: 'var(--text-primary)',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '0.76rem',
+                              padding: '2px 4px',
+                              outline: 'none',
+                            }}
+                            value={currentReceipt.vat !== undefined ? currentReceipt.vat : ''}
+                            onChange={(e) => handleVatChange(e.target.value)}
+                            title="Edit VAT"
+                          />
                         </div>
-                        <div style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--cyan-glow)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-                          {currentReceipt.currency === 'USD' ? '$' : '₱'}{Number(currentReceipt.total || 0).toFixed(2)}
+
+                        {/* Editable Total Due */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                          <span style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--cyan-glow)', fontFamily: 'var(--font-mono)' }}>
+                            {currentReceipt.currency === 'USD' ? '$' : '₱'}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            style={{
+                              background: 'rgba(0, 242, 254, 0.07)',
+                              border: '1px solid rgba(0, 242, 254, 0.35)',
+                              borderRadius: '8px',
+                              fontSize: '1.45rem',
+                              fontWeight: 800,
+                              color: 'var(--cyan-glow)',
+                              fontFamily: 'var(--font-mono)',
+                              padding: '2px 8px',
+                              width: '160px',
+                              outline: 'none',
+                            }}
+                            value={currentReceipt.total !== undefined ? currentReceipt.total : ''}
+                            onChange={(e) => handleTotalChange(e.target.value)}
+                            title="Click to edit Total Due"
+                          />
                         </div>
                       </div>
 

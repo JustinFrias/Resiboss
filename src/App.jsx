@@ -6,6 +6,7 @@ import {
   TopBar,
   ReceiptViewer3D,
   MobileBottomNav,
+  MobileAppGatekeeper,
   TermsModal,
   PrivacyPolicyModal,
   CookieConsentBanner,
@@ -91,7 +92,9 @@ const MainLayout = () => {
 export default function App() {
   return (
     <AppProvider>
-      <MainLayout />
+      <MobileAppGatekeeper>
+        <MainLayout />
+      </MobileAppGatekeeper>
       <TermsModal />
       <PrivacyPolicyModal />
       <CookieConsentBanner />

@@ -1464,6 +1464,23 @@ html, body {
     min-height: 40px;
   }
 
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-stats-grid .glass-panel {
+    padding: 14px 12px !important;
+  }
+
+  .dashboard-stats-grid .stat-card-value {
+    font-size: 1.35rem !important;
+  }
+
+  .dashboard-page {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom, 24px)) !important;
+  }
+
   .dashboard-trend-grid,
   .analytic-trend-grid,
   .analytic-bottom-grid {
