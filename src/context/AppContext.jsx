@@ -165,6 +165,40 @@ export const getInitialUserProfile = () => {
   }
 };
 
+/**
+ * Ensures a receipt has mathematically consistent total, subtotal, and VAT.
+ * Prevents tax anomalies where VAT > 25% of total or subtotal is inverted.
+ */
+export const sanitizeReceiptAmounts = (doc) => {
+  if (!doc) return doc;
+  const total = +(parseFloat(doc.total) || 0).toFixed(2);
+  let subtotal = +(parseFloat(doc.subtotal) || 0).toFixed(2);
+  let vat = +(parseFloat(doc.vat) || 0).toFixed(2);
+
+  const isPhp = (doc.currency || 'PHP') === 'PHP';
+  const vatRate = isPhp ? 0.12 : 0.08;
+
+  // Anomaly checks:
+  // 1. VAT cannot exceed 25% of total amount (or negative).
+  // 2. Subtotal cannot be less than 50% of total amount (unless total is near 0).
+  // 3. Subtotal + VAT must equal total (within 0.10 margin).
+  const isVatSuspicious = vat > total * 0.25 || vat < 0;
+  const isSubtotalSuspicious = subtotal < total * 0.5 || subtotal <= 0 || subtotal > total;
+  const isSumMismatched = Math.abs((subtotal + vat) - total) > 0.15;
+
+  if (total > 0 && (isVatSuspicious || isSubtotalSuspicious || isSumMismatched)) {
+    subtotal = +(total / (1 + vatRate)).toFixed(2);
+    vat = +(total - subtotal).toFixed(2);
+  }
+
+  return {
+    ...doc,
+    total,
+    subtotal,
+    vat,
+  };
+};
+
 export const AppProvider = ({ children }) => {
   // Real Supabase User State (null when user is NOT signed in)
   const [currentUser, setCurrentUser] = useState(null);
@@ -184,7 +218,7 @@ export const AppProvider = ({ children }) => {
       if (!saved) return [];
       const parsed = JSON.parse(saved);
       if (!Array.isArray(parsed)) return [];
-      return parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id));
+      return parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id)).map(sanitizeReceiptAmounts);
     } catch (e) {
       return [];
     }
@@ -205,7 +239,7 @@ export const AppProvider = ({ children }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          cached = parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id));
+          cached = parsed.filter((doc) => !DEMO_RECEIPT_IDS.has(doc.id)).map(sanitizeReceiptAmounts);
         }
       }
     } catch (e) {}
@@ -215,7 +249,7 @@ export const AppProvider = ({ children }) => {
     if (supabase && isSupabaseConfigured) {
       fetchReceiptsFromSupabase(userProfile).then(({ data }) => {
         if (Array.isArray(data)) {
-          const liveDocs = data.map(mapSupabaseToDoc);
+          const liveDocs = data.map(mapSupabaseToDoc).map(sanitizeReceiptAmounts);
           setDocuments(liveDocs);
           try {
             localStorage.setItem(storageKey, JSON.stringify(liveDocs));
@@ -827,7 +861,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const addDocument = (newDoc) => {
-    const completeDoc = {
+    const completeDoc = sanitizeReceiptAmounts({
       ...newDoc,
       id: newDoc.id || `REC-${new Date().getFullYear()}-${String(documents.length + 1).padStart(3, '0')}`,
       userId: userProfile?.id || null,
@@ -837,7 +871,7 @@ export const AppProvider = ({ children }) => {
       status: newDoc.status || 'Verified',
       currency: 'PHP',
       color: newDoc.color || '#00f2fe'
-    };
+    });
 
     setDocuments((prev) => [completeDoc, ...prev]);
     soundFx.playSuccessChime();
@@ -863,7 +897,7 @@ export const AppProvider = ({ children }) => {
     setDocuments((prev) =>
       prev.map((doc) => {
         if (doc.id === id) {
-          updatedTarget = { ...doc, ...updatedFields };
+          updatedTarget = sanitizeReceiptAmounts({ ...doc, ...updatedFields });
           return updatedTarget;
         }
         return doc;

@@ -648,28 +648,32 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       detectedTax = parseAmount(taxMatch[1]);
     }
 
-    // Mathematical consistency check - strictly prevent negative subtotal
+    // Mathematical consistency check - strictly prevent tax anomaly or negative subtotal
     if (detectedTotal && detectedTotal > 0) {
-      if (detectedTax && detectedTax > 0 && detectedTax < detectedTotal) {
-        if (!detectedSubtotal || detectedSubtotal <= 0 || detectedSubtotal >= detectedTotal) {
-          detectedSubtotal = +(detectedTotal - detectedTax).toFixed(2);
+      // Tax in the Philippines or US never exceeds 25% of total receipt amount
+      if (detectedTax && (detectedTax <= 0 || detectedTax > detectedTotal * 0.25)) {
+        if (!detectedSubtotal && detectedTax >= detectedTotal * 0.70 && detectedTax < detectedTotal) {
+          detectedSubtotal = detectedTax;
         }
+        detectedTax = null;
+      }
+
+      if (detectedSubtotal && detectedSubtotal > 0 && detectedSubtotal < detectedTotal) {
+        detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
+      } else if (detectedTax && detectedTax > 0 && detectedTax <= detectedTotal * 0.25) {
+        detectedSubtotal = +(detectedTotal - detectedTax).toFixed(2);
       } else {
-        if (detectedSubtotal && detectedSubtotal > 0 && detectedSubtotal < detectedTotal) {
+        // Standard VAT inclusive rate (12% VAT in Philippines)
+        if (currency === 'PHP') {
+          detectedSubtotal = +(detectedTotal / 1.12).toFixed(2);
           detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
         } else {
-          // Standard VAT inclusive rate
-          if (currency === 'PHP') {
-            detectedSubtotal = +(detectedTotal / 1.12).toFixed(2);
-            detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
-          } else {
-            detectedSubtotal = +(detectedTotal * 0.9).toFixed(2);
-            detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
-          }
+          detectedSubtotal = +(detectedTotal * 0.92).toFixed(2);
+          detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
         }
       }
     } else if (detectedSubtotal && detectedSubtotal > 0) {
-      if (detectedTax && detectedTax > 0) {
+      if (detectedTax && detectedTax > 0 && detectedTax <= detectedSubtotal * 0.3) {
         detectedTotal = +(detectedSubtotal + detectedTax).toFixed(2);
       } else {
         detectedTax = +(detectedSubtotal * (currency === 'PHP' ? 0.12 : 0.08)).toFixed(2);
