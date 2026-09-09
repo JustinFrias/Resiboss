@@ -140,13 +140,12 @@ export const getUserReceiptsStorageKey = (profile) => {
 };
 
 /**
- * Recovers the active authenticated user profile from sessionStorage if available.
+ * Recovers the active authenticated user profile from localStorage (or sessionStorage) if available.
  */
 export const getInitialUserProfile = () => {
   try {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('resiboss_user_profile_v1');
-      const saved = sessionStorage.getItem(SESSION_PROFILE_KEY);
+      const saved = localStorage.getItem(SESSION_PROFILE_KEY) || sessionStorage.getItem(SESSION_PROFILE_KEY) || localStorage.getItem('resiboss_user_profile_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.isAuthSession) {
@@ -384,9 +383,11 @@ export const AppProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setCurrentUser(session.user);
-        const profile = buildUserProfile(session.user, 'google');
+        const provider = session.user.app_metadata?.provider || 'google';
+        const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
         try {
+          localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
         } catch (e) {}
       }
@@ -400,6 +401,7 @@ export const AppProvider = ({ children }) => {
         const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
         try {
+          localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
         } catch (e) {}
       } else if (event === 'SIGNED_OUT') {
@@ -407,6 +409,8 @@ export const AppProvider = ({ children }) => {
         setUserProfile((prev) => {
           try {
             sessionStorage.removeItem(SESSION_PROFILE_KEY);
+            localStorage.removeItem(SESSION_PROFILE_KEY);
+            localStorage.removeItem('resiboss_user_profile_v1');
           } catch (e) {}
           return null;
         });
@@ -677,6 +681,7 @@ export const AppProvider = ({ children }) => {
     setInspectingDoc(null);
     try {
       sessionStorage.removeItem(SESSION_PROFILE_KEY);
+      localStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem('resiboss_user_profile_v1');
     } catch (e) {}
   };
@@ -776,10 +781,10 @@ export const AppProvider = ({ children }) => {
       }
 
       try {
+        localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(merged));
         sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(merged));
-        localStorage.removeItem('resiboss_user_profile_v1');
       } catch (err) {
-        console.warn('SessionStorage warning for profile:', err);
+        console.warn('Storage warning for profile:', err);
       }
 
       // Sync to Supabase user_metadata if available

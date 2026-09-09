@@ -168,12 +168,13 @@ export const SettingsView = () => {
       }
 
       try {
-        sessionStorage.setItem('resiboss_session_profile_v1', JSON.stringify({
+        const profilePayload = JSON.stringify({
           ...(userProfile || {}),
           ...form,
           isAuthSession: true,
-        }));
-        localStorage.removeItem('resiboss_user_profile_v1');
+        });
+        localStorage.setItem('resiboss_session_profile_v1', profilePayload);
+        sessionStorage.setItem('resiboss_session_profile_v1', profilePayload);
       } catch (err) {}
 
       soundFx?.playSuccessChime?.();

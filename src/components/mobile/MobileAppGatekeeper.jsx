@@ -24,7 +24,9 @@ export const MobileAppGatekeeper = ({ children }) => {
     // 2. Check for manual bypass in sessionStorage or URL query (?web=1 or ?preview=1)
     const urlParams = new URLSearchParams(window.location.search);
     const hasBypassParam = urlParams.get('web') === '1' || urlParams.get('preview') === '1' || urlParams.get('bypass') === 'mobile';
-    const hasSessionBypass = sessionStorage.getItem('resiboss_mobile_web_bypass') === 'true';
+    const hasSessionBypass =
+      sessionStorage.getItem('resiboss_mobile_web_bypass') === 'true' ||
+      localStorage.getItem('resiboss_mobile_web_bypass') === 'true';
 
     if (hasBypassParam || hasSessionBypass) {
       setIsBypassed(true);
@@ -88,7 +90,10 @@ export const MobileAppGatekeeper = ({ children }) => {
   };
 
   const handleBypass = () => {
-    sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
+    try {
+      localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+      sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
+    } catch (e) {}
     setIsBypassed(true);
   };
 
