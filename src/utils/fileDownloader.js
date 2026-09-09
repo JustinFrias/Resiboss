@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import * as XLSX from 'xlsx';
 
 /**
  * UTF-8 safe text to Base64 encoder.
@@ -29,6 +30,32 @@ function dataUrlToBase64(dataUrl) {
 }
 
 /**
+ * Convert Base64 string to a binary Blob for web download.
+ */
+function base64ToBlob(base64Data, contentType) {
+  const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+  const byteCharacters = atob(cleanBase64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: contentType });
+}
+
+/**
+ * Detect the best MIME type for the given filename/mimeType.
+ * Forces CSV/XLSX → Excel-compatible MIME so Android opens it with Sheets / Excel.
+ */
+function getShareMime(filename, mimeType) {
+  const lower = (filename || '').toLowerCase();
+  if (lower.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (lower.endsWith('.csv')) return 'text/csv';
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  return mimeType || 'application/octet-stream';
+}
+
+/**
  * Universal cross-platform file downloader.
  * - On Native Mobile (Capacitor Android / iOS):
  *   Writes file to Cache & Documents storage, then opens native Android Share / Save sheet.
@@ -49,43 +76,61 @@ export async function downloadFile({
   if (isNative) {
     try {
       const base64Data = isBase64 ? dataUrlToBase64(content) : textToBase64(content);
+      let shareUri = null;
 
-      // Save to Cache so Android FileProvider can access and share/open it
-      const cacheResult = await Filesystem.writeFile({
-        path: filename,
-        data: base64Data,
-        directory: Directory.Cache,
-        recursive: true,
-      });
-
-      // Also persist to Documents directory
+      // 1. Write to Cache first (optimal for FileProvider sharing to Excel/Sheets apps)
       try {
-        await Filesystem.writeFile({
+        const cacheRes = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Cache,
+          recursive: true,
+        });
+        shareUri = cacheRes.uri;
+      } catch (cacheErr) {
+        console.warn('Could not write to Cache:', cacheErr);
+      }
+
+      // 2. Also persist to Documents for user permanent file access
+      try {
+        const docRes = await Filesystem.writeFile({
           path: filename,
           data: base64Data,
           directory: Directory.Documents,
           recursive: true,
         });
+        if (!shareUri) shareUri = docRes.uri;
       } catch (docErr) {
-        console.warn('Could not write to Documents directory, cache copy available:', docErr);
+        console.warn('Could not write to Documents:', docErr);
       }
 
-      // Open Android native Save / Share sheet
+      if (!shareUri) {
+        throw new Error('Could not write file to any storage directory.');
+      }
+
+      // Open Android native Save / Share sheet with correct MIME
+      const shareMime = getShareMime(filename, mimeType);
       try {
         await Share.share({
-          title: filename,
-          text: `Download / Save ${filename}`,
-          url: cacheResult.uri,
-          dialogTitle: `Save or Open ${filename}`,
+          title: `Open / Save ${filename}`,
+          text: `Resiboss export: ${filename}`,
+          url: shareUri,
+          mimeType: shareMime,
+          dialogTitle: `Save or Open ${filename} in Excel`,
         });
       } catch (shareErr) {
-        // User cancelling share dialog is normal and shouldn't trigger an error
-        if (shareErr.name !== 'AbortError' && !String(shareErr).includes('canceled') && !String(shareErr).includes('cancelled')) {
+        // User cancelling share dialog is normal
+        if (
+          shareErr.name !== 'AbortError' &&
+          !String(shareErr).includes('canceled') &&
+          !String(shareErr).includes('cancelled') &&
+          !String(shareErr).includes('dismiss')
+        ) {
           console.warn('Native share dialog note:', shareErr);
         }
       }
 
-      return { success: true, method: 'native', uri: cacheResult.uri, filename };
+      return { success: true, method: 'native', uri: shareUri, filename };
     } catch (err) {
       console.error('Capacitor native download error, attempting browser fallback:', err);
     }
@@ -98,8 +143,20 @@ export async function downloadFile({
     let downloadUrl;
     let shouldRevoke = false;
 
-    if (isBase64 && typeof content === 'string' && content.startsWith('data:')) {
-      downloadUrl = content;
+    if (isBase64) {
+      try {
+        const blob = base64ToBlob(content, mimeType);
+        downloadUrl = URL.createObjectURL(blob);
+        shouldRevoke = true;
+      } catch {
+        if (typeof content === 'string' && content.startsWith('data:')) {
+          downloadUrl = content;
+        } else {
+          const blob = new Blob([content], { type: mimeType });
+          downloadUrl = URL.createObjectURL(blob);
+          shouldRevoke = true;
+        }
+      }
     } else {
       const blob = new Blob([content], { type: mimeType });
       downloadUrl = URL.createObjectURL(blob);
@@ -126,6 +183,7 @@ export async function downloadFile({
     return { success: false, error: browserErr };
   }
 }
+
 
 /**
  * Downloads a single receipt record as a detailed CSV spreadsheet.
@@ -195,3 +253,185 @@ export async function downloadReceiptImage(doc) {
     isBase64: true,
   });
 }
+
+/**
+ * Downloads a collection of receipts as a professional Microsoft Excel (.xlsx) workbook.
+ * Creates itemized sheets, VAT tax breakdown, and purchases ledger.
+ */
+export async function downloadReceiptsExcel(documents = [], customFilename = '') {
+  if (!Array.isArray(documents) || documents.length === 0) {
+    throw new Error('No receipt documents provided for Excel export.');
+  }
+
+  const timestamp = new Date().toISOString().split('T')[0];
+  const filename = customFilename || `Resiboss_Expense_Journal_${timestamp}.xlsx`;
+
+  const wb = XLSX.utils.book_new();
+
+  // -------------------------------------------------------------
+  // Sheet 1: Purchases & Expenses Journal
+  // -------------------------------------------------------------
+  const journalHeaders = [
+    'No.',
+    'Taxable Month',
+    'Date',
+    'Receipt ID',
+    'Supplier / Merchant',
+    'TIN / Reference',
+    'Category',
+    'Payment Method',
+    'Status',
+    'Vatable Purchases',
+    'Input Tax (12% VAT)',
+    'Total Amount',
+  ];
+
+  let totalVatable = 0;
+  let totalVat = 0;
+  let grandTotal = 0;
+
+  const journalRows = documents.map((doc, idx) => {
+    const tot = Number(doc.total) || 0;
+    const sub = Number(doc.subtotal) || +(tot / 1.12).toFixed(2);
+    const vat = Number(doc.vat) || +(tot - sub).toFixed(2);
+
+    totalVatable += sub;
+    totalVat += vat;
+    grandTotal += tot;
+
+    const dateObj = doc.date ? new Date(doc.date) : new Date();
+    const taxMonth = !isNaN(dateObj.getTime())
+      ? dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      : 'Current';
+
+    return [
+      idx + 1,
+      taxMonth,
+      doc.date || '',
+      doc.id || `REC-${idx + 1}`,
+      doc.merchant || 'Store',
+      doc.tin || 'N/A',
+      doc.category || 'General',
+      doc.paymentMethod || 'Cash',
+      doc.status || 'Verified',
+      +sub.toFixed(2),
+      +vat.toFixed(2),
+      +tot.toFixed(2),
+    ];
+  });
+
+  // Summary row
+  journalRows.push([
+    '',
+    '',
+    '',
+    '',
+    'TOTALS',
+    '',
+    '',
+    '',
+    '',
+    +totalVatable.toFixed(2),
+    +totalVat.toFixed(2),
+    +grandTotal.toFixed(2),
+  ]);
+
+  const wsJournal = XLSX.utils.aoa_to_sheet([journalHeaders, ...journalRows]);
+  wsJournal['!cols'] = [
+    { wch: 6 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 16 },
+    { wch: 28 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 18 },
+  ];
+  XLSX.utils.book_append_sheet(wb, wsJournal, 'Purchases Journal');
+
+  // -------------------------------------------------------------
+  // Sheet 2: Itemized Line Items Breakdown
+  // -------------------------------------------------------------
+  const itemHeaders = [
+    'Receipt ID',
+    'Date',
+    'Merchant',
+    'Category',
+    'Item Description',
+    'Qty',
+    'Unit Price',
+    'Line Total',
+  ];
+
+  const itemRows = [];
+  documents.forEach((doc) => {
+    if (Array.isArray(doc.items) && doc.items.length > 0) {
+      doc.items.forEach((it) => {
+        const qty = Number(it.qty) || 1;
+        const price = Number(it.price) || 0;
+        const total = Number(it.total) || price * qty;
+        itemRows.push([
+          doc.id || '',
+          doc.date || '',
+          doc.merchant || '',
+          doc.category || '',
+          it.name || 'Item',
+          qty,
+          +price.toFixed(2),
+          +total.toFixed(2),
+        ]);
+      });
+    } else {
+      const tot = Number(doc.total) || 0;
+      itemRows.push([
+        doc.id || '',
+        doc.date || '',
+        doc.merchant || '',
+        doc.category || '',
+        doc.merchant || 'General Purchase',
+        1,
+        +tot.toFixed(2),
+        +tot.toFixed(2),
+      ]);
+    }
+  });
+
+  const wsItems = XLSX.utils.aoa_to_sheet([itemHeaders, ...itemRows]);
+  wsItems['!cols'] = [
+    { wch: 16 },
+    { wch: 12 },
+    { wch: 26 },
+    { wch: 14 },
+    { wch: 32 },
+    { wch: 8 },
+    { wch: 14 },
+    { wch: 14 },
+  ];
+  XLSX.utils.book_append_sheet(wb, wsItems, 'Itemized Breakdown');
+
+  // Generate Base64 binary Excel workbook
+  const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+  return await downloadFile({
+    content: b64,
+    filename,
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    isBase64: true,
+  });
+}
+
+/**
+ * Downloads a single receipt record as a clean Microsoft Excel (.xlsx) file.
+ */
+export async function downloadReceiptAsExcel(doc) {
+  if (!doc) return false;
+  const safeMerchant = (doc.merchant || 'Receipt').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const safeId = (doc.id || 'DOC').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `Receipt_${safeMerchant}_${safeId}.xlsx`;
+  return await downloadReceiptsExcel([doc], filename);
+}
+

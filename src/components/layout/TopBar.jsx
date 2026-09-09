@@ -223,14 +223,10 @@ export const TopBar = ({ onOpenMobile }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 20px',
-        marginBottom: '14px',
         borderRadius: '16px',
         border: '1px solid var(--glass-border)',
         background: 'var(--bg-surface)',
         gap: '16px',
-        position: 'sticky',
-        top: '12px',
-        zIndex: 90,
         overflow: 'visible',
       }}
     >

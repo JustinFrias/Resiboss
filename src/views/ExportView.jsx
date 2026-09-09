@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadFile } from '../utils/fileDownloader';
+import { downloadFile, downloadReceiptsExcel } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 import {
   Download,
@@ -19,8 +19,8 @@ import {
 export const ExportView = () => {
   const { documents, t, formatCurrency } = useApp();
 
-  // Multi-format selection: Array of selected format IDs ('purchases' | 'sales' | 'csv')
-  const [selectedFormats, setSelectedFormats] = useState(['purchases', 'csv']);
+  // Multi-format selection: Array of selected format IDs ('excel' | 'purchases' | 'sales' | 'csv')
+  const [selectedFormats, setSelectedFormats] = useState(['excel']);
   const [selectedRange, setSelectedRange] = useState('All Time');
   const [isRangeOpen, setIsRangeOpen] = useState(false);
   const [exportNotification, setExportNotification] = useState(null);
@@ -62,9 +62,16 @@ export const ExportView = () => {
   // Format cards configuration
   const formatOptions = [
     {
+      id: 'excel',
+      title: 'Microsoft Excel (.xlsx)',
+      desc: 'Complete Excel Workbook with Purchases Journal & Itemized Breakdown',
+      recordLabel: (count) => `${count} receipts formatted for Excel`,
+      badge: 'RECOMMENDED',
+    },
+    {
       id: 'purchases',
       title: t.export.purchasesJournal || 'Purchases & Expenses Journal',
-      desc: t.export.purchasesDesc || 'Monthly Purchases & Input Tax Ledger',
+      desc: t.export.purchasesDesc || 'Monthly Purchases & Input Tax Ledger (.xlsx)',
       recordLabel: (count) => `${count} expense records`,
     },
     {
@@ -75,7 +82,7 @@ export const ExportView = () => {
     },
     {
       id: 'csv',
-      title: t.export.customCsv || 'Custom CSV',
+      title: t.export.customCsv || 'Custom CSV (.csv)',
       desc: t.export.customCsvDesc || 'All submitted documents, flat CSV format',
       recordLabel: (count) => `${count} submitted records`,
     },
@@ -120,7 +127,7 @@ export const ExportView = () => {
   };
 
   // Handle download of selected formats & receipts
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (selectedFormats.length === 0) {
       alert('Please select at least one export format.');
       return;
@@ -135,50 +142,14 @@ export const ExportView = () => {
     soundFx.playLaserHum();
     const timestamp = new Date().toISOString().split('T')[0];
 
-    selectedFormats.forEach((fmt, index) => {
-      setTimeout(async () => {
-        let csvHeaders = [];
-        let csvRows = [];
-
-        if (fmt === 'purchases') {
-          csvHeaders = [
-            'Taxable Month',
-            'Date',
-            'Taxpayer TIN',
-            'Supplier / Merchant Name',
-            'Category',
-            'Document Type',
-            'Receipt / Invoice No',
-            'Vatable Purchases',
-            'Zero Rated',
-            'Input Tax (12% VAT)',
-            'Total Amount',
-          ];
-
-          csvRows = docsToExport.map((doc, idx) => {
-            const vatExp = ((doc.total || 0) / 1.12).toFixed(2);
-            const inputTax = (doc.vat || ((doc.total || 0) * 0.12) / 1.12).toFixed(2);
-            const dateObj = doc.date ? new Date(doc.date) : new Date();
-            const taxMonth = !isNaN(dateObj.getTime())
-              ? dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-              : 'Current';
-
-            return [
-              `"${taxMonth}"`,
-              `"${doc.date || ''}"`,
-              `"${doc.tin || '000-000-000-000'}"`,
-              `"${(doc.merchant || 'Store').replace(/"/g, '""')}"`,
-              `"${doc.category || 'Business Expense'}"`,
-              `"Official Receipt"`,
-              `"${doc.id || 'OR-' + (idx + 1001)}"`,
-              vatExp,
-              '0.00',
-              inputTax,
-              (doc.total || 0).toFixed(2),
-            ].join(',');
-          });
+    try {
+      for (const fmt of selectedFormats) {
+        if (fmt === 'excel') {
+          await downloadReceiptsExcel(docsToExport, `Resiboss_Expense_Report_${timestamp}.xlsx`);
+        } else if (fmt === 'purchases') {
+          await downloadReceiptsExcel(docsToExport, `Resiboss_Purchases_Journal_${timestamp}.xlsx`);
         } else if (fmt === 'sales') {
-          csvHeaders = [
+          const salesHeaders = [
             'Date',
             'Customer TIN',
             'Customer Name',
@@ -187,10 +158,15 @@ export const ExportView = () => {
             'VAT Output (12%)',
             'Total Sales Amount',
           ];
-          csvRows = [];
+          const csvContent = '\uFEFF' + salesHeaders.join(',') + '\r\n';
+          await downloadFile({
+            content: csvContent,
+            filename: `Resiboss_VAT_Sales_${timestamp}.csv`,
+            mimeType: 'text/csv;charset=utf-8;',
+          });
         } else {
-          // Custom CSV - Clean, human-readable column headers without raw database underscores
-          csvHeaders = [
+          // Custom CSV
+          const csvHeaders = [
             'Receipt ID',
             'Date',
             'Merchant Name',
@@ -202,7 +178,7 @@ export const ExportView = () => {
             'VAT Amount (12%)',
             'Total Amount (PHP)',
           ];
-          csvRows = docsToExport.map((doc) => [
+          const csvRows = docsToExport.map((doc) => [
             `"${(doc.id || '').replace(/"/g, '""')}"`,
             `"${(doc.date || '').replace(/"/g, '""')}"`,
             `"${(doc.merchant || 'Unknown Merchant').replace(/"/g, '""')}"`,
@@ -214,18 +190,16 @@ export const ExportView = () => {
             ((doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0))).toFixed(2),
             ((doc.total || 0)).toFixed(2),
           ].join(','));
+
+          const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
+          await downloadFile({
+            content: csvContent,
+            filename: `Resiboss_Custom_Export_${timestamp}.csv`,
+            mimeType: 'text/csv;charset=utf-8;',
+          });
         }
+      }
 
-        const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-        await downloadFile({
-          content: csvContent,
-          filename: `Resiboss_${fmt}_Journal_${timestamp}.csv`,
-          mimeType: 'text/csv;charset=utf-8;',
-        });
-      }, index * 400);
-    });
-
-    setTimeout(() => {
       soundFx.playSuccessChime();
       try {
         confetti({
@@ -237,10 +211,13 @@ export const ExportView = () => {
       } catch (e) {}
 
       setExportNotification(
-        `Downloaded ${selectedFormats.length} file(s) with ${docsToExport.length} receipt record(s)!`
+        `Successfully exported ${selectedFormats.length} file(s) with ${docsToExport.length} receipt record(s)!`
       );
       setTimeout(() => setExportNotification(null), 4500);
-    }, selectedFormats.length * 300 + 100);
+    } catch (exportErr) {
+      console.error('Export download error:', exportErr);
+      alert('Export failed. Please check device permissions and try again.');
+    }
   };
 
   const activeRecordsCount = filteredDocs.filter((d) => selectedDocIds.includes(d.id)).length;
@@ -428,7 +405,7 @@ export const ExportView = () => {
               type="button"
               onClick={() => {
                 soundFx.playClick();
-                setSelectedFormats(['purchases', 'sales', 'csv']);
+                setSelectedFormats(['excel', 'purchases', 'sales', 'csv']);
               }}
               style={{
                 background: 'var(--cyan-subtle)',
@@ -446,7 +423,7 @@ export const ExportView = () => {
           </div>
         </div>
 
-        {/* 3 Format Cards Grid */}
+        {/* Format Cards Grid */}
         <div
           className="export-format-grid"
           style={{
@@ -479,8 +456,25 @@ export const ExportView = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
                   <div>
-                    <div style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
-                      {fmt.title}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                      <span style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {fmt.title}
+                      </span>
+                      {fmt.badge && (
+                        <span
+                          style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            background: 'rgba(0, 242, 254, 0.15)',
+                            color: '#00f2fe',
+                            border: '1px solid rgba(0, 242, 254, 0.4)',
+                          }}
+                        >
+                          {fmt.badge}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.35 }}>
                       {fmt.desc}

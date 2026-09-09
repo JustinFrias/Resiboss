@@ -806,14 +806,24 @@ html, body {
   color: #475569 !important;
 }
 
-/* Sticky TopBar Header (Desktop) */
+/* Fixed TopBar Header (Desktop) */
 .topbar-header {
-  position: sticky !important;
-  top: 12px !important;
-  z-index: 90 !important;
+  position: fixed !important;
+  top: 14px !important;
+  left: calc(292px + 12px) !important;
+  right: 24px !important;
+  width: auto !important;
+  z-index: 100 !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
   box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.main-content.sidebar-collapsed .topbar-header {
+  left: calc(108px + 12px) !important;
 }
 
 [data-theme="light"] .topbar-header {
@@ -1213,7 +1223,7 @@ html, body {
 .main-content {
   flex: 1;
   margin-left: 292px;
-  padding: 14px 24px 14px 8px;
+  padding: 86px 24px 24px 12px;
   max-width: none;
   width: calc(100% - 292px);
   min-height: 100vh;
@@ -1278,7 +1288,7 @@ html, body {
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
-    padding: 10px 12px calc(24px + env(safe-area-inset-bottom, 0px)) 12px !important;
+    padding: calc(66px + env(safe-area-inset-top, 8px)) 12px calc(24px + env(safe-area-inset-bottom, 0px)) 12px !important;
   }
   .view-viewport {
     padding-bottom: calc(92px + env(safe-area-inset-bottom, 16px)) !important; /* Prevents content from being hidden behind bottom nav */
@@ -1566,15 +1576,19 @@ html, body {
     padding-top: 8px;
   }
 
-  /* TopBar Mobile Adaptation */
+  /* TopBar Mobile Adaptation - Locked & Fixed at Top */
   .topbar-header {
-    position: sticky !important;
+    position: fixed !important;
     top: max(8px, env(safe-area-inset-top, 8px)) !important;
-    z-index: 90 !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100% - 24px) !important;
+    box-sizing: border-box !important;
+    z-index: 100 !important;
     padding: 8px 10px !important;
     gap: 6px !important;
     border-radius: 14px !important;
-    margin-bottom: 12px !important;
+    margin: 0 !important;
     overflow: visible !important;
     backdrop-filter: blur(28px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
