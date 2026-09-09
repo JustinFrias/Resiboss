@@ -10,6 +10,7 @@ import {
   TermsModal,
   PrivacyPolicyModal,
   CookieConsentBanner,
+  DownloadNotificationBanner,
 } from './components';
 
 import { DashboardView } from './views/DashboardView';
@@ -98,6 +99,7 @@ export default function App() {
       <TermsModal />
       <PrivacyPolicyModal />
       <CookieConsentBanner />
+      <DownloadNotificationBanner />
     </AppProvider>
   );
 }

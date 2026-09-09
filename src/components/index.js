@@ -13,6 +13,7 @@ export { CookieConsentBanner } from './legal/CookieConsentBanner';
 // UI Primitives & Branding
 export { TiltCard } from './ui/TiltCard';
 export { ResibossLogo } from './ui/ResibossLogo';
+export { DownloadNotificationBanner } from './ui/DownloadNotificationBanner';
 
 // Authentication
 export { ResibossAuthCard } from './auth/ResibossAuthCard';
