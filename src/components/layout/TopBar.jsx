@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
-  Menu,
   Search,
   Sun,
   Moon,
@@ -228,33 +227,14 @@ export const TopBar = ({ onOpenMobile }) => {
         border: '1px solid var(--glass-border)',
         background: 'var(--bg-surface)',
         gap: '16px',
-        position: 'relative',
-        zIndex: 50,
+        position: 'sticky',
+        top: '12px',
+        zIndex: 100,
         overflow: 'visible',
       }}
     >
-      {/* 1. Left: Mobile Menu & Breadcrumb */}
+      {/* 1. Left: Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        <button
-          onClick={onOpenMobile}
-          className="mobile-hamburger-btn"
-          style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '10px',
-            width: '36px',
-            height: '36px',
-            display: 'none',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
-          }}
-          title="Open Menu"
-        >
-          <Menu size={18} />
-        </button>
-
         <div
           className="topbar-breadcrumb"
           onClick={() => {

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { soundFx } from '../../utils/soundEffects';
+import { downloadFile } from '../../utils/fileDownloader';
 import { X, RotateCw, Sparkles, CheckCircle2, ShieldCheck, Download, Trash2, Tag, Calendar, Building2, Receipt } from 'lucide-react';
 
 export const ReceiptViewer3D = () => {
@@ -75,6 +77,50 @@ export const ReceiptViewer3D = () => {
   const handleStatusToggle = () => {
     const nextStatus = inspectingDoc.status === 'Verified' ? 'Pending' : 'Verified';
     updateDocument(inspectingDoc.id, { status: nextStatus });
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!inspectingDoc) return;
+    soundFx.playLaserHum();
+
+    // 1. Export structured receipt data (.csv)
+    const csvContent = '\uFEFF' + [
+      'Field,Value',
+      `"Receipt ID","${inspectingDoc.id || ''}"`,
+      `"Merchant Name","${(inspectingDoc.merchant || '').replace(/"/g, '""')}"`,
+      `"TIN","${inspectingDoc.tin || ''}"`,
+      `"Date","${inspectingDoc.date || ''}"`,
+      `"Category","${inspectingDoc.category || ''}"`,
+      `"Payment Method","${inspectingDoc.paymentMethod || ''}"`,
+      `"Status","${inspectingDoc.status || ''}"`,
+      `"Subtotal (Net of VAT)","${((inspectingDoc.subtotal || 0)).toFixed(2)}"`,
+      `"VAT Amount (12%)","${((inspectingDoc.vat || 0)).toFixed(2)}"`,
+      `"Total Amount (PHP)","${((inspectingDoc.total || 0)).toFixed(2)}"`,
+      '',
+      'Item Name,Quantity,Unit Price,Total Price',
+      ...(inspectingDoc.items || []).map(
+        (it) => `"${(it.name || '').replace(/"/g, '""')}",${it.qty || 1},${((it.price || it.total || 0)).toFixed(2)},${((it.total || 0)).toFixed(2)}`
+      ),
+    ].join('\r\n');
+
+    await downloadFile({
+      content: csvContent,
+      filename: `Receipt_${(inspectingDoc.merchant || 'Record').replace(/[^a-zA-Z0-9_-]/g, '_')}_${inspectingDoc.id}.csv`,
+      mimeType: 'text/csv;charset=utf-8;',
+    });
+
+    // 2. If original photo image is present, also download the image
+    if (inspectingDoc.imageUri && inspectingDoc.imageUri.startsWith('data:image')) {
+      const ext = inspectingDoc.imageUri.includes('png') ? 'png' : 'jpg';
+      await downloadFile({
+        content: inspectingDoc.imageUri,
+        filename: `Receipt_Image_${inspectingDoc.id}.${ext}`,
+        mimeType: ext === 'png' ? 'image/png' : 'image/jpeg',
+        isBase64: true,
+      });
+    }
+
+    soundFx.playSuccessChime();
   };
 
   return (
@@ -485,13 +531,29 @@ export const ReceiptViewer3D = () => {
           {/* Action Footer */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--glass-border)' }}>
             <button
+              onClick={handleDownloadReceipt}
+              className="liquid-btn liquid-btn-primary"
+              style={{
+                flex: 1.2,
+                justifyContent: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+              }}
+              title="Download this receipt to your phone or device"
+            >
+              <Download size={16} />
+              <span>Download Receipt</span>
+            </button>
+            <button
               onClick={() => {
                 deleteDocument(inspectingDoc.id);
                 setInspectingDoc(null);
               }}
               className="liquid-btn liquid-btn-secondary"
               style={{
-                flex: 1,
+                flex: 0.8,
                 justifyContent: 'center',
                 color: '#f87171',
                 borderColor: 'rgba(239, 68, 68, 0.3)',
@@ -503,7 +565,7 @@ export const ReceiptViewer3D = () => {
               title={t.documents.delete}
             >
               <Trash2 size={16} />
-              <span>{t.documents.delete || 'Delete Receipt'}</span>
+              <span>{t.documents.delete || 'Delete'}</span>
             </button>
           </div>
         </div>

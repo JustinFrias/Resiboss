@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
+import { downloadFile } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 import {
   Download,
@@ -119,7 +120,7 @@ export const ExportView = () => {
   };
 
   // Handle download of selected formats & receipts
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (selectedFormats.length === 0) {
       alert('Please select at least one export format.');
       return;
@@ -134,8 +135,9 @@ export const ExportView = () => {
     soundFx.playLaserHum();
     const timestamp = new Date().toISOString().split('T')[0];
 
-    selectedFormats.forEach((fmt, index) => {
-      setTimeout(() => {
+    try {
+      for (let index = 0; index < selectedFormats.length; index++) {
+        const fmt = selectedFormats[index];
         let csvHeaders = [];
         let csvRows = [];
 
@@ -216,19 +218,13 @@ export const ExportView = () => {
         }
 
         const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', downloadUrl);
-        link.setAttribute('download', `Resiboss_${fmt}_Journal_${timestamp}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(downloadUrl);
-      }, index * 300);
-    });
+        await downloadFile({
+          content: csvContent,
+          filename: `Resiboss_${fmt}_Journal_${timestamp}.csv`,
+          mimeType: 'text/csv;charset=utf-8;',
+        });
+      }
 
-    setTimeout(() => {
       soundFx.playSuccessChime();
       try {
         confetti({
@@ -243,7 +239,9 @@ export const ExportView = () => {
         `Downloaded ${selectedFormats.length} file(s) with ${docsToExport.length} receipt record(s)!`
       );
       setTimeout(() => setExportNotification(null), 4500);
-    }, selectedFormats.length * 300 + 100);
+    } catch (err) {
+      console.error('Download error:', err);
+    }
   };
 
   const activeRecordsCount = filteredDocs.filter((d) => selectedDocIds.includes(d.id)).length;

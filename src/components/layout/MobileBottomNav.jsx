@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FolderArchive,
   ScanLine,
+  Download,
   BarChart3,
   Settings,
 } from 'lucide-react';
@@ -63,7 +64,20 @@ export const MobileBottomNav = () => {
         <span className="mobile-nav-hero-label">{t.nav?.scanner || 'Scan'}</span>
       </button>
 
-      {/* 4. Analytics Tab */}
+      {/* 4. Export Tab */}
+      <button
+        type="button"
+        onClick={() => handleTabClick('export')}
+        className={`mobile-nav-item ${activeTab === 'export' ? 'active' : ''}`}
+        aria-label="Export"
+      >
+        <div className="mobile-nav-icon-wrap">
+          <Download size={19} />
+        </div>
+        <span className="mobile-nav-label">{t.nav?.export || 'Export'}</span>
+      </button>
+
+      {/* 5. Analytics Tab */}
       <button
         type="button"
         onClick={() => handleTabClick('analytic')}
@@ -71,7 +85,7 @@ export const MobileBottomNav = () => {
         aria-label="Analytics"
       >
         <div className="mobile-nav-icon-wrap">
-          <BarChart3 size={20} />
+          <BarChart3 size={19} />
         </div>
         <span className="mobile-nav-label">{t.nav?.analytic || 'Analytics'}</span>
       </button>
