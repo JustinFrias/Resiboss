@@ -48,6 +48,8 @@ const preprocessImage = (imageUri) => {
 
 // Universal brand dictionary covering Supermarkets, Fast Food, Utilities, Pharmacies, Gas Stations, Telecoms, and Retail
 const knownBrands = [
+  // European & International Dining & Retail
+  { match: /madrid|cerveza|taberna|restaurante|churreria|mes[oó]n|tapas/i, name: 'MADRID RESTAURANTE & BAR' },
   // Fast Food & Dining
   { match: /jollibee|chickenjoy|yumburger|jolly\s*spaghetti/i, name: 'JOLLIBEE FOOD CORP' },
   { match: /mcdonald|mcdo|big\s*mac|happy\s*meal|quarter\s*pounder|dinkytown/i, name: "MCDONALD'S" },
@@ -138,7 +140,7 @@ export const parseAmount = (val) => {
   if (typeof val === 'number') return Number.isFinite(val) ? val : null;
   if (!val || typeof val !== 'string') return null;
 
-  let s = val.replace(/[\$₱P€£]|php|pesos?/gi, '').trim();
+  let s = val.replace(/[\$₱P€£]|php|pesos?|eur/gi, '').trim();
   s = s.replace(/[\)\]\|}]+$/, '').trim();
 
   const lastComma = s.lastIndexOf(',');
@@ -154,7 +156,8 @@ export const parseAmount = (val) => {
     }
   } else if (lastComma !== -1 && lastDot === -1) {
     const parts = s.split(',');
-    if (parts.length === 2 && parts[1].length === 2 && parts[0].length <= 3) {
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // Decimal comma: e.g. 9,00 or 2,80 or 1250,50
       s = s.replace(',', '.');
     } else {
       s = s.replace(/,/g, '');
@@ -169,7 +172,7 @@ export const parseAmount = (val) => {
 
   s = s.replace(/[^\d.-]/g, '');
   const num = parseFloat(s);
-  return Number.isFinite(num) ? num : null;
+  return Number.isFinite(num) ? +(num.toFixed(2)) : null;
 };
 
 /**
@@ -299,7 +302,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       'burger', 'king', 'bk', 'royal', 'perks', 'crowns', 'cust', 'mcdonald', 'hamburger',
       'tel#', 'thank you', 'tel', 'salamat', 'table', 'tbl', 'cashier', 'cshr', 'server', 'chk', 'check',
       'food', 'market', 'pharmacy', 'express', 'supermarket', 'mall', 'cafe', 'resto', 'coffee',
-      'bakery', 'bakeshop', 'petron', 'shell', 'caltex', 'mercury', 'watsons', '7-eleven', 'alfamart'
+      'bakery', 'bakeshop', 'petron', 'shell', 'caltex', 'mercury', 'watsons', '7-eleven', 'alfamart',
+      'factura', 'simplificada', 'importe', 'iva', 'base', 'unid', 'descripcion', 'fecha', 'hora', 'madrid', 'cerveza', 'botella'
     ];
 
     const matchedKeywords = receiptKeywords.filter((kw) => {
@@ -310,7 +314,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       return fullText.toLowerCase().includes(kw);
     });
 
-    const priceRegex = /(?:[\$₱P€£]|php)?\s*\b(?:\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+[.,]\d{1,2}|\d+)\b/gi;
+    const priceRegex = /(?:[\$₱P€£]|php|eur)?\s*\b(?:\d{1,3}(?:[,\.]\d{3})*(?:[,\.]\d{1,2})|\d+[.,]\d{1,2}|\d+)\b/gi;
     const foundPrices = fullText.match(priceRegex) || [];
 
     const hasKnownBrand = knownBrands.some((b) => b.match.test(fullText));
@@ -409,11 +413,22 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     const currentYear = new Date().getFullYear();
     const candidateDates = [];
 
-    // Check labeled date lines first (e.g. "Due Date: 29 Jul 2024", "Bill Date: 17 Aug 2024", "Date: 17 Jul 2024")
-    const labeledDateRegex = /(?:due\s*date|billing\s*date|bill\s*date|sil\s*date|statement\s*date|invoice\s*date|receipt\s*date|date\s*due|billing\s*period|date)\s*[:#\-]?\s*([A-Za-z0-9\s,\/\.\-']{6,30})/gi;
+    // Check labeled date lines first (e.g. "FECHA: 07/11/2016", "Due Date: 29 Jul 2024", "Date: 17 Jul 2024")
+    const labeledDateRegex = /(?:fecha|due\s*date|billing\s*date|bill\s*date|sil\s*date|statement\s*date|invoice\s*date|receipt\s*date|date\s*due|billing\s*period|date)\s*[:#\-]?\s*([A-Za-z0-9\s,\/\.\-']{6,30})/gi;
     let labelMatch;
     while ((labelMatch = labeledDateRegex.exec(fullText)) !== null) {
       const seg = labelMatch[1];
+      // Try Day Month Year in digits (e.g. 07/11/2016)
+      const numericDmy = seg.match(/\b(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})\b/);
+      if (numericDmy) {
+        let yr = numericDmy[3];
+        if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
+        candidateDates.push({
+          date: `${yr}-${String(numericDmy[2]).padStart(2, '0')}-${String(numericDmy[1]).padStart(2, '0')}`,
+          score: 120,
+          year: parseInt(yr, 10),
+        });
+      }
       // Try Day Month Year (e.g. 29 Jul 2024, 17 Aug 2024)
       const dmy = seg.match(/\b(\d{1,2})(?:st|nd|rd|th)?[\s\-\/\.']+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?[\s\-\/\.']+(\d{2,4})\b/i);
       if (dmy) {
@@ -542,6 +557,10 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     // =========================================================================
     // 4. Currency Detection
     // =========================================================================
+    const isEUR = (
+      fullText.includes('€') ||
+      /madrid|barcelona|valencia|sevilla|espana|españa|spain|factura|iva|cerveza/i.test(fullText)
+    );
     const isUSD = (
       fullText.includes('$') ||
       /\b(MN|FL|CA|NY|TX|WA|IL|OH|PA|GA|NC|MI|NJ|VA|AZ|MA|TN|IN|MO|MD|WI|CO|OR)\s+\d{5}\b/i.test(fullText) ||
@@ -549,7 +568,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       /minneapolis|miami|new york|los angeles|chicago/i.test(fullText) ||
       (/eat in tax|sales tax/i.test(fullText) && !/bir|tin|vatable|peso|php|₱/i.test(fullText))
     );
-    const currency = isUSD ? 'USD' : 'PHP';
+    const currency = isEUR ? 'EUR' : (isUSD ? 'USD' : 'PHP');
 
     // =========================================================================
     // 5. Reference / Order Number / TIN (Universal Real Data Detection)
@@ -558,7 +577,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     let detectedInvoiceNo = '';
 
     // Taxpayer Identification Number (TIN)
-    const tinMatch = fullText.match(/(?:TIN|TAX\s*ID|VAT\s*REG|REG)\s*[:#\-]?\s*([0-9\-\s]{9,18})/i);
+    const tinMatch = fullText.match(/(?:TIN|TAX\s*ID|VAT\s*REG|NIF|CIF|REG)\s*[:#\-]?\s*([0-9\-\s]{9,18})/i);
     if (tinMatch && tinMatch[1]) {
       const cleanTin = tinMatch[1].trim().replace(/\s+/g, '-');
       if (cleanTin.replace(/-/g, '').length >= 9) {
@@ -566,8 +585,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       }
     }
 
-    // Official Receipt / Sales Invoice / CAN / Bill / Order Number
-    const invMatch = fullText.match(/(?:official\s*receipt\s*#?|sales\s*invoice\s*#?|cash\s*invoice\s*#?|customer\s*account\s*number|invoice\s*#?|or\s*#|si\s*#|can\s*#?|bill\s*no\.?|order\s*#?|transaction\s*id|trans\s*id|t#|txn\s*#?|ref\s*#?|auth\s*#?)\s*[:#\-]?\s*([A-Za-z0-9\-\/]{4,24})/i);
+    // Official Receipt / Sales Invoice / Factura / CAN / Bill / Order Number
+    const invMatch = fullText.match(/(?:factura\s*simplificada|factura|official\s*receipt\s*#?|sales\s*invoice\s*#?|cash\s*invoice\s*#?|customer\s*account\s*number|invoice\s*#?|or\s*#|si\s*#|can\s*#?|bill\s*no\.?|order\s*#?|transaction\s*id|trans\s*id|t#|txn\s*#?|ref\s*#?|auth\s*#?)\s*[:#\-]?\s*([A-Za-z0-9\-\/]{4,24})/i);
     if (invMatch && invMatch[1]) {
       detectedInvoiceNo = invMatch[1].trim();
     }
@@ -647,14 +666,14 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       }
     }
 
-    // Search for Subtotal (handles SUB TOTAL, Vatable Sales, Charges for this billing period)
-    const subMatch = fullText.match(/(?:sub\s*total|vatable\s*sales|charges\s*for\s*this\s*billing\s*period|current\s*charges|total\s*net|net\s*sales|gross\s*amount)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php\s*)?(\d{1,3}(?:[,\.]\d{3})+(?:\.\d{1,2})?|\d+[.,]\d{2})/i);
+    // Search for Subtotal (handles SUB TOTAL, BASE, Vatable Sales, Charges for this billing period)
+    const subMatch = fullText.match(/(?:sub\s*total|base\s*imponible|\bbase\b|vatable\s*sales|charges\s*for\s*this\s*billing\s*period|current\s*charges|total\s*net|net\s*sales|gross\s*amount)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})+(?:\.\d{1,2})?|\d+[.,]\d{2})/i);
     if (subMatch) {
       detectedSubtotal = parseAmount(subMatch[1]);
     }
 
-    // Search for Tax / VAT
-    const taxMatch = fullText.match(/(?:(?:12%\s*)?vat|government\s*taxes|input\s*tax|(?:eat\s*in\s*)?(?:sales\s*)?tax)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php\s*)?(\d{1,3}(?:[,\.]\d{3})+(?:\.\d{1,2})?|\d+[.,]\d{2})/i);
+    // Search for Tax / VAT / IVA
+    const taxMatch = fullText.match(/(?:(?:12%\s*)?vat|\biva\b|government\s*taxes|input\s*tax|(?:eat\s*in\s*)?(?:sales\s*)?tax)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})+(?:\.\d{1,2})?|\d+[.,]\d{2})/i);
     if (taxMatch && taxMatch[1]) {
       detectedTax = parseAmount(taxMatch[1]);
     }
@@ -707,7 +726,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       'remaining balance', 'previous bill', 'payment options', 'disclaimer', 'registered name',
       'sin#', 'authorized agent', 'barcode', 'due date', 'billing period', 'bill date', 'total amount due',
       'please pay', 'total due', 'bir permit', 'machine serial', 'vatable sales', 'vat exempt',
-      'zero rated', 'gross sales', 'net of vat', 'this serves as', 'cashier', 'terminal'
+      'zero rated', 'gross sales', 'net of vat', 'this serves as', 'cashier', 'terminal',
+      'base', 'base imponible', '% iva', 'iva', 'importe', 'unid', 'descripcion', 'factura', 'fecha', 'hora'
     ];
 
     const matchedLineIndices = new Set();

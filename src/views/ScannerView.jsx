@@ -1174,18 +1174,18 @@ export const ScannerView = () => {
                       marginBottom: '18px',
                     }}
                   >
-                    <div style={{ fontSize: '0.82rem', fontWeight: 650, color: 'var(--text-primary)', marginBottom: '10px' }}>
-                      Why was this image rejected?
+                    <div style={{ fontSize: '0.82rem', fontWeight: 650, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                      Scan Troubleshooting:
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> No Total Amount or Price detected (₱, $, PHP)
+                        <span style={{ color: 'var(--cyan-glow)' }}>•</span> Make sure the receipt is flat and in good lighting
                       </li>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> No registered Merchant or Store name detected
+                        <span style={{ color: 'var(--cyan-glow)' }}>•</span> Thermal receipts or faint ink can be edited directly
                       </li>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span> Does not match Official Receipt, Sales Invoice, or Billing Statement layout
+                        <span style={{ color: 'var(--emerald-glow)' }}>✓</span> Tap <strong>"Proceed with this Photo"</strong> below to save and edit this receipt!
                       </li>
                     </ul>
                   </div>
