@@ -1202,10 +1202,12 @@ html, body {
   padding: 14px 24px 14px 8px;
   max-width: none;
   width: calc(100% - 292px);
-  min-height: 100vh;
+  height: 100vh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1264,6 +1266,9 @@ html, body {
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding: 10px 12px calc(24px + env(safe-area-inset-bottom, 0px)) 12px !important;
   }
   .view-viewport {
