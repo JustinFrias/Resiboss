@@ -326,7 +326,7 @@ export const SettingsView = () => {
   ];
 
   return (
-    <div className="view-page settings-page" style={{ width: '100%', padding: '0 4px', maxWidth: '1080px', margin: '0 auto' }}>
+    <div className="settings-page" style={{ width: '100%', padding: '0 4px', maxWidth: '1080px', margin: '0 auto' }}>
       {/* Top Header Row */}
       <div
         style={{

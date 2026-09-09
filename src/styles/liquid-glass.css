@@ -1062,26 +1062,26 @@ html, body {
 
 /* 3D View Transition Container */
 .view-viewport {
-  perspective: 1400px;
   position: relative;
   width: 100%;
   flex: 1;
+  contain: layout style;
 }
 
 .view-page {
-  animation: pageFade3D 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transform-origin: center top;
+  animation: pageFadeIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
   width: 100%;
+  will-change: opacity, transform;
 }
 
-@keyframes pageFade3D {
-  0% {
+@keyframes pageFadeIn {
+  from {
     opacity: 0;
-    transform: translateY(22px) rotateX(4deg) scale(0.98);
+    transform: translateY(14px) scale(0.995);
   }
-  100% {
+  to {
     opacity: 1;
-    transform: translateY(0) rotateX(0deg) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 

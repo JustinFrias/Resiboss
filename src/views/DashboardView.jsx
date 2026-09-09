@@ -31,7 +31,7 @@ export const DashboardView = () => {
   const categoryEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="view-page dashboard-page" style={{ width: '100%', padding: '0 0 100px 0' }}>
+    <div className="dashboard-page" style={{ width: '100%', padding: '0 0 100px 0' }}>
       {/* 4 Stat Cards */}
       <div
         className="dashboard-stats-grid"

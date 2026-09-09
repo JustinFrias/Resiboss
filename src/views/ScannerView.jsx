@@ -523,7 +523,7 @@ export const ScannerView = () => {
   }, []);
 
   return (
-    <div className="view-page" style={{ width: '100%', padding: 0 }}>
+    <div className="" style={{ width: '100%', padding: 0 }}>
       {/* Global File Input - Always mounted in DOM so 'Scan Another' never leaves screen */}
       <input
         ref={fileInputRef}

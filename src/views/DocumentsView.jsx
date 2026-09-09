@@ -58,7 +58,7 @@ export const DocumentsView = () => {
   };
 
   return (
-    <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
+    <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
       {/* Title Header */}
       <div className="view-title-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>

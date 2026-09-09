@@ -15,8 +15,8 @@ export const MobileBottomNav = () => {
   const handleTabClick = (tabId) => {
     soundFx.playClick();
     setActiveTab(tabId);
-    // Scroll smoothly to top on tab change for easy access
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Instantly jump to top so the new page enters cleanly
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   return (

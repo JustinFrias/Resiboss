@@ -48,7 +48,7 @@ export const AnalyticView = () => {
   const maxMonthAmount = Math.max(...monthlyData.map((m) => m.amount), 1);
 
   return (
-    <div className="view-page" style={{ width: '100%', padding: '0 0 40px 0' }}>
+    <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
       {/* Title Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>

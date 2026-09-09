@@ -246,7 +246,7 @@ export const ExportView = () => {
   const activeRecordsCount = filteredDocs.filter((d) => selectedDocIds.includes(d.id)).length;
 
   return (
-    <div className="view-page" style={{ width: '100%', padding: 0 }}>
+    <div className="" style={{ width: '100%', padding: 0 }}>
       {/* 1. Header Section */}
       <div
         style={{

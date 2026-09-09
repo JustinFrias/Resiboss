@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import {
   LiquidBackground3D,
@@ -25,6 +25,16 @@ import './styles/liquid-glass.css';
 const MainLayout = () => {
   const { activeTab, sidebarCollapsed, userProfile } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const viewportRef = useRef(null);
+
+  // Instantly scroll to top of the content area on every tab switch
+  useLayoutEffect(() => {
+    if (viewportRef.current) {
+      viewportRef.current.scrollTop = 0;
+    }
+    // Also reset window scroll (for mobile)
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   // If not logged in, show Login / Sign Up screen first
   if (!userProfile) {
@@ -34,19 +44,19 @@ const MainLayout = () => {
   const renderActiveView = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView key="dashboard" />;
+        return <DashboardView />;
       case 'scanner':
-        return <ScannerView key="scanner" />;
+        return <ScannerView />;
       case 'documents':
-        return <DocumentsView key="documents" />;
+        return <DocumentsView />;
       case 'analytic':
-        return <AnalyticView key="analytic" />;
+        return <AnalyticView />;
       case 'export':
-        return <ExportView key="export" />;
+        return <ExportView />;
       case 'settings':
-        return <SettingsView key="settings" />;
+        return <SettingsView />;
       default:
-        return <DashboardView key="dashboard-default" />;
+        return <DashboardView />;
     }
   };
 
@@ -74,8 +84,11 @@ const MainLayout = () => {
         <div className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           <TopBar onOpenMobile={() => setMobileMenuOpen(true)} />
 
-          <main className="view-viewport">
-            {renderActiveView()}
+          <main ref={viewportRef} className="view-viewport">
+            {/* key=activeTab forces a fresh mount + CSS animation on every tab switch */}
+            <div key={activeTab} className="view-page">
+              {renderActiveView()}
+            </div>
           </main>
         </div>
 
