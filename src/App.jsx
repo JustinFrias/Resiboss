@@ -10,7 +10,6 @@ import {
   TermsModal,
   PrivacyPolicyModal,
   CookieConsentBanner,
-  DownloadNotificationBanner,
 } from './components';
 
 import { DashboardView } from './views/DashboardView';
@@ -57,7 +56,7 @@ const MainLayout = () => {
         position: 'relative',
         minHeight: '100vh',
         color: 'var(--text-primary)',
-        overflowX: 'clip',
+        overflowX: 'hidden',
       }}
     >
       {/* 3D Liquid Canvas Background */}
@@ -99,7 +98,6 @@ export default function App() {
       <TermsModal />
       <PrivacyPolicyModal />
       <CookieConsentBanner />
-      <DownloadNotificationBanner />
     </AppProvider>
   );
 }

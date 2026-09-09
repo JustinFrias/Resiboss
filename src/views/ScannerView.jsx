@@ -186,56 +186,42 @@ export const ScannerView = () => {
         if (progress % 25 === 0) soundFx.playScanBlip();
       });
 
-      // Populate complete receipt data for user inspection and editing
+      // Check if image was detected as a valid receipt
+      if (!ocrResult.isValid) {
+        setIsScanning(false);
+        setScanError({
+          title: 'Non-Receipt Image Detected',
+          message: ocrResult.errorReason || 'The uploaded photo does not appear to be an official receipt or sales invoice.',
+          tip: 'Ensure the image is clear, flat, and focused on a receipt containing a store name and prices.',
+          imageUri: imageUri,
+          filename: filename,
+        });
+        soundFx.playWarning();
+        return;
+      }
+
       const completeReceipt = {
         ...ocrResult,
-        merchant: ocrResult?.merchant || 'Scanned Receipt',
         id: `REC-2026-${Math.floor(100 + Math.random() * 900)}`,
         imageUri: imageUri,
         fileName: filename,
-        total: ocrResult?.total !== undefined ? ocrResult.total : 100.0,
-        subtotal: ocrResult?.subtotal !== undefined ? ocrResult.subtotal : 89.29,
-        vat: ocrResult?.vat !== undefined ? ocrResult.vat : 10.71,
-        date: ocrResult?.date || new Date().toISOString().split('T')[0],
-        time: ocrResult?.time || '12:00 PM',
-        category: ocrResult?.category || 'Food',
-        paymentMethod: ocrResult?.paymentMethod || 'Cash',
-        items: ocrResult?.items && ocrResult.items.length > 0 ? ocrResult.items : [
-          { name: `${ocrResult?.merchant || 'Scanned'} Item`, qty: 1, price: ocrResult?.total || 100.0, total: ocrResult?.total || 100.0 }
-        ],
       };
 
       setCurrentReceipt(completeReceipt);
-      setDetectedBoxes(ocrResult?.detectedBoxes || []);
-      setScanError(null);
+      setDetectedBoxes(ocrResult.detectedBoxes || []);
       setIsScanning(false);
       soundFx.playSuccessChime();
     } catch (err) {
       console.error('OCR run error:', err);
-      // Graceful fallback: load into editor so user can review and save
-      const fallbackReceipt = {
-        id: `REC-2026-${Math.floor(100 + Math.random() * 900)}`,
-        imageUri: imageUri,
-        fileName: filename || 'Scanned Receipt',
-        merchant: 'Scanned Receipt',
-        date: new Date().toISOString().split('T')[0],
-        time: '12:00 PM',
-        tin: '000-000-000-000',
-        category: 'Food',
-        paymentMethod: 'Cash',
-        subtotal: 100.0,
-        vat: 12.0,
-        total: 112.0,
-        items: [{ name: 'Scanned Item', qty: 1, price: 100.0, total: 100.0 }],
-        currency: 'PHP',
-        confidence: 80,
-        rawOcrText: 'Scanned Receipt Document',
-        detectedBoxes: [],
-      };
-      setCurrentReceipt(fallbackReceipt);
-      setScanError(null);
       setIsScanning(false);
-      soundFx.playSuccessChime();
+      setScanError({
+        title: 'Receipt Unreadable',
+        message: 'Could not extract readable text or receipt details from this image.',
+        tip: 'Please try capturing a brighter and clearer photo of the receipt.',
+        imageUri: imageUri,
+        filename: filename,
+      });
+      soundFx.playWarning();
     }
   };
 
@@ -756,19 +742,19 @@ export const ScannerView = () => {
             alignItems: 'center',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-              <span className="liquid-badge liquid-badge-cyan" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="liquid-badge liquid-badge-cyan">
                 <Camera size={13} /> LIVE VIEWFINDER
               </span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 Align receipt in the center of the camera
               </span>
             </div>
             <button
               onClick={handleResetToIdle}
               className="liquid-btn liquid-btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.8rem', flexShrink: 0, whiteSpace: 'nowrap' }}
+              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
             >
               <X size={15} /> Close Camera
             </button>
@@ -835,39 +821,13 @@ export const ScannerView = () => {
         >
           {/* Left Side: Real Uploaded Image with Holographic Laser OCR Beam */}
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '14px',
-                width: '100%',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  minWidth: 0,
-                  flex: '1 1 auto',
-                  overflow: 'hidden',
-                }}
-              >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.72rem' }}>
+                  <Sparkles size={12} /> ACCURATE OPTICAL OCR
+                </span>
                 {selectedFileName && (
-                  <span
-                    style={{
-                      fontSize: '0.78rem',
-                      color: 'var(--text-secondary)',
-                      fontFamily: 'var(--font-mono)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      minWidth: 0,
-                    }}
-                    title={selectedFileName}
-                  >
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                     {selectedFileName}
                   </span>
                 )}
@@ -878,15 +838,12 @@ export const ScannerView = () => {
                 onClick={handleScanAnother}
                 className="liquid-btn liquid-btn-secondary"
                 style={{
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '6px 13px',
+                  padding: '5px 12px',
                   fontSize: '0.78rem',
-                  fontWeight: 600,
                   cursor: 'pointer',
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap',
                 }}
                 title="Quickly select a new receipt from files without leaving scanner"
               >
@@ -1274,6 +1231,9 @@ export const ScannerView = () => {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       {t.scanner.extractedDetailsTitle}
                     </h3>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      {t.scanner.extractedDetailsDesc}
+                    </span>
                   </div>
                   {currentReceipt && (
                     <span className="liquid-badge liquid-badge-emerald">

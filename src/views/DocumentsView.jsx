@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components';
-import { soundFx } from '../utils/soundEffects';
 import {
   FolderArchive,
   Search,
@@ -415,7 +414,6 @@ export const DocumentsView = () => {
                         onClick={() => setInspectingDoc(doc)}
                         className="liquid-btn liquid-btn-secondary"
                         style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                        title="Inspect Receipt"
                       >
                         <Eye size={13} />
                       </button>
@@ -423,7 +421,6 @@ export const DocumentsView = () => {
                         onClick={() => deleteDocument(doc.id)}
                         className="liquid-btn liquid-btn-secondary"
                         style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f87171' }}
-                        title="Delete Receipt"
                       >
                         <Trash2 size={13} />
                       </button>

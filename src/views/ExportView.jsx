@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadFile } from '../utils/fileDownloader';
-import { generateExcelSpreadsheet } from '../utils/excelExporter';
 import confetti from 'canvas-confetti';
 import {
   Download,
@@ -20,8 +18,8 @@ import {
 export const ExportView = () => {
   const { documents, t, formatCurrency } = useApp();
 
-  // Multi-format selection: Array of selected format IDs ('excel' | 'purchases' | 'sales' | 'csv')
-  const [selectedFormats, setSelectedFormats] = useState(['excel', 'purchases']);
+  // Multi-format selection: Array of selected format IDs ('purchases' | 'sales' | 'csv')
+  const [selectedFormats, setSelectedFormats] = useState(['purchases', 'csv']);
   const [selectedRange, setSelectedRange] = useState('All Time');
   const [isRangeOpen, setIsRangeOpen] = useState(false);
   const [exportNotification, setExportNotification] = useState(null);
@@ -63,12 +61,6 @@ export const ExportView = () => {
   // Format cards configuration
   const formatOptions = [
     {
-      id: 'excel',
-      title: 'Microsoft Excel (.xls / .xlsx)',
-      desc: 'Auto-adjusting column widths, formatted currency & bold headers',
-      recordLabel: (count) => `${count} formatted records`,
-    },
-    {
       id: 'purchases',
       title: t.export.purchasesJournal || 'Purchases & Expenses Journal',
       desc: t.export.purchasesDesc || 'Monthly Purchases & Input Tax Ledger',
@@ -82,8 +74,8 @@ export const ExportView = () => {
     },
     {
       id: 'csv',
-      title: t.export.customCsv || 'Standard CSV',
-      desc: t.export.customCsvDesc || 'Plain text CSV flat format',
+      title: t.export.customCsv || 'Custom CSV',
+      desc: t.export.customCsvDesc || 'All submitted documents, flat CSV format',
       recordLabel: (count) => `${count} submitted records`,
     },
   ];
@@ -127,7 +119,7 @@ export const ExportView = () => {
   };
 
   // Handle download of selected formats & receipts
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (selectedFormats.length === 0) {
       alert('Please select at least one export format.');
       return;
@@ -142,57 +134,12 @@ export const ExportView = () => {
     soundFx.playLaserHum();
     const timestamp = new Date().toISOString().split('T')[0];
 
-    try {
-      for (let index = 0; index < selectedFormats.length; index++) {
-        const fmt = selectedFormats[index];
+    selectedFormats.forEach((fmt, index) => {
+      setTimeout(() => {
         let csvHeaders = [];
         let csvRows = [];
 
-        if (fmt === 'excel') {
-          csvHeaders = [
-            'Receipt ID',
-            'Date',
-            'Merchant Name',
-            'TIN',
-            'Category',
-            'Payment Method',
-            'Status',
-            'Subtotal (Net of VAT)',
-            'VAT Amount (12%)',
-            'Total Amount (PHP)',
-          ];
-
-          const excelRows = docsToExport.map((doc) => {
-            const subtotal = +(doc.subtotal || (doc.total ? doc.total / 1.12 : 0)).toFixed(2);
-            const vat = +(doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0)).toFixed(2);
-            const total = +(doc.total || 0).toFixed(2);
-            const cleanDate = doc.date ? doc.date.split('T')[0] : '';
-            return [
-              doc.id || '',
-              { value: cleanDate, isDate: true },
-              doc.merchant || 'Unknown Merchant',
-              doc.tin || 'N/A',
-              doc.category || 'General',
-              doc.paymentMethod || 'Cash',
-              doc.status || 'Verified',
-              { value: subtotal, isNumber: true },
-              { value: vat, isNumber: true },
-              { value: total, isNumber: true },
-            ];
-          });
-
-          const excelXml = generateExcelSpreadsheet({
-            sheetName: 'Receipts Journal',
-            headers: csvHeaders,
-            rows: excelRows,
-          });
-
-          await downloadFile({
-            content: excelXml,
-            filename: `Resiboss_Excel_Journal_${timestamp}.xls`,
-            mimeType: 'application/vnd.ms-excel',
-          });
-        } else if (fmt === 'purchases') {
+        if (fmt === 'purchases') {
           csvHeaders = [
             'Taxable Month',
             'Date',
@@ -207,45 +154,6 @@ export const ExportView = () => {
             'Total Amount',
           ];
 
-          const excelRows = docsToExport.map((doc, idx) => {
-            const vatExp = +((doc.total || 0) / 1.12).toFixed(2);
-            const inputTax = +(doc.vat || ((doc.total || 0) * 0.12) / 1.12).toFixed(2);
-            const total = +(doc.total || 0).toFixed(2);
-            const cleanDate = doc.date ? doc.date.split('T')[0] : '';
-            const dateObj = doc.date ? new Date(doc.date) : new Date();
-            const taxMonth = !isNaN(dateObj.getTime())
-              ? dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-              : 'Current';
-
-            return [
-              taxMonth,
-              { value: cleanDate, isDate: true },
-              doc.tin || '000-000-000-000',
-              doc.merchant || 'Store',
-              doc.category || 'Business Expense',
-              'Official Receipt',
-              doc.id || 'OR-' + (idx + 1001),
-              { value: vatExp, isNumber: true },
-              { value: 0.00, isNumber: true },
-              { value: inputTax, isNumber: true },
-              { value: total, isNumber: true },
-            ];
-          });
-
-          // Generate auto-adjusting Excel file
-          const excelXml = generateExcelSpreadsheet({
-            sheetName: 'Purchases Ledger',
-            headers: csvHeaders,
-            rows: excelRows,
-          });
-
-          await downloadFile({
-            content: excelXml,
-            filename: `Resiboss_Purchases_Ledger_${timestamp}.xls`,
-            mimeType: 'application/vnd.ms-excel',
-          });
-
-          // Also generate standard CSV
           csvRows = docsToExport.map((doc, idx) => {
             const vatExp = ((doc.total || 0) / 1.12).toFixed(2);
             const inputTax = (doc.vat || ((doc.total || 0) * 0.12) / 1.12).toFixed(2);
@@ -253,11 +161,10 @@ export const ExportView = () => {
             const taxMonth = !isNaN(dateObj.getTime())
               ? dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
               : 'Current';
-            const cleanDate = doc.date ? doc.date.split('T')[0] : '';
 
             return [
               `"${taxMonth}"`,
-              `"${cleanDate}"`,
+              `"${doc.date || ''}"`,
               `"${doc.tin || '000-000-000-000'}"`,
               `"${(doc.merchant || 'Store').replace(/"/g, '""')}"`,
               `"${doc.category || 'Business Expense'}"`,
@@ -268,13 +175,6 @@ export const ExportView = () => {
               inputTax,
               (doc.total || 0).toFixed(2),
             ].join(',');
-          });
-
-          const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-          await downloadFile({
-            content: csvContent,
-            filename: `Resiboss_Purchases_Ledger_${timestamp}.csv`,
-            mimeType: 'text/csv;charset=utf-8;',
           });
         } else if (fmt === 'sales') {
           csvHeaders = [
@@ -287,14 +187,8 @@ export const ExportView = () => {
             'Total Sales Amount',
           ];
           csvRows = [];
-          const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-          await downloadFile({
-            content: csvContent,
-            filename: `Resiboss_Sales_Summary_${timestamp}.csv`,
-            mimeType: 'text/csv;charset=utf-8;',
-          });
         } else {
-          // Custom CSV & Auto-adjusting Excel Spreadsheet
+          // Custom CSV - Clean, human-readable column headers without raw database underscores
           csvHeaders = [
             'Receipt ID',
             'Date',
@@ -307,65 +201,34 @@ export const ExportView = () => {
             'VAT Amount (12%)',
             'Total Amount (PHP)',
           ];
-
-          // 1. Auto-adjusting Excel file
-          const excelRows = docsToExport.map((doc) => {
-            const subtotal = +(doc.subtotal || (doc.total ? doc.total / 1.12 : 0)).toFixed(2);
-            const vat = +(doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0)).toFixed(2);
-            const total = +(doc.total || 0).toFixed(2);
-            const cleanDate = doc.date ? doc.date.split('T')[0] : '';
-            return [
-              doc.id || '',
-              { value: cleanDate, isDate: true },
-              doc.merchant || 'Unknown Merchant',
-              doc.tin || 'N/A',
-              doc.category || 'General',
-              doc.paymentMethod || 'Cash',
-              doc.status || 'Verified',
-              { value: subtotal, isNumber: true },
-              { value: vat, isNumber: true },
-              { value: total, isNumber: true },
-            ];
-          });
-
-          const excelXml = generateExcelSpreadsheet({
-            sheetName: 'Custom Journal',
-            headers: csvHeaders,
-            rows: excelRows,
-          });
-
-          await downloadFile({
-            content: excelXml,
-            filename: `Resiboss_csv_Journal_${timestamp}.xls`,
-            mimeType: 'application/vnd.ms-excel',
-          });
-
-          // 2. Formatted CSV file
-          csvRows = docsToExport.map((doc) => {
-            const cleanDate = doc.date ? doc.date.split('T')[0] : '';
-            return [
-              `"${(doc.id || '').replace(/"/g, '""')}"`,
-              `"${cleanDate}"`,
-              `"${(doc.merchant || 'Unknown Merchant').replace(/"/g, '""')}"`,
-              `"${(doc.tin || 'N/A').replace(/"/g, '""')}"`,
-              `"${(doc.category || 'General').replace(/"/g, '""')}"`,
-              `"${(doc.paymentMethod || 'Cash').replace(/"/g, '""')}"`,
-              `"${(doc.status || 'Verified').replace(/"/g, '""')}"`,
-              ((doc.subtotal || (doc.total ? doc.total / 1.12 : 0))).toFixed(2),
-              ((doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0))).toFixed(2),
-              ((doc.total || 0)).toFixed(2),
-            ].join(',');
-          });
-
-          const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-          await downloadFile({
-            content: csvContent,
-            filename: `Resiboss_csv_Journal_${timestamp}.csv`,
-            mimeType: 'text/csv;charset=utf-8;',
-          });
+          csvRows = docsToExport.map((doc) => [
+            `"${(doc.id || '').replace(/"/g, '""')}"`,
+            `"${(doc.date || '').replace(/"/g, '""')}"`,
+            `"${(doc.merchant || 'Unknown Merchant').replace(/"/g, '""')}"`,
+            `"${(doc.tin || 'N/A').replace(/"/g, '""')}"`,
+            `"${(doc.category || 'General').replace(/"/g, '""')}"`,
+            `"${(doc.paymentMethod || 'Cash').replace(/"/g, '""')}"`,
+            `"${(doc.status || 'Verified').replace(/"/g, '""')}"`,
+            ((doc.subtotal || (doc.total ? doc.total / 1.12 : 0))).toFixed(2),
+            ((doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0))).toFixed(2),
+            ((doc.total || 0)).toFixed(2),
+          ].join(','));
         }
-      }
 
+        const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', downloadUrl);
+        link.setAttribute('download', `Resiboss_${fmt}_Journal_${timestamp}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      }, index * 300);
+    });
+
+    setTimeout(() => {
       soundFx.playSuccessChime();
       try {
         confetti({
@@ -380,9 +243,7 @@ export const ExportView = () => {
         `Downloaded ${selectedFormats.length} file(s) with ${docsToExport.length} receipt record(s)!`
       );
       setTimeout(() => setExportNotification(null), 4500);
-    } catch (err) {
-      console.error('Download error:', err);
-    }
+    }, selectedFormats.length * 300 + 100);
   };
 
   const activeRecordsCount = filteredDocs.filter((d) => selectedDocIds.includes(d.id)).length;

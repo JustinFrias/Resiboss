@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadFile } from '../utils/fileDownloader';
 import { ResibossAuthCard } from '../components';
 import {
   Sliders,
@@ -254,7 +253,7 @@ export const SettingsView = () => {
   };
 
   // Export Backup JSON (Screenshot 4)
-  const handleExportBackup = async () => {
+  const handleExportBackup = () => {
     soundFx.playLaserHum();
     const backupData = {
       version: '1.0',
@@ -263,11 +262,15 @@ export const SettingsView = () => {
       documents,
       notifications,
     };
-    await downloadFile({
-      content: JSON.stringify(backupData, null, 2),
-      filename: `resiboss_backup_${new Date().toISOString().split('T')[0]}.json`,
-      mimeType: 'application/json',
-    });
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resiboss_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     soundFx.playSuccessChime();
   };
 
