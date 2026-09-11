@@ -1,26 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadFile, downloadReceiptsExcel } from '../utils/fileDownloader';
+import { downloadReceiptsExcel } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 import {
   Download,
   Calendar,
   ChevronDown,
   CheckCircle2,
-  FileSpreadsheet,
   Check,
   CheckSquare,
   Square,
-  Layers,
-  FileText,
 } from 'lucide-react';
 
 export const ExportView = () => {
   const { documents, t, formatCurrency } = useApp();
 
-  // Multi-format selection: Array of selected format IDs ('excel' | 'purchases' | 'sales' | 'csv')
-  const [selectedFormats, setSelectedFormats] = useState(['excel']);
   const [selectedRange, setSelectedRange] = useState('All Time');
   const [isRangeOpen, setIsRangeOpen] = useState(false);
   const [exportNotification, setExportNotification] = useState(null);
@@ -59,51 +54,6 @@ export const ExportView = () => {
     });
   }, [documents, selectedRange]);
 
-  // Format cards configuration
-  const formatOptions = [
-    {
-      id: 'excel',
-      title: 'Microsoft Excel (.xlsx)',
-      desc: 'Complete Excel Workbook with Purchases Journal & Itemized Breakdown',
-      recordLabel: (count) => `${count} receipts formatted for Excel`,
-      badge: 'RECOMMENDED',
-    },
-    {
-      id: 'purchases',
-      title: t.export.purchasesJournal || 'Purchases & Expenses Journal',
-      desc: t.export.purchasesDesc || 'Monthly Purchases & Input Tax Ledger (.xlsx)',
-      recordLabel: (count) => `${count} expense records`,
-    },
-    {
-      id: 'sales',
-      title: t.export.vatSales || 'VAT Sales to be Reported',
-      desc: t.export.vatSalesDesc || 'Monthly VAT Sales Summary',
-      recordLabel: () => '0 revenue records',
-    },
-    {
-      id: 'csv',
-      title: t.export.customCsv || 'Custom CSV (.csv)',
-      desc: t.export.customCsvDesc || 'All submitted documents, flat CSV format',
-      recordLabel: (count) => `${count} submitted records`,
-    },
-  ];
-
-  // Toggle format selection
-  const handleToggleFormat = (formatId) => {
-    soundFx.playClick();
-    setSelectedFormats((prev) => {
-      if (prev.includes(formatId)) {
-        if (prev.length === 1) {
-          // Keep at least one selected
-          return prev;
-        }
-        return prev.filter((id) => id !== formatId);
-      } else {
-        return [...prev, formatId];
-      }
-    });
-  };
-
   // Toggle single document selection
   const handleToggleDoc = (docId) => {
     soundFx.playClick();
@@ -126,15 +76,10 @@ export const ExportView = () => {
     }
   };
 
-  // Handle download of selected formats & receipts
+  // Handle download of selected receipts directly as Microsoft Excel (.xlsx)
   const handleDownload = async () => {
-    if (selectedFormats.length === 0) {
-      alert('Please select at least one export format.');
-      return;
-    }
-
     const docsToExport = filteredDocs.filter((doc) => selectedDocIds.includes(doc.id));
-    if (docsToExport.length === 0 && !selectedFormats.includes('sales')) {
+    if (docsToExport.length === 0) {
       alert('Please select at least one document to download.');
       return;
     }
@@ -143,62 +88,7 @@ export const ExportView = () => {
     const timestamp = new Date().toISOString().split('T')[0];
 
     try {
-      for (const fmt of selectedFormats) {
-        if (fmt === 'excel') {
-          await downloadReceiptsExcel(docsToExport, `Resiboss_Expense_Report_${timestamp}.xlsx`);
-        } else if (fmt === 'purchases') {
-          await downloadReceiptsExcel(docsToExport, `Resiboss_Purchases_Journal_${timestamp}.xlsx`);
-        } else if (fmt === 'sales') {
-          const salesHeaders = [
-            'Date',
-            'Customer TIN',
-            'Customer Name',
-            'Invoice No',
-            'Vatable Sales',
-            'VAT Output (12%)',
-            'Total Sales Amount',
-          ];
-          const csvContent = '\uFEFF' + salesHeaders.join(',') + '\r\n';
-          await downloadFile({
-            content: csvContent,
-            filename: `Resiboss_VAT_Sales_${timestamp}.csv`,
-            mimeType: 'text/csv;charset=utf-8;',
-          });
-        } else {
-          // Custom CSV
-          const csvHeaders = [
-            'Receipt ID',
-            'Date',
-            'Merchant Name',
-            'TIN',
-            'Category',
-            'Payment Method',
-            'Status',
-            'Subtotal (Net of VAT)',
-            'VAT Amount (12%)',
-            'Total Amount (PHP)',
-          ];
-          const csvRows = docsToExport.map((doc) => [
-            `"${(doc.id || '').replace(/"/g, '""')}"`,
-            `"${(doc.date || '').replace(/"/g, '""')}"`,
-            `"${(doc.merchant || 'Unknown Merchant').replace(/"/g, '""')}"`,
-            `"${(doc.tin || 'N/A').replace(/"/g, '""')}"`,
-            `"${(doc.category || 'General').replace(/"/g, '""')}"`,
-            `"${(doc.paymentMethod || 'Cash').replace(/"/g, '""')}"`,
-            `"${(doc.status || 'Verified').replace(/"/g, '""')}"`,
-            ((doc.subtotal || (doc.total ? doc.total / 1.12 : 0))).toFixed(2),
-            ((doc.vat || (doc.total ? (doc.total * 0.12) / 1.12 : 0))).toFixed(2),
-            ((doc.total || 0)).toFixed(2),
-          ].join(','));
-
-          const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
-          await downloadFile({
-            content: csvContent,
-            filename: `Resiboss_Custom_Export_${timestamp}.csv`,
-            mimeType: 'text/csv;charset=utf-8;',
-          });
-        }
-      }
+      await downloadReceiptsExcel(docsToExport, `Resiboss_Expense_Report_${timestamp}.xlsx`);
 
       soundFx.playSuccessChime();
       try {
@@ -211,7 +101,7 @@ export const ExportView = () => {
       } catch (e) {}
 
       setExportNotification(
-        `Successfully exported ${selectedFormats.length} file(s) with ${docsToExport.length} receipt record(s)!`
+        `Successfully exported ${docsToExport.length} receipt record(s) to Microsoft Excel (.xlsx)!`
       );
       setTimeout(() => setExportNotification(null), 4500);
     } catch (exportErr) {
@@ -219,8 +109,6 @@ export const ExportView = () => {
       alert('Export failed. Please check device permissions and try again.');
     }
   };
-
-  const activeRecordsCount = filteredDocs.filter((d) => selectedDocIds.includes(d.id)).length;
 
   return (
     <div className="" style={{ width: '100%', padding: 0 }}>
@@ -342,9 +230,7 @@ export const ExportView = () => {
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
           >
             <Download size={16} />
-            <span>
-              Download Selected ({selectedFormats.length} {selectedFormats.length === 1 ? 'file' : 'files'})
-            </span>
+            <span>Download</span>
           </button>
         </div>
       </div>
@@ -373,155 +259,7 @@ export const ExportView = () => {
         </div>
       )}
 
-      {/* 2. Format Selection Cards Section (Multi-Selectable) */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '22px',
-          marginBottom: '20px',
-          borderRadius: '16px',
-          border: '1px solid var(--glass-border)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <div>
-            <h2
-              style={{
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                margin: 0,
-              }}
-            >
-              {t.export.formatSelect || 'Export Formats'}
-            </h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '3px 0 0 0' }}>
-              Choose which formats to export (click to toggle multiple formats)
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => {
-                soundFx.playClick();
-                setSelectedFormats(['excel', 'purchases', 'sales', 'csv']);
-              }}
-              style={{
-                background: 'var(--cyan-subtle)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '8px',
-                color: 'var(--cyan-glow)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                padding: '5px 10px',
-                cursor: 'pointer',
-              }}
-            >
-              Select All Formats
-            </button>
-          </div>
-        </div>
-
-        {/* Format Cards Grid */}
-        <div
-          className="export-format-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {formatOptions.map((fmt) => {
-            const isSelected = selectedFormats.includes(fmt.id);
-            return (
-              <div
-                key={fmt.id}
-                onClick={() => handleToggleFormat(fmt.id)}
-                style={{
-                  padding: '16px 18px',
-                  borderRadius: '14px',
-                  background: isSelected ? 'var(--cyan-subtle)' : 'var(--bg-surface-elevated)',
-                  border: isSelected ? '2px solid var(--cyan-glow)' : '1px solid var(--glass-border)',
-                  boxShadow: isSelected ? '0 0 20px var(--cyan-subtle)' : 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.22s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  minHeight: '110px',
-                  position: 'relative',
-                  userSelect: 'none',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                      <span style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {fmt.title}
-                      </span>
-                      {fmt.badge && (
-                        <span
-                          style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '6px',
-                            background: 'rgba(0, 242, 254, 0.15)',
-                            color: '#00f2fe',
-                            border: '1px solid rgba(0, 242, 254, 0.4)',
-                          }}
-                        >
-                          {fmt.badge}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.35 }}>
-                      {fmt.desc}
-                    </div>
-                  </div>
-
-                  {/* Multi-Select Checkbox Badge */}
-                    <div
-                      style={{
-                        width: '22px',
-                        height: '22px',
-                        borderRadius: '7px',
-                        border: isSelected ? 'none' : '2px solid var(--glass-border-bright)',
-                        background: isSelected ? 'var(--cyan-glow)' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: isSelected ? '0 0 10px rgba(0, 242, 254, 0.4)' : 'none',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {isSelected && <Check size={14} color="#090e21" strokeWidth={3} />}
-                    </div>
-                </div>
-
-                <div
-                  style={{
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    color: isSelected ? 'var(--cyan-glow)' : 'var(--text-muted)',
-                    marginTop: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <FileSpreadsheet size={14} />
-                  <span>{fmt.recordLabel(activeRecordsCount)}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Document Selection Table (Select Which Receipts to Include) */}
+      {/* 2. Document Selection Table (Select Which Receipts to Include) */}
       <div
         className="glass-panel"
         style={{
