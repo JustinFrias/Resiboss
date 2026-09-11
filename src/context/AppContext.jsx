@@ -290,11 +290,32 @@ export const AppProvider = ({ children }) => {
 
   const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem('resiboss_theme_v1') || 'dark';
+      const saved = localStorage.getItem('resiboss_theme_v2');
+      if (saved === 'dark' || saved === 'light') return saved;
+      return 'light';
     } catch (e) {
-      return 'dark';
+      return 'light';
     }
   });
+
+  // Synchronize theme to documentElement attribute and localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('resiboss_theme_v2', theme);
+      localStorage.setItem('resiboss_theme_v1', theme);
+    } catch (e) {}
+
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+        document.body.classList.remove('dark-mode');
+      } else {
+        document.body.classList.add('dark-mode');
+        document.body.classList.remove('light-mode');
+      }
+    }
+  }, [theme]);
 
   const getNotifStorageKey = (user) => {
     const id = user?.id || user?.email;

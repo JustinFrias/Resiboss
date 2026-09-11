@@ -16,10 +16,11 @@ export const AuthView = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: isLight ? '#f1f5f9' : '#080c15',
+        background: isLight ? '#f8fafc' : '#080c15',
         overflowX: 'hidden',
         padding: '32px 16px',
         boxSizing: 'border-box',
+        transition: 'background 0.3s ease',
       }}
     >
       {/* 3D Liquid Canvas Background */}
@@ -27,7 +28,7 @@ export const AuthView = () => {
 
       {/* Centered Liquid Glass Authentication Card */}
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '440px' }}>
-        <ResibossAuthCard />
+        <ResibossAuthCard initialMode="signin" />
       </div>
     </div>
   );

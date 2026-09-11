@@ -314,6 +314,8 @@
 }
 
 /* Preserve bright white text inside solid colored buttons */
+[data-theme="light"] .keep-white,
+[data-theme="light"] .keep-white *,
 [data-theme="light"] .liquid-btn-primary,
 [data-theme="light"] .liquid-btn-primary *,
 [data-theme="light"] [style*="background: #059669"],
@@ -324,9 +326,19 @@
 [data-theme="light"] [style*="background: #2563eb"] *,
 [data-theme="light"] [style*="background: #dc2626"],
 [data-theme="light"] [style*="background: #dc2626"] *,
+[data-theme="light"] [style*="background: linear-gradient(135deg, #0284c7"],
+[data-theme="light"] [style*="background: linear-gradient(135deg, #0284c7"] *,
 [data-theme="light"] [style*="background: linear-gradient(135deg, #ef4444"],
 [data-theme="light"] [style*="background: linear-gradient(135deg, #ef4444"] * {
   color: #ffffff !important;
+}
+
+/* Ensure gradient clipped text displays properly in light mode */
+[data-theme="light"] .auth-title-gradient {
+  background: linear-gradient(135deg, #0f172a 35%, #0284c7 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 /* Liquid Glass Cards */
@@ -334,6 +346,14 @@
   background: rgba(255, 255, 255, 0.92) !important;
   border-color: rgba(15, 23, 42, 0.12) !important;
   box-shadow: 0 10px 30px 0 rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-theme="light"] .glass-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent) !important;
+}
+
+[data-theme="light"] .glass-panel::after {
+  background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.08), transparent) !important;
 }
 
 [data-theme="light"] .glass-panel-elevated {

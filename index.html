@@ -1,16 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/resiboss-emblem.png" />
     <link rel="apple-touch-icon" href="/resiboss-emblem.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('resiboss_theme_v2') || 'light';
+          document.documentElement.setAttribute('data-theme', saved);
+        } catch (e) {}
+      })();
+    </script>
+    
     <!-- Android Chrome & PWA Mobile Capabilities -->
-    <meta name="theme-color" content="#030712" />
+    <meta name="theme-color" content="#f8fafc" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Resiboss" />
     <meta name="application-name" content="Resiboss" />
     <meta name="format-detection" content="telephone=no" />

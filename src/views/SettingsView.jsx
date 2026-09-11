@@ -517,7 +517,7 @@ export const SettingsView = () => {
           {activeSettingTab === 'profile' && (
             <div>
               {!userProfile ? (
-                <ResibossAuthCard />
+                <ResibossAuthCard initialMode="signin" />
               ) : (
                 <form onSubmit={handleSaveProfile}>
                   <div style={{ marginBottom: '18px' }}>
