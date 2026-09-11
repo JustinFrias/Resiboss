@@ -81,19 +81,52 @@ export async function downloadFile({
   filename,
   mimeType = 'text/csv;charset=utf-8;',
   isBase64 = false,
+  blob = null,
 }) {
+  const resolvedMime = getShareMime(filename, mimeType);
+  const base64Data = isBase64 ? dataUrlToBase64(content) : textToBase64(content);
+  const fileBlob = blob || (isBase64 ? base64ToBlob(content, resolvedMime) : new Blob([content], { type: resolvedMime }));
   const isNative = Capacitor.isNativePlatform();
 
   // -------------------------------------------------------------
   // 1. CAPACITOR NATIVE ANDROID / IOS
   // -------------------------------------------------------------
   if (isNative) {
-    try {
-      const base64Data = isBase64 ? dataUrlToBase64(content) : textToBase64(content);
+    // 1.A. Custom NativeDownloader Plugin (Writes directly to Android public Downloads folder)
+    const NativeDownloader = Capacitor?.Plugins?.NativeDownloader;
+    if (NativeDownloader?.saveToDownloads) {
+      try {
+        const nativeRes = await NativeDownloader.saveToDownloads({
+          filename,
+          content: base64Data,
+          mimeType: resolvedMime,
+          openAfterSave: true,
+        });
+        if (nativeRes?.success) {
+          let backupBlobUrl = null;
+          try {
+            backupBlobUrl = URL.createObjectURL(fileBlob);
+          } catch (e) {}
 
-      // 1. Always write to Directory.Cache FIRST.
-      // Cache directory requires NO runtime permissions on any Android (up to API 36+) or iOS,
-      // and is directly configured in FileProvider (internal_cache).
+          return {
+            success: true,
+            method: 'native-mediastore',
+            filename,
+            savedToDownloads: true,
+            downloadUrl: backupBlobUrl,
+            uri: nativeRes.downloadUri || nativeRes.cacheUri,
+            blob: fileBlob,
+            base64: base64Data,
+          };
+        }
+      } catch (ndErr) {
+        console.warn('NativeDownloader note, falling back to Filesystem+Share:', ndErr);
+      }
+    }
+
+    // 1.B. Standard Capacitor Filesystem + Share plugin fallback
+    try {
+      // 1. Write to Directory.Cache
       const cacheResult = await Filesystem.writeFile({
         path: filename,
         data: base64Data,
@@ -116,7 +149,6 @@ export async function downloadFile({
       }
 
       // 2. Also try writing a persistent copy to Directory.Documents
-      // so the file remains saved in the user's Documents folder.
       try {
         await Filesystem.writeFile({
           path: filename,
@@ -128,87 +160,97 @@ export async function downloadFile({
         console.warn('Optional Documents folder write skipped:', docErr);
       }
 
-      if (!shareUri) {
-        throw new Error('Could not write file to device storage.');
-      }
-
       // 3. Open native Android / iOS Share and Save dialog
-      // In @capacitor/share v4.1+, only provide the `files` array with the file:// URI.
-      // Do NOT pass `url` alongside `files` because Android SharePlugin processes both,
-      // creating duplicate URIs that break the Intent chooser.
-      try {
-        await Share.share({
-          title: filename,
-          files: [shareUri],
-          dialogTitle: `Download / Save ${filename}`,
-        });
-      } catch (shareErr) {
-        if (
-          shareErr?.name !== 'AbortError' &&
-          !String(shareErr).includes('canceled') &&
-          !String(shareErr).includes('cancelled') &&
-          !String(shareErr).includes('dismiss')
-        ) {
-          console.warn('Native share note:', shareErr);
+      if (shareUri && shareUri.startsWith('file:')) {
+        try {
+          await Share.share({
+            title: filename,
+            files: [shareUri],
+            dialogTitle: `Download / Save ${filename}`,
+          });
+        } catch (shareErr) {
+          if (
+            shareErr?.name !== 'AbortError' &&
+            !String(shareErr).toLowerCase().includes('cancel') &&
+            !String(shareErr).toLowerCase().includes('dismiss')
+          ) {
+            console.warn('Native share note:', shareErr);
+          }
         }
       }
 
       // Generate blob URL for backup direct-tap download
       let backupBlobUrl = null;
       try {
-        const blob = isBase64 ? base64ToBlob(content, mimeType) : new Blob([content], { type: mimeType });
-        backupBlobUrl = URL.createObjectURL(blob);
+        backupBlobUrl = URL.createObjectURL(fileBlob);
       } catch (bErr) {}
 
-      return { success: true, method: 'native', uri: shareUri, downloadUrl: backupBlobUrl, filename };
+      return {
+        success: true,
+        method: 'native-share',
+        uri: shareUri,
+        downloadUrl: backupBlobUrl,
+        filename,
+        blob: fileBlob,
+        base64: base64Data,
+      };
     } catch (err) {
       console.error('Capacitor native download error, attempting browser fallback:', err);
     }
   }
 
   // -------------------------------------------------------------
-  // 2. BROWSER / WEB FALLBACK (Mobile Browser & Desktop)
+  // 2. MOBILE WEB BROWSER (Chrome Android / Safari iOS / PWA)
+  // -------------------------------------------------------------
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    try {
+      const testFile = new File([fileBlob], filename, { type: resolvedMime });
+      const canShareFiles = typeof navigator.canShare === 'function' ? navigator.canShare({ files: [testFile] }) : true;
+      if (canShareFiles) {
+        await navigator.share({
+          files: [testFile],
+          title: filename,
+        });
+        return {
+          success: true,
+          method: 'web-share',
+          downloadUrl: null,
+          filename,
+          blob: fileBlob,
+          base64: base64Data,
+        };
+      }
+    } catch (wsErr) {
+      if (wsErr?.name === 'AbortError') {
+        return {
+          success: true,
+          method: 'web-share-dismissed',
+          downloadUrl: null,
+          filename,
+          blob: fileBlob,
+          base64: base64Data,
+        };
+      }
+      console.warn('Web share note, proceeding with browser fallback:', wsErr);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 3. DIRECT BROWSER / DESKTOP DOWNLOAD FALLBACK
   // -------------------------------------------------------------
   try {
-    const blob = isBase64 ? base64ToBlob(content, mimeType) : new Blob([content], { type: mimeType });
-    const downloadUrl = URL.createObjectURL(blob);
-
-    // Try Web Share API with files if on mobile browser (Chrome Android / Safari iOS)
-    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
-      try {
-        const testFile = new File([blob], filename, { type: mimeType });
-        if (navigator.canShare({ files: [testFile] })) {
-          await navigator.share({
-            files: [testFile],
-            title: filename,
-          });
-          return { success: true, method: 'web-share', downloadUrl, filename };
-        }
-      } catch (wsErr) {
-        if (wsErr?.name === 'AbortError') {
-          return { success: true, method: 'web-share-dismissed', downloadUrl, filename };
-        }
-        console.warn('Web share note, proceeding with anchor download:', wsErr);
-      }
-    }
-
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.setAttribute('download', filename);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-
-    setTimeout(() => {
-      try {
-        document.body.removeChild(link);
-      } catch (e) {}
-    }, 2000);
-
-    return { success: true, method: 'browser', downloadUrl, filename };
+    const downloadUrl = triggerDirectBlobDownload(fileBlob, filename);
+    return {
+      success: true,
+      method: 'browser',
+      downloadUrl,
+      filename,
+      blob: fileBlob,
+      base64: base64Data,
+    };
   } catch (browserErr) {
     console.error('Browser download error:', browserErr);
-    return { success: false, error: browserErr };
+    return { success: false, error: browserErr, blob: fileBlob, base64: base64Data };
   }
 }
 
@@ -447,32 +489,22 @@ export async function downloadReceiptsExcel(documents = [], customFilename = '')
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
 
-  // 1. IMMEDIATE ZERO-WAIT SYNCHRONOUS BROWSER TRIGGER
-  // Triggered in the exact same call frame as user click — guarantees active transient
-  // user activation so mobile Chrome, mobile Safari, and WebViews cannot block it.
-  const directDownloadUrl = triggerDirectBlobDownload(excelBlob, filename);
+  const b64 = uint8ArrayToBase64(new Uint8Array(xlsxArray));
 
-  const isNative = Capacitor.isNativePlatform();
-  if (isNative) {
-    const b64 = uint8ArrayToBase64(new Uint8Array(xlsxArray));
-    const nativeRes = await downloadFile({
-      content: b64,
-      filename,
-      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      isBase64: true,
-    });
-    return {
-      ...nativeRes,
-      downloadUrl: directDownloadUrl || nativeRes?.downloadUrl,
-      filename,
-    };
-  }
+  // Run unified cross-platform downloader (NativeDownloader -> Filesystem/Share -> Web Share -> Browser Anchor)
+  const downloadRes = await downloadFile({
+    content: b64,
+    filename,
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    isBase64: true,
+    blob: excelBlob,
+  });
 
   return {
-    success: true,
-    method: 'browser-direct',
-    downloadUrl: directDownloadUrl,
+    ...downloadRes,
     filename,
+    blob: excelBlob,
+    base64: b64,
   };
 }
 
@@ -532,4 +564,32 @@ export async function downloadReceiptAsExcel(doc) {
   const filename = `Receipt_${safeMerchant}_${safeId}.xlsx`;
   return await downloadReceiptsExcel([doc], filename);
 }
+
+/**
+ * Re-triggers saving or sharing an already-generated Excel report on demand
+ * directly from an active user gesture (e.g., tapping "Tap to Save Excel").
+ */
+export async function saveOrShareExcelFile({ blob, base64, filename, mimeType }) {
+  const mime = mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const fname = filename || `Resiboss_Expense_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+  let contentData = base64;
+  if (!contentData && blob) {
+    try {
+      const buffer = await blob.arrayBuffer();
+      contentData = uint8ArrayToBase64(new Uint8Array(buffer));
+    } catch (e) {
+      console.warn('Could not read blob buffer:', e);
+    }
+  }
+
+  return await downloadFile({
+    content: contentData,
+    filename: fname,
+    mimeType: mime,
+    isBase64: true,
+    blob,
+  });
+}
+
 

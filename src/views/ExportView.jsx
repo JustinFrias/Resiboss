@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadReceiptsExcel } from '../utils/fileDownloader';
+import { downloadReceiptsExcel, saveOrShareExcelFile } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 import {
   Download,
@@ -19,6 +19,7 @@ export const ExportView = () => {
   const [selectedRange, setSelectedRange] = useState('All Time');
   const [isRangeOpen, setIsRangeOpen] = useState(false);
   const [exportNotification, setExportNotification] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Multi-receipt selection: Array of selected document IDs
   const [selectedDocIds, setSelectedDocIds] = useState(() => documents.map((d) => d.id));
@@ -84,6 +85,7 @@ export const ExportView = () => {
       return;
     }
 
+    setIsExporting(true);
     soundFx.playLaserHum();
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `Resiboss_Expense_Report_${timestamp}.xlsx`;
@@ -101,15 +103,56 @@ export const ExportView = () => {
         });
       } catch (e) {}
 
+      let statusMsg = `Successfully generated Excel report (${docsToExport.length} receipts)!`;
+      if (res?.savedToDownloads) {
+        statusMsg = `Saved to Downloads folder (${docsToExport.length} receipts)!`;
+      }
+
       setExportNotification({
-        message: `Successfully generated Excel report (${docsToExport.length} receipts)!`,
+        message: statusMsg,
         downloadUrl: res?.downloadUrl || null,
         filename,
+        blob: res?.blob || null,
+        base64: res?.base64 || null,
       });
-      setTimeout(() => setExportNotification(null), 8000);
+      setTimeout(() => setExportNotification(null), 14000);
     } catch (exportErr) {
       console.error('Export download error:', exportErr);
       alert('Export failed. Please check device permissions and try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Re-trigger saving or sharing directly from user tap
+  const handleSaveAgain = async () => {
+    if (!exportNotification) return;
+    soundFx.playClick();
+    try {
+      const res = await saveOrShareExcelFile({
+        blob: exportNotification.blob,
+        base64: exportNotification.base64,
+        filename: exportNotification.filename,
+      });
+      soundFx.playSuccessChime();
+      try {
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { y: 0.65 },
+          colors: ['#00f2fe', '#3b82f6', '#10b981', '#ffffff'],
+        });
+      } catch (e) {}
+
+      let updatedMsg = 'Report saved successfully!';
+      if (res?.savedToDownloads) {
+        updatedMsg = 'Saved to Downloads folder! Check your files.';
+      } else if (res?.method === 'web-share') {
+        updatedMsg = 'Share sheet opened!';
+      }
+      setExportNotification((prev) => (prev ? { ...prev, message: updatedMsg } : null));
+    } catch (err) {
+      console.warn('Save again error:', err);
     }
   };
 
@@ -214,8 +257,11 @@ export const ExportView = () => {
           {/* Download Button */}
           <button
             onClick={handleDownload}
+            disabled={isExporting}
             style={{
-              background: 'linear-gradient(135deg, #0284c7, #2563eb)',
+              background: isExporting
+                ? 'rgba(37, 99, 235, 0.5)'
+                : 'linear-gradient(135deg, #0284c7, #2563eb)',
               color: '#ffffff',
               border: 'none',
               borderRadius: '999px',
@@ -225,15 +271,16 @@ export const ExportView = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              cursor: 'pointer',
+              cursor: isExporting ? 'default' : 'pointer',
               boxShadow: '0 4px 18px rgba(37, 99, 235, 0.4)',
               transition: 'all 0.2s ease',
+              opacity: isExporting ? 0.75 : 1,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+            onMouseEnter={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(-1px)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
           >
             <Download size={16} />
-            <span>Download</span>
+            <span>{isExporting ? 'Generating...' : 'Download'}</span>
           </button>
         </div>
       </div>
@@ -268,28 +315,31 @@ export const ExportView = () => {
             </span>
           </div>
 
-          {typeof exportNotification === 'object' && exportNotification.downloadUrl && (
-            <a
-              href={exportNotification.downloadUrl}
-              download={exportNotification.filename || 'Resiboss_Expense_Report.xlsx'}
+          {exportNotification && (
+            <button
+              type="button"
+              onClick={handleSaveAgain}
               style={{
                 background: 'linear-gradient(135deg, #0284c7, #2563eb)',
                 color: '#ffffff',
-                padding: '7px 16px',
+                border: 'none',
+                padding: '8px 18px',
                 borderRadius: '999px',
                 fontSize: '0.82rem',
                 fontWeight: 700,
-                textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 boxShadow: '0 2px 12px rgba(37, 99, 235, 0.45)',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
             >
               <Download size={14} />
-              <span>Tap to Save Excel (.xlsx)</span>
-            </a>
+              <span>Save / Share Excel (.xlsx)</span>
+            </button>
           )}
         </div>
       )}
