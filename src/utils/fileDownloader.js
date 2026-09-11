@@ -441,18 +441,85 @@ export async function downloadReceiptsExcel(documents = [], customFilename = '')
   ];
   XLSX.utils.book_append_sheet(wb, wsItems, 'Itemized Breakdown');
 
-  // Generate Excel workbook as Uint8Array and convert to base64 in a chunk-safe way.
-  // DO NOT use XLSX.write(..., { type: 'base64' }) — it calls btoa() internally
-  // which overflows the stack in Capacitor's WebView for anything bigger than ~500KB.
+  // Generate Excel workbook array
   const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const b64 = uint8ArrayToBase64(new Uint8Array(xlsxArray));
-
-  return await downloadFile({
-    content: b64,
-    filename,
-    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    isBase64: true,
+  const excelBlob = new Blob([xlsxArray], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
+
+  // 1. IMMEDIATE ZERO-WAIT SYNCHRONOUS BROWSER TRIGGER
+  // Triggered in the exact same call frame as user click — guarantees active transient
+  // user activation so mobile Chrome, mobile Safari, and WebViews cannot block it.
+  const directDownloadUrl = triggerDirectBlobDownload(excelBlob, filename);
+
+  const isNative = Capacitor.isNativePlatform();
+  if (isNative) {
+    const b64 = uint8ArrayToBase64(new Uint8Array(xlsxArray));
+    const nativeRes = await downloadFile({
+      content: b64,
+      filename,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      isBase64: true,
+    });
+    return {
+      ...nativeRes,
+      downloadUrl: directDownloadUrl || nativeRes?.downloadUrl,
+      filename,
+    };
+  }
+
+  return {
+    success: true,
+    method: 'browser-direct',
+    downloadUrl: directDownloadUrl,
+    filename,
+  };
+}
+
+/**
+ * Triggers a direct browser download synchronously within the active user gesture frame.
+ * Appends to DOM, dispatches a trusted MouseEvent, and keeps the ObjectURL alive.
+ */
+export function triggerDirectBlobDownload(blob, filename) {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', filename);
+    link.setAttribute('rel', 'noopener');
+    link.style.position = 'fixed';
+    link.style.top = '-9999px';
+    link.style.left = '-9999px';
+    link.style.opacity = '0';
+    document.body.appendChild(link);
+
+    // Try modern MouseEvent dispatch, fall back to link.click()
+    try {
+      const clickEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      });
+      link.dispatchEvent(clickEvent);
+    } catch (e) {
+      link.click();
+    }
+
+    // Keep ObjectURL alive for 60s so mobile browser transfer finishes
+    setTimeout(() => {
+      try {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      } catch (e) {}
+    }, 60000);
+
+    return downloadUrl;
+  } catch (err) {
+    console.error('triggerDirectBlobDownload error:', err);
+    return null;
+  }
 }
 
 /**

@@ -272,8 +272,6 @@ export const ExportView = () => {
             <a
               href={exportNotification.downloadUrl}
               download={exportNotification.filename || 'Resiboss_Expense_Report.xlsx'}
-              target="_blank"
-              rel="noopener noreferrer"
               style={{
                 background: 'linear-gradient(135deg, #0284c7, #2563eb)',
                 color: '#ffffff',
