@@ -24,7 +24,10 @@
     "react-dom": "^19.2.8",
     "tesseract.js": "^7.0.0",
     "three": "^0.185.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "npm:@e965/xlsx@^0.20.3"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

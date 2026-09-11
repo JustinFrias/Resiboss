@@ -21,6 +21,20 @@ function textToBase64(str) {
 }
 
 /**
+ * Chunk-safe Uint8Array → Base64 encoder.
+ * btoa(String.fromCharCode(...array)) throws on large files in Capacitor WebView
+ * because spreading a big Uint8Array overflows the stack. This processes in 8KB chunks.
+ */
+function uint8ArrayToBase64(bytes) {
+  const CHUNK = 8192;
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+/**
  * Extract raw Base64 from data URL.
  */
 function dataUrlToBase64(dataUrl) {
@@ -78,30 +92,28 @@ export async function downloadFile({
       const base64Data = isBase64 ? dataUrlToBase64(content) : textToBase64(content);
       let shareUri = null;
 
-      // 1. Write to Cache first (optimal for FileProvider sharing to Excel/Sheets apps)
-      try {
-        const cacheRes = await Filesystem.writeFile({
-          path: filename,
-          data: base64Data,
-          directory: Directory.Cache,
-          recursive: true,
-        });
-        shareUri = cacheRes.uri;
-      } catch (cacheErr) {
-        console.warn('Could not write to Cache:', cacheErr);
-      }
+      // Android API 29+ scoped storage: External is the most reliably accessible location
+      // for file sharing without requiring a runtime permission dialog.
+      // Try External → Cache → Documents in that order.
+      const writeAttempts = [
+        Directory.External,
+        Directory.Cache,
+        Directory.Documents,
+      ];
 
-      // 2. Also persist to Documents for user permanent file access
-      try {
-        const docRes = await Filesystem.writeFile({
-          path: filename,
-          data: base64Data,
-          directory: Directory.Documents,
-          recursive: true,
-        });
-        if (!shareUri) shareUri = docRes.uri;
-      } catch (docErr) {
-        console.warn('Could not write to Documents:', docErr);
+      for (const dir of writeAttempts) {
+        try {
+          const result = await Filesystem.writeFile({
+            path: filename,
+            data: base64Data,
+            directory: dir,
+            recursive: true,
+          });
+          shareUri = result.uri;
+          break; // stop at first success
+        } catch (writeErr) {
+          console.warn(`Write to ${dir} failed, trying next:`, writeErr);
+        }
       }
 
       if (!shareUri) {
@@ -413,8 +425,11 @@ export async function downloadReceiptsExcel(documents = [], customFilename = '')
   ];
   XLSX.utils.book_append_sheet(wb, wsItems, 'Itemized Breakdown');
 
-  // Generate Base64 binary Excel workbook
-  const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+  // Generate Excel workbook as Uint8Array and convert to base64 in a chunk-safe way.
+  // DO NOT use XLSX.write(..., { type: 'base64' }) — it calls btoa() internally
+  // which overflows the stack in Capacitor's WebView for anything bigger than ~500KB.
+  const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const b64 = uint8ArrayToBase64(new Uint8Array(xlsxArray));
 
   return await downloadFile({
     content: b64,

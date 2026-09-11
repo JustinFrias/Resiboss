@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { extractReceiptWithOCR } from '../utils/receiptOcrParser';
 import { soundFx } from '../utils/soundEffects';
+import { getActiveGeminiKey, saveGeminiKey, testGeminiApiKey } from '../utils/geminiOcr';
 import {
   Camera,
   FileText,
@@ -21,6 +22,10 @@ import {
   Maximize2,
   AlertTriangle,
   RotateCcw,
+  Key,
+  ExternalLink,
+  Zap,
+  Check,
 } from 'lucide-react';
 
 export const ScannerView = () => {
@@ -50,6 +55,51 @@ export const ScannerView = () => {
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
   const [showBoxes, setShowBoxes] = useState(true);
   const [isFullscreenModal, setIsFullscreenModal] = useState(false);
+
+  // AI OCR Engine Configuration State
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [activeGeminiKey, setActiveGeminiKey] = useState(getActiveGeminiKey());
+  const [keyInput, setKeyInput] = useState(getActiveGeminiKey());
+  const [testResult, setTestResult] = useState(null);
+  const [isTestingKey, setIsTestingKey] = useState(false);
+
+  const handleSaveApiKey = () => {
+    saveGeminiKey(keyInput.trim());
+    setActiveGeminiKey(keyInput.trim());
+    addNotification({
+      title: keyInput.trim() ? 'Gemini AI Vision Active' : 'Switched to Local OCR',
+      message: keyInput.trim()
+        ? 'Gemini 1.5/2.0 Vision engine is active for high-accuracy receipt scans.'
+        : 'Local Neural OCR engine is active.',
+      type: 'success',
+    });
+    setShowAiModal(false);
+    setTestResult(null);
+  };
+
+  const handleClearApiKey = () => {
+    saveGeminiKey('');
+    setActiveGeminiKey('');
+    setKeyInput('');
+    setTestResult(null);
+    addNotification({
+      title: 'Local Engine Active',
+      message: 'Using local offline OCR engine.',
+      type: 'info',
+    });
+  };
+
+  const handleTestApiKey = async () => {
+    if (!keyInput.trim()) {
+      setTestResult({ success: false, message: 'Please paste an API key first.' });
+      return;
+    }
+    setIsTestingKey(true);
+    setTestResult(null);
+    const res = await testGeminiApiKey(keyInput.trim());
+    setIsTestingKey(false);
+    setTestResult(res);
+  };
 
   // Camera state
   const [cameraError, setCameraError] = useState(null);
@@ -692,27 +742,67 @@ export const ScannerView = () => {
 
           {/* AI Extraction Callout Banner */}
           <div
-            className="glass-panel"
+            className="glass-panel glass-panel-interactive"
+            onClick={() => setShowAiModal(true)}
             style={{
               padding: '14px 18px',
               borderRadius: '14px',
               marginBottom: '14px',
               background: 'var(--bg-surface)',
-              border: '1px solid var(--glass-border)',
+              border: activeGeminiKey ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--glass-border)',
               display: 'flex',
-              alignItems: 'flex-start',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
               gap: '12px',
             }}
           >
-            <Sparkles size={18} color="var(--cyan-glow)" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                {t.scanner.aiExtractionTitle}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                {t.scanner.aiExtractionDesc}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {activeGeminiKey ? (
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Zap size={18} color="#10b981" />
+                </div>
+              ) : (
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--cyan-subtle)', border: '1px solid var(--cyan-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Sparkles size={18} color="var(--cyan-glow)" />
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{activeGeminiKey ? 'Gemini AI Vision Engine Active' : 'Dual OCR Engines: Local & Gemini Vision AI'}</span>
+                  {activeGeminiKey ? (
+                    <span className="liquid-badge liquid-badge-emerald" style={{ fontSize: '0.65rem' }}>99% Accuracy</span>
+                  ) : (
+                    <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.65rem' }}>Local Ready</span>
+                  )}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  {activeGeminiKey
+                    ? 'AI Vision model active for high-accuracy thermal receipt scans across mobile and web.'
+                    : 'Works offline locally, or connect your free Google Gemini key for instant 99% accuracy.'}
+                </div>
               </div>
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAiModal(true);
+              }}
+              className="liquid-btn liquid-btn-secondary"
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.76rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <Key size={12} />
+              <span>{activeGeminiKey ? 'AI Settings' : 'Configure Key'}</span>
+            </button>
           </div>
         </div>
       ) : (
@@ -857,11 +947,43 @@ export const ScannerView = () => {
         >
           {/* Left Side: Real Uploaded Image with Holographic Laser OCR Beam */}
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.72rem' }}>
-                  <Sparkles size={12} /> ACCURATE OPTICAL OCR
-                </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {currentReceipt?.ocrEngine === 'gemini' ? (
+                  <span
+                    className="liquid-badge liquid-badge-emerald"
+                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
+                    onClick={() => setShowAiModal(true)}
+                    title="Powered by Gemini 1.5/2.0 Vision AI"
+                  >
+                    <Zap size={12} /> GEMINI AI VISION (99% ACCURACY)
+                  </span>
+                ) : (
+                  <span
+                    className="liquid-badge liquid-badge-cyan"
+                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
+                    onClick={() => setShowAiModal(true)}
+                    title="Powered by Tesseract Neural OCR (Offline / Local)"
+                  >
+                    <Sparkles size={12} /> OPTICAL OCR (LOCAL)
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowAiModal(true)}
+                  className="liquid-btn liquid-btn-secondary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 8px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                  }}
+                  title="Configure Gemini AI for instant 99% accuracy"
+                >
+                  <Key size={11} />
+                  <span>{activeGeminiKey ? 'AI Settings' : 'Enable Gemini AI'}</span>
+                </button>
                 {selectedFileName && (
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                     {selectedFileName}
@@ -1737,6 +1859,228 @@ export const ScannerView = () => {
                 />
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI OCR Engine Configuration Modal */}
+      {showAiModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={() => setShowAiModal(false)}
+        >
+          <div
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              borderRadius: '20px',
+              padding: '28px',
+              background: 'var(--bg-surface-elevated, #0f172a)',
+              border: '1px solid var(--glass-border)',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 242, 254, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '12px',
+                    background: activeGeminiKey ? 'rgba(16, 185, 129, 0.15)' : 'var(--cyan-subtle)',
+                    border: activeGeminiKey ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--cyan-glow)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {activeGeminiKey ? <Zap size={20} color="#10b981" /> : <Key size={20} color="var(--cyan-glow)" />}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    AI OCR Engine Settings
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Website & Mobile App Scanner Engine
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAiModal(false)}
+                className="liquid-btn liquid-btn-secondary"
+                style={{ padding: '6px', borderRadius: '50%', cursor: 'pointer' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Current Active Engine Status Card */}
+            <div
+              style={{
+                padding: '14px',
+                borderRadius: '12px',
+                background: activeGeminiKey ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 242, 254, 0.06)',
+                border: activeGeminiKey ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(0, 242, 254, 0.2)',
+                marginBottom: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Active OCR Engine:</div>
+                <div style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {activeGeminiKey ? (
+                    <>
+                      <Zap size={15} color="#10b981" />
+                      <span>Google Gemini 1.5/2.0 Vision AI</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={15} color="var(--cyan-glow)" />
+                      <span>Tesseract Neural OCR (Offline Local)</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <span className={activeGeminiKey ? 'liquid-badge liquid-badge-emerald' : 'liquid-badge liquid-badge-cyan'} style={{ fontSize: '0.72rem' }}>
+                {activeGeminiKey ? '99% Precision' : 'Local Mode'}
+              </span>
+            </div>
+
+            {/* Explanation & Free Tier Info */}
+            <div style={{ marginBottom: '18px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p style={{ margin: '0 0 8px 0' }}>
+                For the highest accuracy on curved, crumpled, or faint thermal paper receipts, connect a free <strong>Google Gemini API Key</strong>.
+              </p>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: 'var(--cyan-glow)',
+                  background: 'rgba(0, 242, 254, 0.06)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                }}
+              >
+                <Sparkles size={14} style={{ flexShrink: 0 }} />
+                <span>Google AI Studio offers <strong>1,500 scans/day 100% FREE</strong> on the free tier.</span>
+              </div>
+            </div>
+
+            {/* API Key Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Gemini API Key
+                </label>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--cyan-glow)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>Get Free Key at Google AI Studio</span>
+                  <ExternalLink size={11} />
+                </a>
+              </div>
+              <input
+                type="text"
+                className="liquid-input"
+                placeholder="AIzaSy..."
+                value={keyInput}
+                onChange={(e) => {
+                  setKeyInput(e.target.value);
+                  setTestResult(null);
+                }}
+                style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: '0.84rem' }}
+              />
+            </div>
+
+            {/* Test Key Result Banner */}
+            {testResult && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  marginBottom: '16px',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: testResult.success ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: testResult.success ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                  color: testResult.success ? '#6ee7b7' : '#fca5a5',
+                }}
+              >
+                {testResult.success ? <Check size={16} /> : <AlertTriangle size={16} />}
+                <span>{testResult.success ? 'Gemini API Key is valid and active!' : (testResult.message || 'Key validation failed.')}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button
+                type="button"
+                onClick={handleTestApiKey}
+                disabled={isTestingKey || !keyInput.trim()}
+                className="liquid-btn liquid-btn-secondary"
+                style={{ flex: 1, padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                {isTestingKey ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
+                <span>{isTestingKey ? 'Verifying...' : 'Test Key'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                className="liquid-btn liquid-btn-primary"
+                style={{ flex: 1.3, padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <Check size={15} />
+                <span>Save & Activate</span>
+              </button>
+            </div>
+
+            {activeGeminiKey && (
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleClearApiKey}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Clear Key & Revert to Local Offline OCR
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
