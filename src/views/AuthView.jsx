@@ -1,7 +1,11 @@
 import React from 'react';
 import { ResibossAuthCard, LiquidBackground3D } from '../components';
+import { useApp } from '../context/AppContext';
 
 export const AuthView = () => {
+  const { theme } = useApp();
+  const isLight = theme === 'light';
+
   return (
     <div
       style={{
@@ -12,7 +16,7 @@ export const AuthView = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#080c15',
+        background: isLight ? '#f1f5f9' : '#080c15',
         overflowX: 'hidden',
         padding: '32px 16px',
         boxSizing: 'border-box',

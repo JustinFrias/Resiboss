@@ -30,7 +30,10 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
     setIsTermsAccepted,
     setIsPrivacyOpen,
     language,
+    theme,
   } = useApp();
+
+  const isLight = theme === 'light';
 
   const [mode, setMode] = useState(initialMode); // 'signin' | 'register'
   const [fullName, setFullName] = useState('');
@@ -314,29 +317,33 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
         width: '100%',
         maxWidth: '430px',
         margin: '0 auto',
-        background: 'rgba(13, 18, 32, 0.88)',
+        background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(13, 18, 32, 0.88)',
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
         borderRadius: '32px',
         padding: '38px 28px 30px 28px',
-        boxShadow: '0 25px 65px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 242, 254, 0.12)',
-        border: '1px solid rgba(0, 242, 254, 0.28)',
+        boxShadow: isLight
+          ? '0 25px 60px rgba(15, 23, 42, 0.12), 0 0 25px rgba(2, 132, 199, 0.08)'
+          : '0 25px 65px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 242, 254, 0.12)',
+        border: isLight ? '1px solid rgba(15, 23, 42, 0.12)' : '1px solid rgba(0, 242, 254, 0.28)',
         boxSizing: 'border-box',
         textAlign: 'center',
         position: 'relative',
-        color: '#f8fafc',
+        color: isLight ? '#0f172a' : '#f8fafc',
         fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
       }}
     >
-      {/* 1. App Squircle Icon Badge with Cyan Glow */}
+      {/* 1. App Squircle Icon Badge with Glow */}
       <div
         style={{
           width: '66px',
           height: '66px',
           borderRadius: '20px',
-          background: 'rgba(0, 242, 254, 0.12)',
-          border: '1px solid rgba(0, 242, 254, 0.38)',
-          boxShadow: '0 0 25px rgba(0, 242, 254, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
+          background: isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(0, 242, 254, 0.12)',
+          border: isLight ? '1px solid rgba(2, 132, 199, 0.28)' : '1px solid rgba(0, 242, 254, 0.38)',
+          boxShadow: isLight
+            ? '0 4px 16px rgba(2, 132, 199, 0.15)'
+            : '0 0 25px rgba(0, 242, 254, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -358,13 +365,15 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
         />
       </div>
 
-      {/* 2. Cyberpunk Liquid Gradient Title */}
+      {/* 2. Theme-adaptive Liquid Gradient Title */}
       <h1
         style={{
           fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
           fontSize: '1.9rem',
           fontWeight: 800,
-          background: 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
+          background: isLight
+            ? 'linear-gradient(135deg, #0f172a 35%, #0284c7 100%)'
+            : 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           margin: '0 0 6px 0',
@@ -379,7 +388,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
       <p
         style={{
           fontSize: '0.85rem',
-          color: '#94a3b8',
+          color: isLight ? '#64748b' : '#94a3b8',
           margin: '0 0 22px 0',
           lineHeight: 1.45,
           fontWeight: 450,
@@ -398,9 +407,15 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
             width: '100%',
             padding: '12px 20px',
             borderRadius: '999px',
-            background: isGoogleDisabled ? 'rgba(10, 16, 34, 0.45)' : 'rgba(10, 16, 34, 0.85)',
-            border: isGoogleDisabled ? '1.5px dashed rgba(255, 255, 255, 0.12)' : '1.5px solid rgba(255, 255, 255, 0.18)',
-            color: isGoogleDisabled ? '#64748b' : '#ffffff',
+            background: isGoogleDisabled
+              ? (isLight ? 'rgba(241, 245, 249, 0.6)' : 'rgba(10, 16, 34, 0.45)')
+              : (isLight ? '#ffffff' : 'rgba(10, 16, 34, 0.85)'),
+            border: isGoogleDisabled
+              ? (isLight ? '1.5px dashed rgba(15, 23, 42, 0.15)' : '1.5px dashed rgba(255, 255, 255, 0.12)')
+              : (isLight ? '1.5px solid rgba(15, 23, 42, 0.14)' : '1.5px solid rgba(255, 255, 255, 0.18)'),
+            color: isGoogleDisabled
+              ? '#94a3b8'
+              : (isLight ? '#0f172a' : '#ffffff'),
             fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
             fontSize: '0.94rem',
             fontWeight: 700,
@@ -410,22 +425,22 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '12px',
-            boxShadow: isGoogleDisabled ? 'none' : '0 4px 16px rgba(0, 0, 0, 0.4)',
+            boxShadow: isGoogleDisabled ? 'none' : (isLight ? '0 4px 14px rgba(15, 23, 42, 0.08)' : '0 4px 16px rgba(0, 0, 0, 0.4)'),
             transition: 'all 0.18s ease',
             outline: 'none',
           }}
           onMouseEnter={(e) => {
             if (!isGoogleDisabled) {
-              e.currentTarget.style.background = 'rgba(26, 36, 62, 0.95)';
+              e.currentTarget.style.background = isLight ? '#f8fafc' : 'rgba(26, 36, 62, 0.95)';
               e.currentTarget.style.borderColor = '#00f2fe';
               e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 242, 254, 0.25)';
             }
           }}
           onMouseLeave={(e) => {
             if (!isGoogleDisabled) {
-              e.currentTarget.style.background = 'rgba(10, 16, 34, 0.85)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.4)';
+              e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(10, 16, 34, 0.85)';
+              e.currentTarget.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.18)';
+              e.currentTarget.style.boxShadow = isLight ? '0 4px 14px rgba(15, 23, 42, 0.08)' : '0 4px 16px rgba(0, 0, 0, 0.4)';
             }
           }}
         >
@@ -475,29 +490,29 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
           width: '100%',
         }}
       >
-        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+        <div style={{ flex: 1, height: '1px', background: isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.1)' }} />
         <span
           style={{
             padding: '0 12px',
             fontSize: '0.68rem',
             fontWeight: 700,
             fontFamily: "'JetBrains Mono', monospace",
-            color: '#64748b',
+            color: isLight ? '#64748b' : '#64748b',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
           }}
         >
           OR WITH EMAIL
         </span>
-        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+        <div style={{ flex: 1, height: '1px', background: isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.1)' }} />
       </div>
 
       {/* 6. Sign In / Register Segmented Tab Switcher */}
       <div
         style={{
           display: 'flex',
-          background: 'rgba(10, 16, 34, 0.75)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(10, 16, 34, 0.75)',
+          border: isLight ? '1px solid rgba(15, 23, 42, 0.1)' : '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '999px',
           padding: '4px',
           marginBottom: '20px',
@@ -522,7 +537,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
             border: 'none',
             cursor: 'pointer',
             background: mode === 'signin' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : 'transparent',
-            color: mode === 'signin' ? '#ffffff' : '#94a3b8',
+            color: mode === 'signin' ? '#ffffff' : (isLight ? '#64748b' : '#94a3b8'),
             fontSize: '0.88rem',
             fontFamily: "'Outfit', sans-serif",
             fontWeight: mode === 'signin' ? 700 : 600,
@@ -553,7 +568,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
             border: 'none',
             cursor: 'pointer',
             background: mode === 'register' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : 'transparent',
-            color: mode === 'register' ? '#ffffff' : '#94a3b8',
+            color: mode === 'register' ? '#ffffff' : (isLight ? '#64748b' : '#94a3b8'),
             fontSize: '0.88rem',
             fontFamily: "'Outfit', sans-serif",
             fontWeight: mode === 'register' ? 700 : 600,
@@ -677,7 +692,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                 fontSize: '0.84rem',
                 fontWeight: 600,
                 fontFamily: "'Outfit', sans-serif",
-                color: '#cbd5e1',
+                color: isLight ? '#1e293b' : '#cbd5e1',
                 marginBottom: '6px',
               }}
             >
@@ -687,7 +702,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                   fontWeight: 400,
                   fontSize: '0.74rem',
-                  color: '#64748b',
+                  color: isLight ? '#94a3b8' : '#64748b',
                 }}
               >
                 (Optional)
@@ -698,8 +713,8 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                background: 'rgba(10, 16, 34, 0.7)',
-                border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                background: isLight ? 'rgba(248, 250, 252, 0.95)' : 'rgba(10, 16, 34, 0.7)',
+                border: isLight ? '1.5px solid rgba(15, 23, 42, 0.14)' : '1.5px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '999px',
                 padding: '11px 18px',
                 transition: 'all 0.2s ease',
@@ -709,11 +724,11 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                 e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 242, 254, 0.18), 0 0 15px rgba(0, 242, 254, 0.15)';
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                e.currentTarget.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.12)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <User size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+              <User size={18} color={isLight ? '#0284c7' : '#38bdf8'} style={{ flexShrink: 0 }} />
               <input
                 id="resiboss-auth-fullname"
                 type="text"
@@ -726,7 +741,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                   outline: 'none',
                   width: '100%',
                   fontSize: '0.92rem',
-                  color: '#ffffff',
+                  color: isLight ? '#0f172a' : '#ffffff',
                   background: 'transparent',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
@@ -744,7 +759,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               fontSize: '0.84rem',
               fontWeight: 600,
               fontFamily: "'Outfit', sans-serif",
-              color: '#cbd5e1',
+              color: isLight ? '#1e293b' : '#cbd5e1',
               marginBottom: '6px',
             }}
           >
@@ -755,8 +770,8 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: 'rgba(10, 16, 34, 0.7)',
-              border: '1.5px solid rgba(255, 255, 255, 0.12)',
+              background: isLight ? 'rgba(248, 250, 252, 0.95)' : 'rgba(10, 16, 34, 0.7)',
+              border: isLight ? '1.5px solid rgba(15, 23, 42, 0.14)' : '1.5px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '999px',
               padding: '11px 18px',
               transition: 'all 0.2s ease',
@@ -766,11 +781,11 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 242, 254, 0.18), 0 0 15px rgba(0, 242, 254, 0.15)';
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.12)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <Mail size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+            <Mail size={18} color={isLight ? '#0284c7' : '#38bdf8'} style={{ flexShrink: 0 }} />
             <input
               id="resiboss-auth-email"
               type="email"
@@ -784,7 +799,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                 outline: 'none',
                 width: '100%',
                 fontSize: '0.92rem',
-                color: '#ffffff',
+                color: isLight ? '#0f172a' : '#ffffff',
                 background: 'transparent',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
@@ -808,7 +823,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                 fontSize: '0.84rem',
                 fontWeight: 600,
                 fontFamily: "'Outfit', sans-serif",
-                color: '#cbd5e1',
+                color: isLight ? '#1e293b' : '#cbd5e1',
               }}
             >
               Password
@@ -823,7 +838,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                   padding: 0,
                   fontSize: '0.78rem',
                   fontWeight: 600,
-                  color: '#38bdf8',
+                  color: isLight ? '#0284c7' : '#38bdf8',
                   cursor: 'pointer',
                   outline: 'none',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -838,8 +853,8 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: 'rgba(10, 16, 34, 0.7)',
-              border: '1.5px solid rgba(255, 255, 255, 0.12)',
+              background: isLight ? 'rgba(248, 250, 252, 0.95)' : 'rgba(10, 16, 34, 0.7)',
+              border: isLight ? '1.5px solid rgba(15, 23, 42, 0.14)' : '1.5px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '999px',
               padding: '11px 18px',
               transition: 'all 0.2s ease',
@@ -849,11 +864,11 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 242, 254, 0.18), 0 0 15px rgba(0, 242, 254, 0.15)';
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.12)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <Lock size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+            <Lock size={18} color={isLight ? '#0284c7' : '#38bdf8'} style={{ flexShrink: 0 }} />
             <input
               id="resiboss-auth-password"
               type={showPassword ? 'text' : 'password'}
@@ -867,7 +882,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
                 outline: 'none',
                 width: '100%',
                 fontSize: '0.92rem',
-                color: '#ffffff',
+                color: isLight ? '#0f172a' : '#ffffff',
                 background: 'transparent',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
@@ -955,7 +970,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               htmlFor="resiboss-terms-checkbox"
               style={{
                 fontSize: '0.8rem',
-                color: '#94a3b8',
+                color: isLight ? '#334155' : '#94a3b8',
                 lineHeight: 1.45,
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -963,11 +978,11 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
               }}
             >
               I agree to the{' '}
-              <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+              <span style={{ color: isLight ? '#0284c7' : '#38bdf8', fontWeight: 600 }}>
                 terms & conditions
               </span>{' '}
               and{' '}
-              <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+              <span style={{ color: isLight ? '#0284c7' : '#38bdf8', fontWeight: 600 }}>
                 privacy policy
               </span>{' '}
               provided by the company.
@@ -1037,7 +1052,7 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
         By continuing, you agree to Resiboss's{' '}
         <span
           onClick={() => setIsPrivacyOpen?.(true)}
-          style={{ textDecoration: 'underline', cursor: 'pointer', color: '#38bdf8' }}
+          style={{ textDecoration: 'underline', cursor: 'pointer', color: isLight ? '#0284c7' : '#38bdf8' }}
         >
           local-first privacy policy
         </span>
