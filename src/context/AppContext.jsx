@@ -296,26 +296,48 @@ export const AppProvider = ({ children }) => {
     }
   });
 
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('resiboss_notifications_v1');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [];
-  });
+  const getNotifStorageKey = (user) => {
+    const id = user?.id || user?.email;
+    return id ? `resiboss_notifications_${id}` : null;
+  };
 
+  const [notifications, setNotifications] = useState([]);
+
+  // Clear legacy leaked notifications immediately on startup
   useEffect(() => {
     try {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('resiboss_theme_v1', theme);
+      localStorage.removeItem('resiboss_notifications_v1');
     } catch (e) {}
-  }, [theme]);
+  }, []);
 
+  // Load user-specific notifications when currentUser changes
   useEffect(() => {
+    if (!currentUser) {
+      setNotifications([]);
+      return;
+    }
+    const key = getNotifStorageKey(currentUser);
+    if (!key) {
+      setNotifications([]);
+      return;
+    }
     try {
-      localStorage.setItem('resiboss_notifications_v1', JSON.stringify(notifications));
+      const saved = localStorage.getItem(key);
+      setNotifications(saved ? JSON.parse(saved) : []);
+    } catch (e) {
+      setNotifications([]);
+    }
+  }, [currentUser?.id, currentUser?.email]);
+
+  // Save notifications strictly scoped to the active user
+  useEffect(() => {
+    if (!currentUser) return;
+    const key = getNotifStorageKey(currentUser);
+    if (!key) return;
+    try {
+      localStorage.setItem(key, JSON.stringify(notifications));
     } catch (e) {}
-  }, [notifications]);
+  }, [notifications, currentUser?.id, currentUser?.email]);
 
   const toggleTheme = () => {
     soundFx.playClick();
@@ -373,6 +395,8 @@ export const AppProvider = ({ children }) => {
     setNotifications([]);
     try {
       localStorage.removeItem('resiboss_notifications_v1');
+      const key = getNotifStorageKey(currentUser);
+      if (key) localStorage.removeItem(key);
     } catch (e) {}
   };
 
@@ -454,11 +478,13 @@ export const AppProvider = ({ children }) => {
             sessionStorage.removeItem(SESSION_PROFILE_KEY);
             localStorage.removeItem(SESSION_PROFILE_KEY);
             localStorage.removeItem('resiboss_user_profile_v1');
+            localStorage.removeItem('resiboss_notifications_v1');
           } catch (e) {}
           return null;
         });
         setCurrentUser(null);
         setDocuments([]);
+        setNotifications([]);
         setInspectingDoc(null);
       }
     });
@@ -762,11 +788,13 @@ export const AppProvider = ({ children }) => {
     setCurrentUser(null);
     setUserProfile(null);
     setDocuments([]);
+    setNotifications([]);
     setInspectingDoc(null);
     try {
       sessionStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem('resiboss_user_profile_v1');
+      localStorage.removeItem('resiboss_notifications_v1');
     } catch (e) {}
   };
 
