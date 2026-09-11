@@ -107,7 +107,6 @@ export default function App() {
       <MobileAppGatekeeper>
         <MainLayout />
       </MobileAppGatekeeper>
-      <TermsModal />
       <PrivacyPolicyModal />
       <CookieConsentBanner />
     </AppProvider>

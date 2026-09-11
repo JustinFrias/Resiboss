@@ -6,18 +6,24 @@ import { App } from '@capacitor/app';
 import {
   Mail,
   Lock,
+  User,
   ArrowRight,
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from 'lucide-react';
+import { validateEmailAddress } from '../../utils/emailValidator';
 
-export const ResibossAuthCard = () => {
+export const ResibossAuthCard = ({ initialMode = 'register' }) => {
   const {
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     resetPasswordForEmail,
+    resendConfirmationEmail,
     soundFx,
     setIsTermsOpen,
     isTermsAccepted,
@@ -26,12 +32,28 @@ export const ResibossAuthCard = () => {
     language,
   } = useApp();
 
-  const [mode, setMode] = useState('signin'); // 'signin' | 'register'
+  const [mode, setMode] = useState(initialMode); // 'signin' | 'register'
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [hasCreatedAccount, setHasCreatedAccount] = useState(() => {
+    try {
+      if (localStorage.getItem('resiboss_account_created_v1') === 'true') return true;
+      if (localStorage.getItem('resiboss_user_profile_v1')) return true;
+      return false;
+    } catch (e) {
+      return false;
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [suggestedEmail, setSuggestedEmail] = useState(null);
+
+  const isGoogleDisabled = isLoading || (mode === 'signin' && !hasCreatedAccount);
 
   const isFil = language === 'fil';
 
@@ -83,20 +105,51 @@ export const ResibossAuthCard = () => {
     };
   }, []);
 
+  // Handle email confirmed redirect: force Sign In tab so user manually types email and password
+  useEffect(() => {
+    try {
+      const confirmedEmail = localStorage.getItem('resiboss_email_just_confirmed');
+      if (confirmedEmail !== null) {
+        setMode('signin');
+        setEmail('');
+        setPassword('');
+        setSuccessMsg(
+          isFil
+            ? 'Matagumpay nang nakumpirma ang iyong email! Pakilagay ang iyong email at password para mag-sign in.'
+            : 'Email successfully confirmed! Please enter your email and password to sign in.'
+        );
+        setErrorMsg(null);
+        localStorage.removeItem('resiboss_email_just_confirmed');
+        soundFx?.playSuccessChime?.();
+      }
+    } catch (e) {}
+  }, [isFil]);
+
   // Google OAuth flow
   const handleGoogleAuth = async () => {
+    if (isGoogleDisabled) {
+      soundFx?.playClick?.();
+      setErrorMsg(
+        isFil
+          ? 'Kailangang gumawa muna ng account sa Register bago mag-sign in gamit ang Google.'
+          : 'Please create an account in the Register tab first before continuing with Google.'
+      );
+      return;
+    }
+
     if (isLoading) {
       soundFx?.playClick?.();
       setIsLoading(false);
       return;
     }
 
-    if (!isTermsAccepted) {
-      setIsTermsAccepted?.(true);
-      try {
-        localStorage.setItem('resiboss_terms_accepted_v1', 'true');
-      } catch (e) {}
-    }
+    // Mark account as created and terms as accepted
+    try {
+      localStorage.setItem('resiboss_account_created_v1', 'true');
+      localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+    } catch (e) {}
+    setHasCreatedAccount(true);
+    setIsTermsAccepted?.(true);
 
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -119,14 +172,30 @@ export const ResibossAuthCard = () => {
     e?.preventDefault?.();
     setErrorMsg(null);
     setSuccessMsg(null);
+    setSuggestedEmail(null);
 
-    if (!email.trim()) {
-      setErrorMsg(isFil ? 'Pakilagay ang iyong email address.' : 'Please enter your email address.');
+    const emailCheck = validateEmailAddress(email, language);
+    if (!emailCheck.isValid) {
+      setErrorMsg(emailCheck.error);
+      if (emailCheck.suggestion) {
+        setSuggestedEmail(emailCheck.suggestion);
+      }
       soundFx?.playClick?.();
       return;
     }
+
     if (!password) {
       setErrorMsg(isFil ? 'Pakilagay ang iyong password.' : 'Please enter your password.');
+      soundFx?.playClick?.();
+      return;
+    }
+
+    if (mode === 'register' && !isAgreed) {
+      setErrorMsg(
+        isFil
+          ? 'Pakisuyong i-check ang kahon upang tanggapin ang Terms & Conditions bago magpatuloy.'
+          : 'Please check the box to agree to the Terms & Conditions before continuing.'
+      );
       soundFx?.playClick?.();
       return;
     }
@@ -149,13 +218,18 @@ export const ResibossAuthCard = () => {
         }
       } else {
         if (signUpWithEmail) {
-          const res = await signUpWithEmail(email, password);
+          const res = await signUpWithEmail(email, password, fullName);
           soundFx?.playSuccessChime?.();
+          try {
+            localStorage.setItem('resiboss_account_created_v1', 'true');
+          } catch (e) {}
+          setHasCreatedAccount(true);
+
           if (res?.user && !res?.session) {
             setSuccessMsg(
               isFil
-                ? 'Nagawa na ang account! Pakitingnan ang iyong email para sa confirmation link bago mag-sign in.'
-                : 'Account created! Please check your email for the confirmation link to sign in.'
+                ? 'Napadala na ang confirmation link sa iyong email! Paki-click muna ang link sa iyong Gmail inbox bago mag-sign in dito.'
+                : 'Confirmation link sent to your email! Please click the verification link in your inbox before signing in.'
             );
             setMode('signin');
             setIsLoading(false);
@@ -202,36 +276,71 @@ export const ResibossAuthCard = () => {
     }
   };
 
+  // Resend verification email handler
+  const handleResendConfirmation = async () => {
+    if (!email.trim()) {
+      setErrorMsg(
+        isFil
+          ? 'Pakilagay muna ang iyong email sa field sa ibaba bago mag-resend.'
+          : 'Please enter your email in the field below first, then tap Resend.'
+      );
+      soundFx?.playClick?.();
+      return;
+    }
+
+    setIsResending(true);
+    soundFx?.playClick?.();
+    try {
+      if (resendConfirmationEmail) {
+        await resendConfirmationEmail(email.trim());
+        setSuccessMsg(
+          isFil
+            ? 'Naipadala na muli ang confirmation link sa iyong Gmail inbox! Pakisuri ang iyong email.'
+            : 'Verification link resent to your email! Please check your inbox.'
+        );
+        setErrorMsg(null);
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Hindi maipadala ang verification link. Pakisubukang muli.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div
+      className="glass-panel"
       style={{
         width: '100%',
         maxWidth: '430px',
         margin: '0 auto',
-        background: '#ffffff',
-        borderRadius: '38px',
-        padding: '42px 32px 36px 32px',
-        boxShadow: '0 24px 70px rgba(0, 0, 0, 0.08), 0 6px 20px rgba(0, 0, 0, 0.03)',
-        border: '1px solid rgba(0, 0, 0, 0.04)',
+        background: 'rgba(13, 18, 32, 0.88)',
+        backdropFilter: 'blur(25px)',
+        WebkitBackdropFilter: 'blur(25px)',
+        borderRadius: '32px',
+        padding: '38px 28px 30px 28px',
+        boxShadow: '0 25px 65px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 242, 254, 0.12)',
+        border: '1px solid rgba(0, 242, 254, 0.28)',
         boxSizing: 'border-box',
         textAlign: 'center',
         position: 'relative',
-        color: '#1a2219',
-        fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+        color: '#f8fafc',
+        fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
       }}
     >
-      {/* 1. App Squircle Icon Badge */}
+      {/* 1. App Squircle Icon Badge with Cyan Glow */}
       <div
         style={{
-          width: '68px',
-          height: '68px',
-          borderRadius: '22px',
-          background: '#e9eee7',
+          width: '66px',
+          height: '66px',
+          borderRadius: '20px',
+          background: 'rgba(0, 242, 254, 0.12)',
+          border: '1px solid rgba(0, 242, 254, 0.38)',
+          boxShadow: '0 0 25px rgba(0, 242, 254, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          margin: '0 auto 20px auto',
-          boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(0, 0, 0, 0.04)',
+          margin: '0 auto 18px auto',
         }}
       >
         <img
@@ -244,20 +353,21 @@ export const ResibossAuthCard = () => {
             display: 'block',
           }}
           onError={(e) => {
-            // Fallback SVG in case image file is missing
             e.currentTarget.style.display = 'none';
           }}
         />
       </div>
 
-      {/* 2. Editorial Serif Title */}
+      {/* 2. Cyberpunk Liquid Gradient Title */}
       <h1
         style={{
-          fontFamily: "'Playfair Display', Georgia, serif",
-          fontSize: '2rem',
-          fontWeight: 700,
-          color: '#1a2219',
-          margin: '0 0 8px 0',
+          fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+          fontSize: '1.9rem',
+          fontWeight: 800,
+          background: 'linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          margin: '0 0 6px 0',
           letterSpacing: '-0.02em',
           lineHeight: 1.2,
         }}
@@ -268,9 +378,9 @@ export const ResibossAuthCard = () => {
       {/* 3. Subtitle */}
       <p
         style={{
-          fontSize: '0.88rem',
-          color: '#697268',
-          margin: '0 0 24px 0',
+          fontSize: '0.85rem',
+          color: '#94a3b8',
+          margin: '0 0 22px 0',
           lineHeight: 1.45,
           fontWeight: 450,
         }}
@@ -279,87 +389,115 @@ export const ResibossAuthCard = () => {
       </p>
 
       {/* 4. Google OAuth Button */}
-      <button
-        type="button"
-        onClick={handleGoogleAuth}
-        style={{
-          width: '100%',
-          padding: '13px 20px',
-          borderRadius: '999px',
-          background: '#ffffff',
-          border: '1.5px solid #e4e0d7',
-          color: '#222822',
-          fontSize: '0.94rem',
-          fontWeight: 650,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          boxShadow: '0 2px 5px rgba(0, 0, 0, 0.02)',
-          transition: 'all 0.18s ease',
-          outline: 'none',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#faf9f6';
-          e.currentTarget.style.borderColor = '#d6d2c8';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = '#ffffff';
-          e.currentTarget.style.borderColor = '#e4e0d7';
-        }}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path
-            fill="#4285F4"
-            d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-          />
-          <path
-            fill="#34A853"
-            d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
-          />
-          <path
-            fill="#FBBC05"
-            d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
-          />
-          <path
-            fill="#EA4335"
-            d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-          />
-        </svg>
-        <span>Continue with Google</span>
-      </button>
+      <div style={{ width: '100%', marginBottom: '4px' }}>
+        <button
+          type="button"
+          onClick={handleGoogleAuth}
+          disabled={isGoogleDisabled}
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            borderRadius: '999px',
+            background: isGoogleDisabled ? 'rgba(10, 16, 34, 0.45)' : 'rgba(10, 16, 34, 0.85)',
+            border: isGoogleDisabled ? '1.5px dashed rgba(255, 255, 255, 0.12)' : '1.5px solid rgba(255, 255, 255, 0.18)',
+            color: isGoogleDisabled ? '#64748b' : '#ffffff',
+            fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+            fontSize: '0.94rem',
+            fontWeight: 700,
+            cursor: isGoogleDisabled ? 'not-allowed' : 'pointer',
+            opacity: isGoogleDisabled ? 0.55 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            boxShadow: isGoogleDisabled ? 'none' : '0 4px 16px rgba(0, 0, 0, 0.4)',
+            transition: 'all 0.18s ease',
+            outline: 'none',
+          }}
+          onMouseEnter={(e) => {
+            if (!isGoogleDisabled) {
+              e.currentTarget.style.background = 'rgba(26, 36, 62, 0.95)';
+              e.currentTarget.style.borderColor = '#00f2fe';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 242, 254, 0.25)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isGoogleDisabled) {
+              e.currentTarget.style.background = 'rgba(10, 16, 34, 0.85)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.4)';
+            }
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" style={{ opacity: isGoogleDisabled ? 0.4 : 1 }}>
+            <path
+              fill="#4285F4"
+              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+            />
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+        {mode === 'signin' && !hasCreatedAccount && (
+          <div
+            style={{
+              fontSize: '0.72rem',
+              color: '#64748b',
+              marginTop: '6px',
+              fontStyle: 'italic',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+            }}
+          >
+            {isFil
+              ? 'Mag-create muna ng account sa Register bago mag-sign in gamit ang Google.'
+              : 'Create an account first in Register to enable Google sign-in.'}
+          </div>
+        )}
+      </div>
 
       {/* 5. Divider "OR WITH EMAIL" */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          margin: '22px 0 18px 0',
+          margin: '20px 0 18px 0',
           width: '100%',
         }}
       >
-        <div style={{ flex: 1, height: '1px', background: '#ebe7de' }} />
+        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
         <span
           style={{
             padding: '0 12px',
-            fontSize: '0.7rem',
+            fontSize: '0.68rem',
             fontWeight: 700,
-            color: '#899088',
-            letterSpacing: '0.08em',
+            fontFamily: "'JetBrains Mono', monospace",
+            color: '#64748b',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
           }}
         >
           OR WITH EMAIL
         </span>
-        <div style={{ flex: 1, height: '1px', background: '#ebe7de' }} />
+        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
       </div>
 
       {/* 6. Sign In / Register Segmented Tab Switcher */}
       <div
         style={{
           display: 'flex',
-          background: '#eeece5',
+          background: 'rgba(10, 16, 34, 0.75)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '999px',
           padding: '4px',
           marginBottom: '20px',
@@ -379,10 +517,12 @@ export const ResibossAuthCard = () => {
             borderRadius: '999px',
             border: 'none',
             cursor: 'pointer',
-            background: mode === 'signin' ? '#536851' : 'transparent',
-            color: mode === 'signin' ? '#ffffff' : '#697168',
+            background: mode === 'signin' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : 'transparent',
+            color: mode === 'signin' ? '#ffffff' : '#94a3b8',
             fontSize: '0.88rem',
+            fontFamily: "'Outfit', sans-serif",
             fontWeight: mode === 'signin' ? 700 : 600,
+            boxShadow: mode === 'signin' ? '0 2px 14px rgba(37, 99, 235, 0.45), 0 0 15px rgba(0, 242, 254, 0.2)' : 'none',
             transition: 'all 0.18s ease',
             outline: 'none',
           }}
@@ -403,10 +543,12 @@ export const ResibossAuthCard = () => {
             borderRadius: '999px',
             border: 'none',
             cursor: 'pointer',
-            background: mode === 'register' ? '#536851' : 'transparent',
-            color: mode === 'register' ? '#ffffff' : '#697168',
+            background: mode === 'register' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : 'transparent',
+            color: mode === 'register' ? '#ffffff' : '#94a3b8',
             fontSize: '0.88rem',
+            fontFamily: "'Outfit', sans-serif",
             fontWeight: mode === 'register' ? 700 : 600,
+            boxShadow: mode === 'register' ? '0 2px 14px rgba(37, 99, 235, 0.45), 0 0 15px rgba(0, 242, 254, 0.2)' : 'none',
             transition: 'all 0.18s ease',
             outline: 'none',
           }}
@@ -420,20 +562,76 @@ export const ResibossAuthCard = () => {
         <div
           style={{
             padding: '10px 14px',
-            borderRadius: '14px',
-            background: '#fee2e2',
-            border: '1px solid #fca5a5',
-            color: '#b91c1c',
+            borderRadius: '12px',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#f87171',
             fontSize: '0.82rem',
             marginBottom: '16px',
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
             gap: '8px',
             textAlign: 'left',
           }}
         >
-          <AlertCircle size={16} style={{ flexShrink: 0 }} />
-          <span>{errorMsg}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{errorMsg}</span>
+          </div>
+          {(errorMsg.toLowerCase().includes('confirm') || errorMsg.toLowerCase().includes('kumpirma')) && (
+            <div style={{ paddingLeft: '24px' }}>
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={isResending}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.25)',
+                  border: '1px solid rgba(239, 68, 68, 0.45)',
+                  color: '#ffffff',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '4px 12px',
+                  borderRadius: '999px',
+                  cursor: isResending ? 'not-allowed' : 'pointer',
+                  outline: 'none',
+                }}
+              >
+                {isResending
+                  ? (isFil ? 'Ipinapadala...' : 'Resending...')
+                  : (isFil ? '📩 I-resend ang confirmation link' : '📩 Resend verification email')}
+              </button>
+            </div>
+          )}
+          {suggestedEmail && (
+            <div style={{ paddingLeft: '24px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail(suggestedEmail);
+                  setSuggestedEmail(null);
+                  setErrorMsg(null);
+                  soundFx?.playClick?.();
+                }}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.2)',
+                  border: '1px solid rgba(56, 189, 248, 0.5)',
+                  color: '#38bdf8',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '4px 12px',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Sparkles size={13} />
+                <span>{isFil ? `Itama: Gamitin ang "${suggestedEmail}"` : `Fix: Use "${suggestedEmail}"`}</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -441,10 +639,10 @@ export const ResibossAuthCard = () => {
         <div
           style={{
             padding: '10px 14px',
-            borderRadius: '14px',
-            background: '#dcfce7',
-            border: '1px solid #86efac',
-            color: '#15803d',
+            borderRadius: '12px',
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: '#34d399',
             fontSize: '0.82rem',
             marginBottom: '16px',
             display: 'flex',
@@ -460,15 +658,84 @@ export const ResibossAuthCard = () => {
 
       {/* 7. Form Fields */}
       <form onSubmit={handleSubmit} style={{ width: '100%', textAlign: 'left' }}>
+        {/* Full Name (Optional) - Shown when registering */}
+        {mode === 'register' && (
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              htmlFor="resiboss-auth-fullname"
+              style={{
+                display: 'block',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                fontFamily: "'Outfit', sans-serif",
+                color: '#cbd5e1',
+                marginBottom: '6px',
+              }}
+            >
+              Full Name{' '}
+              <span
+                style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 400,
+                  fontSize: '0.74rem',
+                  color: '#64748b',
+                }}
+              >
+                (Optional)
+              </span>
+            </label>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'rgba(10, 16, 34, 0.7)',
+                border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '999px',
+                padding: '11px 18px',
+                transition: 'all 0.2s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#00f2fe';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 242, 254, 0.18), 0 0 15px rgba(0, 242, 254, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <User size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+              <input
+                id="resiboss-auth-fullname"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Jane Doe"
+                autoComplete="name"
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  fontSize: '0.92rem',
+                  color: '#ffffff',
+                  background: 'transparent',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Email Address */}
         <div style={{ marginBottom: '16px' }}>
           <label
             htmlFor="resiboss-auth-email"
             style={{
               display: 'block',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              color: '#424841',
+              fontSize: '0.84rem',
+              fontWeight: 600,
+              fontFamily: "'Outfit', sans-serif",
+              color: '#cbd5e1',
               marginBottom: '6px',
             }}
           >
@@ -479,22 +746,22 @@ export const ResibossAuthCard = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: '#ffffff',
-              border: '1.5px solid #e4e0d7',
+              background: 'rgba(10, 16, 34, 0.7)',
+              border: '1.5px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '999px',
               padding: '11px 18px',
-              transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#536851';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(83, 104, 81, 0.12)';
+              e.currentTarget.style.borderColor = '#00f2fe';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 242, 254, 0.18), 0 0 15px rgba(0, 242, 254, 0.15)';
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#e4e0d7';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <Mail size={18} color="#949a93" style={{ flexShrink: 0 }} />
+            <Mail size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
             <input
               id="resiboss-auth-email"
               type="email"
@@ -508,16 +775,16 @@ export const ResibossAuthCard = () => {
                 outline: 'none',
                 width: '100%',
                 fontSize: '0.92rem',
-                color: '#1a2219',
+                color: '#ffffff',
                 background: 'transparent',
-                fontFamily: 'inherit',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             />
           </div>
         </div>
 
         {/* Password */}
-        <div style={{ marginBottom: '22px' }}>
+        <div style={{ marginBottom: mode === 'register' ? '18px' : '22px' }}>
           <div
             style={{
               display: 'flex',
@@ -529,9 +796,10 @@ export const ResibossAuthCard = () => {
             <label
               htmlFor="resiboss-auth-password"
               style={{
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                color: '#424841',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                fontFamily: "'Outfit', sans-serif",
+                color: '#cbd5e1',
               }}
             >
               Password
@@ -546,9 +814,10 @@ export const ResibossAuthCard = () => {
                   padding: 0,
                   fontSize: '0.78rem',
                   fontWeight: 600,
-                  color: '#536851',
+                  color: '#38bdf8',
                   cursor: 'pointer',
                   outline: 'none',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
               >
                 Forgot password?
@@ -560,25 +829,25 @@ export const ResibossAuthCard = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: '#ffffff',
-              border: '1.5px solid #e4e0d7',
+              background: 'rgba(10, 16, 34, 0.7)',
+              border: '1.5px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '999px',
               padding: '11px 18px',
-              transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#536851';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(83, 104, 81, 0.12)';
+              e.currentTarget.style.borderColor = '#00f2fe';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 242, 254, 0.18), 0 0 15px rgba(0, 242, 254, 0.15)';
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#e4e0d7';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <Lock size={18} color="#949a93" style={{ flexShrink: 0 }} />
+            <Lock size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
             <input
               id="resiboss-auth-password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -589,49 +858,157 @@ export const ResibossAuthCard = () => {
                 outline: 'none',
                 width: '100%',
                 fontSize: '0.92rem',
-                color: '#1a2219',
+                color: '#ffffff',
                 background: 'transparent',
-                fontFamily: 'inherit',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             />
+            <button
+              type="button"
+              onClick={() => {
+                soundFx?.playClick?.();
+                setShowPassword((prev) => !prev);
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                margin: '-4px -6px -4px 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: showPassword ? '#00f2fe' : '#94a3b8',
+                transition: 'all 0.18s ease',
+                flexShrink: 0,
+                borderRadius: '50%',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#38bdf8';
+                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = showPassword ? '#00f2fe' : '#94a3b8';
+                e.currentTarget.style.background = 'transparent';
+              }}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
           </div>
+          {mode === 'register' && (
+            <div
+              style={{
+                fontSize: '0.74rem',
+                color: '#64748b',
+                marginTop: '6px',
+                paddingLeft: '4px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            >
+              Must be at least 6 characters.
+            </div>
+          )}
         </div>
 
-        {/* 8. Submit Button */}
+        {/* Terms & Conditions Checkbox (For first-timers registering only) */}
+        {mode === 'register' && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
+              marginBottom: '20px',
+              textAlign: 'left',
+              padding: '0 4px',
+            }}
+          >
+            <input
+              type="checkbox"
+              id="resiboss-terms-checkbox"
+              checked={isAgreed}
+              onChange={(e) => {
+                soundFx?.playClick?.();
+                setIsAgreed(e.target.checked);
+              }}
+              style={{
+                marginTop: '3px',
+                accentColor: '#00f2fe',
+                width: '17px',
+                height: '17px',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            />
+            <label
+              htmlFor="resiboss-terms-checkbox"
+              style={{
+                fontSize: '0.8rem',
+                color: '#94a3b8',
+                lineHeight: 1.45,
+                cursor: 'pointer',
+                userSelect: 'none',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            >
+              I agree to the{' '}
+              <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                terms & conditions
+              </span>{' '}
+              and{' '}
+              <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                privacy policy
+              </span>{' '}
+              provided by the company.
+            </label>
+          </div>
+        )}
+
+        {/* 8. Submit Button with Neon Cyan / Electric Blue Gradient */}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || (mode === 'register' && !isAgreed)}
           style={{
             width: '100%',
             padding: '14px 20px',
             borderRadius: '999px',
-            background: '#536851',
+            background: mode === 'register' && !isAgreed ? 'rgba(37, 99, 235, 0.3)' : 'linear-gradient(135deg, #0284c7, #2563eb)',
             border: 'none',
-            color: '#ffffff',
+            color: mode === 'register' && !isAgreed ? '#94a3b8' : '#ffffff',
             fontSize: '0.96rem',
             fontWeight: 700,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
+            fontFamily: "'Outfit', sans-serif",
+            cursor: isLoading || (mode === 'register' && !isAgreed) ? 'not-allowed' : 'pointer',
+            opacity: mode === 'register' && !isAgreed ? 0.6 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            boxShadow: '0 4px 14px rgba(83, 104, 81, 0.3)',
-            transition: 'all 0.18s ease',
+            boxShadow: mode === 'register' && !isAgreed ? 'none' : '0 4px 18px rgba(37, 99, 235, 0.45), 0 0 25px rgba(0, 242, 254, 0.25)',
+            transition: 'all 0.2s ease',
             outline: 'none',
             marginBottom: '18px',
           }}
           onMouseEnter={(e) => {
-            if (!isLoading) e.currentTarget.style.background = '#475a45';
+            if (!isLoading && !(mode === 'register' && !isAgreed)) {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 24px rgba(37, 99, 235, 0.55), 0 0 30px rgba(0, 242, 254, 0.35)';
+            }
           }}
           onMouseLeave={(e) => {
-            if (!isLoading) e.currentTarget.style.background = '#536851';
+            if (!isLoading && !(mode === 'register' && !isAgreed)) {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 18px rgba(37, 99, 235, 0.45), 0 0 25px rgba(0, 242, 254, 0.25)';
+            }
           }}
         >
           {isLoading ? (
             <Loader2 size={18} className="animate-spin" />
           ) : (
             <>
-              <span>{mode === 'signin' ? 'Sign In' : 'Register'}</span>
+              <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
               <ArrowRight size={17} />
             </>
           )}
@@ -641,8 +1018,8 @@ export const ResibossAuthCard = () => {
       {/* 9. Footer Terms & Privacy Disclaimer */}
       <p
         style={{
-          fontSize: '0.72rem',
-          color: '#889088',
+          fontSize: '0.74rem',
+          color: '#64748b',
           margin: 0,
           lineHeight: 1.5,
           fontWeight: 450,
@@ -651,7 +1028,7 @@ export const ResibossAuthCard = () => {
         By continuing, you agree to Resiboss's{' '}
         <span
           onClick={() => setIsPrivacyOpen?.(true)}
-          style={{ textDecoration: 'underline', cursor: 'pointer', color: '#536851' }}
+          style={{ textDecoration: 'underline', cursor: 'pointer', color: '#38bdf8' }}
         >
           local-first privacy policy
         </span>

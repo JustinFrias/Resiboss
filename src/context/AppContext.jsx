@@ -14,6 +14,7 @@ import {
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
+import { validateEmailAddress } from '../utils/emailValidator';
 
 const AppContext = createContext();
 
@@ -379,9 +380,38 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (!supabase) return;
 
+    const checkIsSignupConfirmation = () => {
+      try {
+        if (typeof window === 'undefined') return false;
+        const hash = window.location.hash || '';
+        const search = window.location.search || '';
+        return (
+          hash.includes('type=signup') ||
+          hash.includes('type=email_confirmation') ||
+          search.includes('type=signup') ||
+          search.includes('type=email_confirmation')
+        );
+      } catch (e) {
+        return false;
+      }
+    };
+
     // Check existing active session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        if (checkIsSignupConfirmation()) {
+          const confirmedEmail = session.user.email || '';
+          try {
+            window.history.replaceState(null, '', window.location.pathname);
+            localStorage.setItem('resiboss_email_just_confirmed', confirmedEmail);
+            localStorage.setItem('resiboss_account_created_v1', 'true');
+          } catch (e) {}
+          supabase.auth.signOut().catch(() => {});
+          setCurrentUser(null);
+          setUserProfile(null);
+          return;
+        }
+
         setCurrentUser(session.user);
         const provider = session.user.app_metadata?.provider || 'google';
         const profile = buildUserProfile(session.user, provider);
@@ -396,6 +426,19 @@ export const AppProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
+        if (checkIsSignupConfirmation()) {
+          const confirmedEmail = session.user.email || '';
+          try {
+            window.history.replaceState(null, '', window.location.pathname);
+            localStorage.setItem('resiboss_email_just_confirmed', confirmedEmail);
+            localStorage.setItem('resiboss_account_created_v1', 'true');
+          } catch (e) {}
+          supabase.auth.signOut().catch(() => {});
+          setCurrentUser(null);
+          setUserProfile(null);
+          return;
+        }
+
         setCurrentUser(session.user);
         const provider = session.user.app_metadata?.provider || 'email';
         const profile = buildUserProfile(session.user, provider);
@@ -533,12 +576,10 @@ export const AppProvider = ({ children }) => {
 
   const signInWithGoogle = async () => {
     if (!isTermsAccepted) {
-      setIsTermsOpen(true);
-      throw new Error(
-        language === 'fil'
-          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in gamit ang Google.'
-          : 'Please read and accept the Terms & Conditions before continuing with Google.'
-      );
+      setIsTermsAccepted(true);
+      try {
+        localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+      } catch (e) {}
     }
 
     if (!supabase) {
@@ -588,16 +629,19 @@ export const AppProvider = ({ children }) => {
 
   const signInWithEmail = async (email, password) => {
     if (!isTermsAccepted) {
-      setIsTermsOpen(true);
-      throw new Error(
-        language === 'fil'
-          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in.'
-          : 'Please read and accept the Terms & Conditions before continuing.'
-      );
+      setIsTermsAccepted(true);
+      try {
+        localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+      } catch (e) {}
     }
 
     if (!email || !password) {
       throw new Error(language === 'fil' ? 'Pakilagay ang email at password.' : 'Please enter your email and password.');
+    }
+
+    const emailValidation = validateEmailAddress(email, language);
+    if (!emailValidation.isValid) {
+      throw new Error(emailValidation.error);
     }
 
     if (!supabase) {
@@ -613,23 +657,52 @@ export const AppProvider = ({ children }) => {
       if (error.message?.includes('Invalid login credentials')) {
         throw new Error(language === 'fil' ? 'Maling email o password.' : 'Invalid email or password.');
       }
+      if (error.message?.includes('Email not confirmed')) {
+        throw new Error(
+          language === 'fil'
+            ? 'Hindi pa nakukumpirma ang iyong email. Pakibuksan ang iyong Gmail inbox at i-click ang confirmation link.'
+            : 'Email not confirmed. Please check your Gmail inbox and click the confirmation link.'
+        );
+      }
       throw error;
     }
     return data;
   };
 
-  const signUpWithEmail = async (email, password) => {
+  const resendConfirmationEmail = async (email) => {
+    if (!email) {
+      throw new Error(language === 'fil' ? 'Pakilagay ang email address.' : 'Please enter your email address.');
+    }
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+    const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}` : 'https://resiboss.vercel.app';
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim().toLowerCase(),
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  const signUpWithEmail = async (email, password, fullName = '') => {
     if (!isTermsAccepted) {
-      setIsTermsOpen(true);
-      throw new Error(
-        language === 'fil'
-          ? 'Kailangang basahin at tanggapin muna ang Terms and Conditions bago mag-sign in.'
-          : 'Please read and accept the Terms & Conditions before continuing.'
-      );
+      setIsTermsAccepted(true);
+      try {
+        localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+      } catch (e) {}
     }
 
     if (!email || !password) {
       throw new Error(language === 'fil' ? 'Pakilagay ang email at password.' : 'Please enter your email and password.');
+    }
+
+    const emailValidation = validateEmailAddress(email, language);
+    if (!emailValidation.isValid) {
+      throw new Error(emailValidation.error);
     }
 
     if (password.length < 6) {
@@ -640,17 +713,28 @@ export const AppProvider = ({ children }) => {
       throw new Error('Supabase is not configured.');
     }
 
+    const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}` : 'https://resiboss.vercel.app';
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
       options: {
         data: {
-          full_name: email.split('@')[0],
+          full_name: fullName?.trim() || email.split('@')[0],
         },
+        emailRedirectTo: redirectUrl,
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes('Error sending confirmation email')) {
+        throw new Error(
+          language === 'fil'
+            ? 'Hindi maipadala ang confirmation email ng Supabase. Pakisiguradong naka-configure ang Custom SMTP sa Supabase Dashboard o naabot na ang hourly email limit.'
+            : 'Error sending confirmation email. Please configure Custom SMTP in your Supabase Dashboard or wait for the hourly rate limit to reset.'
+        );
+      }
+      throw error;
+    }
     return data;
   };
 
@@ -934,6 +1018,7 @@ export const AppProvider = ({ children }) => {
         signInWithEmail,
         signUpWithEmail,
         resetPasswordForEmail,
+        resendConfirmationEmail,
         invokeEdgeFunction,
         signOut,
         deleteAccount,

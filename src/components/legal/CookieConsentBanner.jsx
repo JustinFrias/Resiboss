@@ -74,66 +74,23 @@ export const CookieConsentBanner = () => {
 
   return (
     <>
-      {/* Floating Bottom Cookie Banner (Only shown on initial Auth/Landing screen when user is not logged in) */}
+      {/* Floating Bottom Cookie Banner (Compact on mobile phone screen) */}
       {!cookieConsent && !userProfile && (
-        <div
-          className="cookie-banner-container"
-          style={{
-            position: 'fixed',
-            bottom: '18px',
-            left: '16px',
-            right: '16px',
-            margin: '0 auto',
-            width: 'calc(100% - 32px)',
-            maxWidth: '840px',
-            zIndex: 9998,
-            animation: 'pageFade3D 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-          }}
-        >
-          <div
-            className="glass-panel"
-            style={{
-              padding: '18px 24px',
-              borderRadius: '20px',
-              background: 'var(--bg-card, rgba(13, 18, 32, 0.94))',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid var(--glass-border-bright, rgba(0, 242, 254, 0.3))',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 242, 254, 0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '20px',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 360px' }}>
-              <div
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  background: 'rgba(0, 242, 254, 0.14)',
-                  border: '1px solid rgba(0, 242, 254, 0.35)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#00f2fe',
-                  flexShrink: 0,
-                }}
-              >
-                <Cookie size={22} />
+        <div className="cookie-banner-wrapper">
+          <div className="cookie-banner-card glass-panel">
+            <div className="cookie-banner-content" style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+              <div className="cookie-banner-icon">
+                <Cookie size={20} />
               </div>
 
-              <div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
-                  {isFil ? 'Mahalaga ang Iyong Privacy at Seguridad' : 'We Value Your Privacy & Data Security'}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div className="cookie-banner-title">
+                  {isFil ? 'Mahalaga ang Iyong Privacy' : 'We Value Your Privacy & Data'}
                 </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.45' }}>
+                <div className="cookie-banner-text">
                   {isFil
-                    ? 'Gumagamit ang Resiboss ng cookies at browser storage upang mapanatili ang iyong secure session at maihiwalay ang iyong mga resibo. Sumusunod kami sa Republic Act 10173 (Data Privacy Act of 2012).'
-                    : 'Resiboss uses cookies and local storage to secure your session, isolate your receipts, and save your theme. We strictly adhere to Republic Act 10173 (Data Privacy Act of 2012).'}
-                  {' '}
+                    ? 'Gumagamit kami ng cookies upang ma-secure ang iyong sesyon at resibo.'
+                    : 'Resiboss uses cookies and local storage to secure your session and receipts.'}{' '}
                   <button
                     type="button"
                     onClick={() => {
@@ -145,20 +102,20 @@ export const CookieConsentBanner = () => {
                       border: 'none',
                       padding: 0,
                       color: '#00f2fe',
-                      fontSize: '0.78rem',
+                      fontSize: 'inherit',
                       fontWeight: 600,
                       textDecoration: 'underline',
                       cursor: 'pointer',
                     }}
                   >
-                    {isFil ? 'Basahin ang Patakaran' : 'Privacy Policy'}
+                    {isFil ? 'Privacy Policy' : 'Privacy Policy'}
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <div className="cookie-banner-actions">
               <button
                 type="button"
                 onClick={() => {
@@ -166,9 +123,9 @@ export const CookieConsentBanner = () => {
                   setIsCookieModalOpen(true);
                 }}
                 className="liquid-btn liquid-btn-secondary"
-                style={{ padding: '8px 14px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
               >
-                <Sliders size={14} />
+                <Sliders size={13} />
                 <span>{isFil ? 'I-customize' : 'Preferences'}</span>
               </button>
 
@@ -176,19 +133,18 @@ export const CookieConsentBanner = () => {
                 type="button"
                 onClick={handleEssentialOnly}
                 className="liquid-btn liquid-btn-secondary"
-                style={{ padding: '8px 14px', fontSize: '0.82rem' }}
               >
-                {isFil ? 'Mahalaga Lamang' : 'Essential Only'}
+                {isFil ? 'Mahalaga' : 'Essential Only'}
               </button>
 
               <button
                 type="button"
                 onClick={handleAcceptAll}
                 className="liquid-btn liquid-btn-primary"
-                style={{ padding: '8px 18px', fontSize: '0.82rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
               >
-                <CheckCircle2 size={15} />
-                <span>{isFil ? 'Tanggapin Lahat' : 'Accept All'}</span>
+                <CheckCircle2 size={14} />
+                <span>{isFil ? 'Tanggapin' : 'Accept All'}</span>
               </button>
             </div>
           </div>

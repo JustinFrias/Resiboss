@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm your Resiboss Account</title>
+</head>
+<body style="margin: 0; padding: 40px 16px; background-color: #f7f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center">
+        <!-- Main Card Container -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02); overflow: hidden; padding: 36px 32px;">
+          
+          <!-- Top Header: Logo + Badge -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="left" style="vertical-align: middle;">
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <!-- Resiboss Logo Icon -->
+                        <td style="width: 42px; height: 42px; background: linear-gradient(135deg, #0284c7 0%, #00f2fe 100%); border-radius: 12px; text-align: center; vertical-align: middle; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                          <span style="color: #ffffff; font-weight: 900; font-size: 22px; font-family: sans-serif; line-height: 42px; display: inline-block;">R</span>
+                        </td>
+                        <!-- Brand Name -->
+                        <td style="padding-left: 12px; vertical-align: middle;">
+                          <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Resiboss</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <!-- Verification Badge -->
+                  <td align="right" style="vertical-align: middle;">
+                    <span style="display: inline-block; padding: 6px 14px; background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 999px; border: 1px solid #e2e8f0;">
+                      ACCOUNT VERIFICATION
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td height="28" style="font-size: 0; line-height: 0;">&nbsp;</td></tr>
+
+          <!-- Heading -->
+          <tr>
+            <td align="left">
+              <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.03em; line-height: 1.25;">
+                Confirm your email address
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Subtext / Greeting -->
+          <tr>
+            <td align="left" style="padding-top: 14px;">
+              <p style="margin: 0; font-size: 15px; color: #475569; line-height: 1.6;">
+                Hello <strong>{{ .Email }}</strong>,<br>
+                Thank you for signing up with <strong>Resiboss</strong>. Please confirm your email address below to activate your account and securely access your receipts and dashboard.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td height="22" style="font-size: 0; line-height: 0;">&nbsp;</td></tr>
+
+          <!-- Feature / Info Card Box (Matches 2nd Pic) -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px 20px;">
+                <tr>
+                  <!-- Receipt / Doc Icon Box -->
+                  <td width="46" style="vertical-align: middle;">
+                    <div style="width: 44px; height: 44px; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; text-align: center; line-height: 44px; font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+                      🧾
+                    </div>
+                  </td>
+                  <!-- Card Details -->
+                  <td style="padding-left: 14px; vertical-align: middle;">
+                    <div style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 3px;">
+                      Resiboss Account Activation
+                    </div>
+                    <div style="font-size: 12.5px; color: #64748b; line-height: 1.4;">
+                      Authorized for <strong style="color: #334155;">{{ .Email }}</strong> • Local-first e-signatures & receipts
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td height="28" style="font-size: 0; line-height: 0;">&nbsp;</td></tr>
+
+          <!-- Action Button: Confirm & Activate (Matches 2nd Pic) -->
+          <tr>
+            <td align="center">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="width: 100%;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background: #3d5a45; background-color: #3d5a45; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 24px; border-radius: 999px; text-align: center; box-shadow: 0 4px 14px rgba(61, 90, 69, 0.28); letter-spacing: 0.01em;">
+                      Confirm Email & Continue &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td height="20" style="font-size: 0; line-height: 0;">&nbsp;</td></tr>
+
+          <!-- Security Badges -->
+          <tr>
+            <td align="center">
+              <span style="font-size: 12px; color: #64748b; font-weight: 500;">
+                &#128274; 256-Bit SSL Encrypted &bull; Local-First Security &bull; Account Verification
+              </span>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding-top: 24px; padding-bottom: 20px;">
+              <div style="height: 1px; border-top: 1px dashed #cbd5e1;"></div>
+            </td>
+          </tr>
+
+          <!-- Direct Link Fallback -->
+          <tr>
+            <td align="left">
+              <p style="margin: 0 0 6px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+                Button not working? Copy and paste this secure link directly into your browser:
+              </p>
+              <a href="{{ .ConfirmationURL }}" style="font-size: 12px; color: #0284c7; word-break: break-all; text-decoration: underline;">
+                {{ .ConfirmationURL }}
+              </a>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Outer Sub-footer -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; margin-top: 20px;">
+          <tr>
+            <td align="center" style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+              Delivered securely via <strong>Resiboss</strong> &mdash; Local-First Receipt &amp; Document Management.<br>
+              If you did not request this account, you can safely ignore this email.
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

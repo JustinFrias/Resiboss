@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadReceiptsExcel, saveOrShareExcelFile } from '../utils/fileDownloader';
+import { downloadReceiptsExcel } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 import {
   Download,
@@ -124,37 +124,7 @@ export const ExportView = () => {
     }
   };
 
-  // Re-trigger saving or sharing directly from user tap
-  const handleSaveAgain = async () => {
-    if (!exportNotification) return;
-    soundFx.playClick();
-    try {
-      const res = await saveOrShareExcelFile({
-        blob: exportNotification.blob,
-        base64: exportNotification.base64,
-        filename: exportNotification.filename,
-      });
-      soundFx.playSuccessChime();
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 70,
-          origin: { y: 0.65 },
-          colors: ['#00f2fe', '#3b82f6', '#10b981', '#ffffff'],
-        });
-      } catch (e) {}
 
-      let updatedMsg = 'Report saved successfully!';
-      if (res?.savedToDownloads) {
-        updatedMsg = 'Saved to Downloads folder! Check your files.';
-      } else if (res?.method === 'web-share') {
-        updatedMsg = 'Share sheet opened!';
-      }
-      setExportNotification((prev) => (prev ? { ...prev, message: updatedMsg } : null));
-    } catch (err) {
-      console.warn('Save again error:', err);
-    }
-  };
 
   return (
     <div className="" style={{ width: '100%', padding: 0 }}>
@@ -315,32 +285,7 @@ export const ExportView = () => {
             </span>
           </div>
 
-          {exportNotification && (
-            <button
-              type="button"
-              onClick={handleSaveAgain}
-              style={{
-                background: 'linear-gradient(135deg, #0284c7, #2563eb)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '8px 18px',
-                borderRadius: '999px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 12px rgba(37, 99, 235, 0.45)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-            >
-              <Download size={14} />
-              <span>Save / Share Excel (.xlsx)</span>
-            </button>
-          )}
+
         </div>
       )}
 
