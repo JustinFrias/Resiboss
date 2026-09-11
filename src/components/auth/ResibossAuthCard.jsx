@@ -508,8 +508,12 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
           onClick={() => {
             soundFx?.playClick?.();
             setMode('signin');
+            setEmail('');
+            setPassword('');
+            setFullName('');
             setErrorMsg(null);
             setSuccessMsg(null);
+            setSuggestedEmail(null);
           }}
           style={{
             flex: 1,
@@ -534,8 +538,13 @@ export const ResibossAuthCard = ({ initialMode = 'register' }) => {
           onClick={() => {
             soundFx?.playClick?.();
             setMode('register');
+            setEmail('');
+            setPassword('');
+            setFullName('');
+            setIsAgreed(false);
             setErrorMsg(null);
             setSuccessMsg(null);
+            setSuggestedEmail(null);
           }}
           style={{
             flex: 1,
