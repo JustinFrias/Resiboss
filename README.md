@@ -1,254 +1,200 @@
-# Resiboss — Project Plan
+# Resiboss 🧾✨
 
-## 1. Overview
-Resiboss is a **receipt and expense tracking app** that helps a user capture, organize, and monitor their spending in one place — turning a shoebox of paper/digital receipts into searchable, categorized, reportable data.
+> **Next-Generation 3D Liquid Glass Receipt Scanner & Financial Intelligence**  
+> Automated OCR, intelligent VAT computation, 3D interactive inspection, and seamless Microsoft Excel (`.xlsx`) export across Web and Native Mobile.
 
-**Primary user:** One person tracking their own personal or small-business expenses (single-user tool — no team/shared workspaces in v1).
+[![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.2-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8.5-119EFF?style=flat-square&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
+[![Three.js](https://img.shields.io/badge/Three.js-3D%20Graphics-000000?style=flat-square&logo=three.js&logoColor=white)](https://threejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-**Core loop:**
-1. Capture a receipt (photo, upload, or manual entry)
-2. Extract/enter the details — vendor, date, amount, category
-3. It's saved and synced to the cloud
-4. Browse, search, filter, and see spending summaries whenever needed
+🌐 **Live Web Application:** [https://resiboss.vercel.app](https://resiboss.vercel.app)  
+📱 **Mobile Platform:** Android APK (Capacitor 8) & Responsive Web / PWA
 
-## 2. Why it's more than "just a receipt scanner"
-- **OCR-based capture** — snap a photo and let the app pull vendor, date, and total automatically (v2), instead of typing everything by hand
-- **Category tracking** — every expense tagged by category so spending patterns are visible, not just a pile of receipts
-- **Spending summaries & reports** — see totals by category, by month, by vendor at a glance
-- **Search & filter** — find that one receipt from three months ago in seconds
-- **Cloud sync** — capture a receipt on your phone, review it later on desktop, same data everywhere
-- **Budget goals & alerts (v2)** — set a monthly budget per category and get warned before overspending
-- **Export reports** — pull a CSV/PDF for tax season, reimbursement, or personal records
-- **Multi-currency support (v2)** — track spending across currencies for travel or international purchases
+---
 
-## 3. Core Features (v1)
-| Feature | Description |
+## 🌟 Overview
+
+**Resiboss** transforms messy paper receipts and invoices into structured, auditable financial records. Built with modern web and mobile technologies, it features an immersive **3D Liquid Glassmorphism** interface, dual OCR recognition engines (Offline Local OCR & Google Gemini Vision AI), and an automated tax engine tailored for standard VAT and expense reporting.
+
+---
+
+## 🚀 Key Features
+
+### 📸 Dual-Engine Receipt Scanning & OCR
+- **Offline Local OCR (`Tesseract.js`):** Client-side image recognition that works completely offline with zero server dependencies.
+- **Google Gemini Vision AI (`gemini-1.5-flash` / `gemini-2.0-flash`):** High-precision AI vision extraction with multi-model fallback for complex thermal receipts, crumpled paper, and noisy backgrounds.
+- **Smart Financial Parser:** Automatically extracts and structures:
+  - Merchant / Vendor Name
+  - Transaction Date & Time
+  - Tax Identification Number (TIN) / OR Number
+  - 12% VAT Breakdown & Vatable Subtotal
+  - Payment Method (Cash, Card, GCash, Maya, etc.)
+  - Line-by-line itemized items with quantities and unit prices
+
+### 🎮 Immersive 3D Liquid Glass UI
+- **TiltCard 3D Interactivity:** Gyroscope and cursor-reactive 3D depth tilt on cards and panels.
+- **3D Receipt Inspector (`ReceiptViewer3D`):** Full 360-degree interactive rotation, flip to examine back annotations, and zoom controls.
+- **Dynamic Haptic Sound FX:** Synthesized audio feedback for scans, laser interactions, button clicks, and celebrations.
+
+### 📊 Financial Dashboard & Audit Vault
+- **Visual Analytics:** Real-time charts showing monthly expenses, category distribution, top vendors, and VAT deductible credits.
+- **Document Audit Vault:** Search by merchant, TIN, or ID; filter by category and verification status (`Verified`, `Pending`).
+
+### 📥 Unblockable Microsoft Excel (`.xlsx`) & CSV Export
+- **Automated Excel Generation:** Creates professional, multi-sheet Excel workbooks with:
+  1. *Purchases & Expenses Journal* (monthly ledger with VAT tax columns)
+  2. *Itemized Breakdown* (line-by-line descriptions, quantities, and totals)
+- **Zero-Wait Synchronous Trigger:** Solves mobile browser popup and download blocker issues (Chrome/Safari/WebView) by triggering downloads directly inside the active user interaction tick.
+- **Android Native Save / Share Sheet:** Integrated with `@capacitor/filesystem` (Scoped Storage safe) and `@capacitor/share` for saving directly to device storage or opening in Google Sheets / Excel.
+- **One-Tap Direct Download Fallback:** Interactive in-app notification button for guaranteed one-tap downloads on any restrictive browser or in-app webview.
+
+### ☁️ Cloud Sync & Security
+- **Supabase Backend:** PostgreSQL storage with Row Level Security (RLS) policies.
+- **Authentication:** Google OAuth and email/password login with secure session persistence.
+- **Cross-Device Continuity:** Instant data synchronization across desktop browsers, mobile web, and the native Android app.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
 |---|---|
-| Receipt capture | Upload a photo or file of a receipt; manual entry as fallback |
-| Expense fields | Vendor, date, amount, category, notes per entry |
-| Category tracking | Predefined + custom categories, assignable per expense |
-| Cloud sync | Firebase-backed storage so data is available across devices |
-| Spending summaries | Totals and breakdowns by category and by date range |
-| Search & filter | Find past transactions by vendor, category, date, or amount |
-| Auth | Basic sign-in so the user's data is tied to their account |
-| Receipt gallery | Thumbnail view of stored receipt images tied to each expense |
+| **Frontend Framework** | React 19, Vite 8 |
+| **Styling & Design System** | Custom Liquid Glass CSS, Cyber Neon design tokens, Google Fonts (*Outfit*, *JetBrains Mono*, *Plus Jakarta Sans*) |
+| **3D Rendering** | Three.js, Canvas Confetti |
+| **Mobile Runtime** | Capacitor 8 (`@capacitor/core`, `@capacitor/android`, `@capacitor/filesystem`, `@capacitor/share`, `@capacitor/browser`, `@capacitor/app`) |
+| **Database & Auth** | Supabase (`@supabase/supabase-js`) |
+| **OCR & AI** | Tesseract.js (Local), Google Gemini Vision API (Cloud AI) |
+| **Spreadsheet Generation**| SheetJS (`xlsx`) |
+| **Icons** | Lucide React |
 
-## 4. Nice-to-Have Features (v2+)
-- **OCR-based receipt scanning** — auto-extract vendor/date/total from a photo instead of manual entry
-- **Budget goal setting and alerts** — set per-category monthly budgets, get notified when close to/over limit
-- **Export reports to CSV/PDF** — for taxes, reimbursement, or bookkeeping
-- **Multi-currency support** — log and convert expenses in different currencies
-- **Recurring expense detection** — flag subscriptions or repeat vendors automatically
-- **Spending insights** — trends over time, month-over-month comparisons, top categories
-- **Dark mode**
-- **PWA install + offline capture** — snap a receipt with no signal, syncs once back online
+---
 
-**Explicitly out of scope for now:** multi-user/shared household budgets, receipt-sharing with an accountant, bank account/card integration (auto-import of transactions).
-
-## 5. Design Priorities
-- **Mobile-first capture, desktop-friendly review**: receipts are usually captured on the go (phone camera), but summaries/reports are often reviewed on a bigger screen
-- **Minimal friction on capture**: logging a receipt should take just a few taps — photo, category, save
-- **Clarity over density**: spending summaries should be scannable at a glance, not a wall of numbers
-- **Consistent categorization**: category picker should be fast (recent/frequent categories surfaced first) so tagging doesn't feel like a chore
-- **Distinctive, non-generic visual design**: a deliberate color palette and type system rather than default component styling, so it doesn't read as a bootstrapped template
-
-## 6. Tech Stack
-- **Frontend:** React (JavaScript)
-- **Styling:** CSS (Tailwind or another framework recommended for consistency, if adopted)
-- **Backend:** Node.js
-- **Database / Cloud:** Firebase (Firestore for data, Firebase Storage for receipt images, Firebase Auth for sign-in)
-- **OCR (v2):** Cloud OCR API (e.g. Google Cloud Vision, or a Firebase Extension) for receipt text extraction
-- **Reporting/export (v2):** CSV generation client-side; PDF export via a library (e.g. `pdf-lib` or `jsPDF`)
-- **Charts:** A charting library (e.g. Recharts or Chart.js) for spending summaries and trend views
-
-## 7. Open Questions
-- [ ] **Receipt capture flow:** Camera capture directly in-app vs. file upload only vs. both?
-- [ ] **Category set:** Fixed default categories, fully custom, or a hybrid (defaults + user-added)?
-- [ ] **OCR provider:** Which OCR service to use, and how much manual correction UI is needed for low-confidence extractions?
-- [ ] **Budgeting scope:** Per-category budgets only, or also an overall monthly budget?
-- [ ] **Reporting granularity:** Weekly/monthly/yearly views, custom date ranges, or both?
-
-## 8. Suggested Build Order
-1. Auth + basic app shell
-2. Manual expense entry (vendor, date, amount, category, notes)
-3. Receipt image upload + gallery view tied to expenses
-4. Firebase sync across devices
-5. Spending summaries (category/date breakdowns)
-6. Search & filter
-7. Export reports (CSV/PDF)
-8. OCR-based capture
-9. Budget goals & alerts
-10. Multi-currency support
-
-## 9. System Architecture
-
-```mermaid
-flowchart TB
-    subgraph Client["Client — React"]
-        CAP["Receipt Capture (camera/upload)"]
-        EX["Expense Entry / Edit"]
-        SUM["Summaries / Reports"]
-        SRCH["Search & Filter"]
-    end
-
-    subgraph Backend["Backend — Node.js"]
-        ES["Expense Service (CRUD)"]
-        RS["Receipt Service (image handling)"]
-        OS_S["OCR Service (v2)"]
-        RPS["Report Service (CSV/PDF export)"]
-    end
-
-    FA[("Firebase Auth")]
-    FS[("Firestore — expenses, categories")]
-    FST[("Firebase Storage — receipt images")]
-
-    Client -- "HTTPS / SDK calls" --> Backend
-    Client -- "Auth" --> FA
-    ES --> FS
-    RS --> FST
-    OS_S --> RS
-    RPS --> FS
-```
-
-## 10. Data Flow Diagram (DFD)
-
-**Level 0 (context):**
-
-```mermaid
-flowchart LR
-    User(["User"])
-    App["Resiboss App"]
-
-    User -- "captures/enters receipt" --> App
-    App -- "syncs data" --> User
-    App -- "spending summaries/reports" --> User
-```
-
-**Level 1 (major processes):**
-
-```mermaid
-flowchart TB
-    User(["User"])
-
-    P1["P1: Receipt Capture"]
-    P2["P2: Expense Entry"]
-    P3["P3: Categorization"]
-    P4["P4: Sync & Storage"]
-    P5["P5: Reporting & Summaries"]
-
-    D1[("Store: Receipt Images")]
-    D2[("Store: Expenses")]
-    D3[("Store: Categories")]
-
-    User -- "(1) Upload/Photo" --> P1 --> D1
-    User -- "(2) Enter Details" --> P2 --> D2
-    P2 --> P3 --> D3
-    D2 --> P4
-    D1 --> P4
-    P4 -- "synced data" --> User
-    D2 --> P5
-    P5 -- "(3) Summaries/Export" --> User
-```
-
-## 11. Entity Relationship Diagram (ERD)
-
-```mermaid
-erDiagram
-    USER ||--o{ EXPENSE : owns
-    USER ||--o{ CATEGORY : owns
-    EXPENSE ||--o| RECEIPT_IMAGE : has
-    EXPENSE }o--|| CATEGORY : "tagged with"
-    USER ||--o{ BUDGET : sets
-
-    USER {
-        string id PK
-        string name
-        string email
-        datetime created_at
-    }
-    EXPENSE {
-        string id PK
-        string user_id FK
-        string vendor
-        float amount
-        string currency
-        date expense_date
-        string category_id FK
-        string notes
-        datetime created_at
-        datetime updated_at
-    }
-    RECEIPT_IMAGE {
-        string id PK
-        string expense_id FK
-        string file_path
-        string ocr_status "pending/done/failed/none"
-        datetime uploaded_at
-    }
-    CATEGORY {
-        string id PK
-        string user_id FK
-        string name
-        string color
-        bool is_default
-    }
-    BUDGET {
-        string id PK
-        string user_id FK
-        string category_id FK
-        float monthly_limit
-        string period "monthly/yearly"
-    }
-```
-
-## 12. User Stories
-
-**Capturing expenses**
-- As a user, I want to upload a photo of a receipt, so I have a digital record of it.
-- As a user, I want to manually enter an expense if I don't have a physical receipt, so nothing gets left out.
-- As a user, I want the app to extract vendor, date, and total from a photo automatically, so I don't have to type it all in myself.
-- As a user, I want to assign a category to each expense, so my spending is organized from the start.
-
-**Reviewing & organizing**
-- As a user, I want to see a summary of my spending by category, so I know where my money is going.
-- As a user, I want to filter my transactions by date range, category, or vendor, so I can find what I need quickly.
-- As a user, I want my data to sync across my devices, so I can capture on my phone and review on desktop.
-- As a user, I want to browse a gallery of my stored receipt images, so I can double-check the original if needed.
-
-**Reporting & budgeting**
-- As a user, I want to export my expenses to CSV or PDF, so I can use them for taxes or reimbursement.
-- As a user, I want to set a monthly budget per category, so I can track how close I am to my limit.
-- As a user, I want to be alerted when I'm nearing or over a budget, so I can adjust my spending in time.
-- As a user, I want to track expenses in different currencies, so travel spending is recorded accurately.
-
-## 13. Project Architecture (Folder/File Structure)
+## 📁 Project Structure
 
 ```
 Resiboss/
-├── public/                     # Static assets
+├── android/                         # Capacitor Native Android project
+│   ├── app/src/main/
+│   │   ├── AndroidManifest.xml      # App permissions & FileProvider
+│   │   └── res/xml/file_paths.xml   # File sharing storage paths
+├── public/                          # Static assets, emblems, icons
 ├── src/
-│   ├── components/             # Reusable UI components
-│   │   ├── receipt/             # Capture, upload, gallery
-│   │   ├── expense/              # Entry form, expense list/card
-│   │   ├── summary/              # Charts, category breakdowns
-│   │   └── ui/                   # Buttons, inputs, shared elements
-│   ├── pages/                  # Page-level views
-│   │   ├── Dashboard/            # Spending summaries
-│   │   ├── Expenses/             # List, search, filter
-│   │   ├── AddExpense/           # Capture/entry flow
-│   │   ├── Reports/              # Export CSV/PDF
-│   │   ├── Budgets/               # v2: budget goals & alerts
-│   │   └── Settings/
-│   ├── services/                # Firebase/API service logic
-│   │   ├── firebase.js           # Firebase config/init
-│   │   ├── expenseService.js     # CRUD for expenses
-│   │   ├── receiptService.js     # Image upload/storage
-│   │   ├── ocrService.js         # v2: OCR extraction
-│   │   └── reportService.js      # CSV/PDF export
-│   ├── hooks/
-│   ├── App.js
-│   └── index.js
-├── .env                         # Environment variables (not committed)
+│   ├── assets/                      # Bundled images and media
+│   ├── components/                  # Reusable UI components
+│   │   ├── auth/                    # Auth cards & modal forms
+│   │   ├── canvas/                  # Three.js 3D background canvas
+│   │   ├── layout/                  # Navbar, Sidebar, TopBar
+│   │   ├── legal/                   # Terms, Privacy, Cookie modals
+│   │   ├── mobile/                  # Bottom navigation bar
+│   │   ├── modals/                  # ReceiptViewer3D inspector, AI config modal
+│   │   └── ui/                      # TiltCard, Liquid buttons, badges
+│   ├── context/
+│   │   └── AppContext.jsx           # Global state (documents, auth, theme, settings)
+│   ├── lib/
+│   │   └── supabaseClient.js        # Supabase client initialization
+│   ├── styles/                      # CSS variables, glassmorphism utilities
+│   ├── utils/
+│   │   ├── fileDownloader.js        # Cross-platform Excel/CSV unblockable exporter
+│   │   ├── geminiOcr.js             # Google Gemini Vision AI OCR client
+│   │   ├── i18n.js                  # English & Tagalog translations
+│   │   ├── receiptOcrParser.js      # Financial parser (regex, TIN, VAT, items)
+│   │   └── soundEffects.js          # Web Audio API sound synthesis
+│   ├── views/                       # Main application views
+│   │   ├── AnalyticView.jsx         # Charts & financial metrics
+│   │   ├── AuthView.jsx             # Sign-in & registration
+│   │   ├── DashboardView.jsx        # Overview & recent activity
+│   │   ├── DocumentsView.jsx        # Vault table & card views
+│   │   ├── ExportView.jsx           # Multi-receipt selection & Excel export
+│   │   ├── ScannerView.jsx          # Camera capture, file upload & OCR scanner
+│   │   └── SettingsView.jsx         # Profile, theme, audio, and account controls
+│   ├── App.jsx                      # Route management & layout wrapper
+│   ├── index.css                    # Core design system & glass styles
+│   └── main.jsx                     # Application entry point
+├── capacitor.config.json            # Capacitor mobile configuration
 ├── package.json
-└── README.md
+├── supabase_schema.sql              # Supabase database schema & RLS policies
+└── vite.config.js                   # Vite build configuration
 ```
+
+---
+
+## 🚦 Getting Started
+
+### Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm** or **pnpm**
+- **Android Studio** (optional, only for building local Android APK)
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/JustinFrias/Resiboss.git
+cd Resiboss
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Optional: Google Gemini Vision API Key (can also be configured inside the app settings)
+VITE_GEMINI_API_KEY=your-gemini-api-key
+```
+
+### 4. Run Development Server
+```bash
+npm run dev
+```
+Open your browser at `http://localhost:5173`.
+
+### 5. Build for Production
+```bash
+npm run build
+```
+
+---
+
+## 📱 Mobile App (Capacitor Android)
+
+### Sync Web Assets to Android
+```bash
+npx cap sync android
+```
+
+### Open in Android Studio
+```bash
+npx cap open android
+```
+From Android Studio, click **Run** to launch on a connected device or emulator, or build an APK via **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+
+---
+
+## 🔒 Security & Privacy
+
+- **Row Level Security (RLS):** Users can strictly only read and write their own financial receipts in Supabase.
+- **Local OCR Privacy:** Receipts scanned via Tesseract.js are processed locally in-browser/on-device without leaving the client.
+- **Credential Storage:** Sensitive API keys (e.g. Gemini Vision API keys) can be stored locally in browser `localStorage` or device sandbox.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 👤 Author
+
+**Justin Frias**  
+- GitHub: [@JustinFrias](https://github.com/JustinFrias)  
+- Project Repository: [Resiboss](https://github.com/JustinFrias/Resiboss)
