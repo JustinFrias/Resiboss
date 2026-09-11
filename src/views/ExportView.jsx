@@ -86,9 +86,10 @@ export const ExportView = () => {
 
     soundFx.playLaserHum();
     const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `Resiboss_Expense_Report_${timestamp}.xlsx`;
 
     try {
-      await downloadReceiptsExcel(docsToExport, `Resiboss_Expense_Report_${timestamp}.xlsx`);
+      const res = await downloadReceiptsExcel(docsToExport, filename);
 
       soundFx.playSuccessChime();
       try {
@@ -100,10 +101,12 @@ export const ExportView = () => {
         });
       } catch (e) {}
 
-      setExportNotification(
-        `Successfully exported ${docsToExport.length} receipt record(s) to Microsoft Excel (.xlsx)!`
-      );
-      setTimeout(() => setExportNotification(null), 4500);
+      setExportNotification({
+        message: `Successfully generated Excel report (${docsToExport.length} receipts)!`,
+        downloadUrl: res?.downloadUrl || null,
+        filename,
+      });
+      setTimeout(() => setExportNotification(null), 8000);
     } catch (exportErr) {
       console.error('Export download error:', exportErr);
       alert('Export failed. Please check device permissions and try again.');
@@ -247,15 +250,49 @@ export const ExportView = () => {
             color: '#38bdf8',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
             fontSize: '0.88rem',
             fontWeight: 600,
             boxShadow: '0 0 25px rgba(0, 242, 254, 0.25)',
             animation: 'fadeIn 0.25s ease',
           }}
         >
-          <CheckCircle2 size={18} color="#00f2fe" />
-          <span>{exportNotification}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <CheckCircle2 size={18} color="#00f2fe" style={{ flexShrink: 0 }} />
+            <span>
+              {typeof exportNotification === 'string'
+                ? exportNotification
+                : exportNotification.message}
+            </span>
+          </div>
+
+          {typeof exportNotification === 'object' && exportNotification.downloadUrl && (
+            <a
+              href={exportNotification.downloadUrl}
+              download={exportNotification.filename || 'Resiboss_Expense_Report.xlsx'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: 'linear-gradient(135deg, #0284c7, #2563eb)',
+                color: '#ffffff',
+                padding: '7px 16px',
+                borderRadius: '999px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 12px rgba(37, 99, 235, 0.45)',
+                cursor: 'pointer',
+              }}
+            >
+              <Download size={14} />
+              <span>Tap to Save Excel (.xlsx)</span>
+            </a>
+          )}
         </div>
       )}
 

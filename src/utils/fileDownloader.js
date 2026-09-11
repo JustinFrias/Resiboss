@@ -133,12 +133,13 @@ export async function downloadFile({
       }
 
       // 3. Open native Android / iOS Share and Save dialog
-      // In @capacitor/share v4.1+, the `files` array of file:// URLs is required to share files.
+      // In @capacitor/share v4.1+, only provide the `files` array with the file:// URI.
+      // Do NOT pass `url` alongside `files` because Android SharePlugin processes both,
+      // creating duplicate URIs that break the Intent chooser.
       try {
         await Share.share({
           title: filename,
           files: [shareUri],
-          url: shareUri,
           dialogTitle: `Download / Save ${filename}`,
         });
       } catch (shareErr) {
@@ -152,7 +153,14 @@ export async function downloadFile({
         }
       }
 
-      return { success: true, method: 'native', uri: shareUri, filename };
+      // Generate blob URL for backup direct-tap download
+      let backupBlobUrl = null;
+      try {
+        const blob = isBase64 ? base64ToBlob(content, mimeType) : new Blob([content], { type: mimeType });
+        backupBlobUrl = URL.createObjectURL(blob);
+      } catch (bErr) {}
+
+      return { success: true, method: 'native', uri: shareUri, downloadUrl: backupBlobUrl, filename };
     } catch (err) {
       console.error('Capacitor native download error, attempting browser fallback:', err);
     }
@@ -163,6 +171,7 @@ export async function downloadFile({
   // -------------------------------------------------------------
   try {
     const blob = isBase64 ? base64ToBlob(content, mimeType) : new Blob([content], { type: mimeType });
+    const downloadUrl = URL.createObjectURL(blob);
 
     // Try Web Share API with files if on mobile browser (Chrome Android / Safari iOS)
     if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
@@ -173,17 +182,16 @@ export async function downloadFile({
             files: [testFile],
             title: filename,
           });
-          return { success: true, method: 'web-share', filename };
+          return { success: true, method: 'web-share', downloadUrl, filename };
         }
       } catch (wsErr) {
         if (wsErr?.name === 'AbortError') {
-          return { success: true, method: 'web-share-dismissed', filename };
+          return { success: true, method: 'web-share-dismissed', downloadUrl, filename };
         }
         console.warn('Web share note, proceeding with anchor download:', wsErr);
       }
     }
 
-    const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.setAttribute('download', filename);
@@ -194,11 +202,10 @@ export async function downloadFile({
     setTimeout(() => {
       try {
         document.body.removeChild(link);
-        URL.revokeObjectURL(downloadUrl);
       } catch (e) {}
     }, 2000);
 
-    return { success: true, method: 'browser', filename };
+    return { success: true, method: 'browser', downloadUrl, filename };
   } catch (browserErr) {
     console.error('Browser download error:', browserErr);
     return { success: false, error: browserErr };
