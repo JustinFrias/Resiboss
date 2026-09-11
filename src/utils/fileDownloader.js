@@ -90,55 +90,65 @@ export async function downloadFile({
   if (isNative) {
     try {
       const base64Data = isBase64 ? dataUrlToBase64(content) : textToBase64(content);
-      let shareUri = null;
 
-      // Android API 29+ scoped storage: External is the most reliably accessible location
-      // for file sharing without requiring a runtime permission dialog.
-      // Try External → Cache → Documents in that order.
-      const writeAttempts = [
-        Directory.External,
-        Directory.Cache,
-        Directory.Documents,
-      ];
+      // 1. Always write to Directory.Cache FIRST.
+      // Cache directory requires NO runtime permissions on any Android (up to API 36+) or iOS,
+      // and is directly configured in FileProvider (internal_cache).
+      const cacheResult = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache,
+        recursive: true,
+      });
 
-      for (const dir of writeAttempts) {
+      // Get full file:// URI for FileProvider
+      let shareUri = cacheResult?.uri;
+      if (!shareUri || !shareUri.startsWith('file:')) {
         try {
-          const result = await Filesystem.writeFile({
+          const uriRes = await Filesystem.getUri({
+            directory: Directory.Cache,
             path: filename,
-            data: base64Data,
-            directory: dir,
-            recursive: true,
           });
-          shareUri = result.uri;
-          break; // stop at first success
-        } catch (writeErr) {
-          console.warn(`Write to ${dir} failed, trying next:`, writeErr);
+          shareUri = uriRes?.uri || shareUri;
+        } catch (uErr) {
+          console.warn('getUri Cache note:', uErr);
         }
       }
 
-      if (!shareUri) {
-        throw new Error('Could not write file to any storage directory.');
+      // 2. Also try writing a persistent copy to Directory.Documents
+      // so the file remains saved in the user's Documents folder.
+      try {
+        await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Documents,
+          recursive: true,
+        });
+      } catch (docErr) {
+        console.warn('Optional Documents folder write skipped:', docErr);
       }
 
-      // Open Android native Save / Share sheet with correct MIME
-      const shareMime = getShareMime(filename, mimeType);
+      if (!shareUri) {
+        throw new Error('Could not write file to device storage.');
+      }
+
+      // 3. Open native Android / iOS Share and Save dialog
+      // In @capacitor/share v4.1+, the `files` array of file:// URLs is required to share files.
       try {
         await Share.share({
-          title: `Open / Save ${filename}`,
-          text: `Resiboss export: ${filename}`,
+          title: filename,
+          files: [shareUri],
           url: shareUri,
-          mimeType: shareMime,
-          dialogTitle: `Save or Open ${filename} in Excel`,
+          dialogTitle: `Download / Save ${filename}`,
         });
       } catch (shareErr) {
-        // User cancelling share dialog is normal
         if (
-          shareErr.name !== 'AbortError' &&
+          shareErr?.name !== 'AbortError' &&
           !String(shareErr).includes('canceled') &&
           !String(shareErr).includes('cancelled') &&
           !String(shareErr).includes('dismiss')
         ) {
-          console.warn('Native share dialog note:', shareErr);
+          console.warn('Native share note:', shareErr);
         }
       }
 
@@ -149,32 +159,31 @@ export async function downloadFile({
   }
 
   // -------------------------------------------------------------
-  // 2. BROWSER / WEB FALLBACK
+  // 2. BROWSER / WEB FALLBACK (Mobile Browser & Desktop)
   // -------------------------------------------------------------
   try {
-    let downloadUrl;
-    let shouldRevoke = false;
+    const blob = isBase64 ? base64ToBlob(content, mimeType) : new Blob([content], { type: mimeType });
 
-    if (isBase64) {
+    // Try Web Share API with files if on mobile browser (Chrome Android / Safari iOS)
+    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
       try {
-        const blob = base64ToBlob(content, mimeType);
-        downloadUrl = URL.createObjectURL(blob);
-        shouldRevoke = true;
-      } catch {
-        if (typeof content === 'string' && content.startsWith('data:')) {
-          downloadUrl = content;
-        } else {
-          const blob = new Blob([content], { type: mimeType });
-          downloadUrl = URL.createObjectURL(blob);
-          shouldRevoke = true;
+        const testFile = new File([blob], filename, { type: mimeType });
+        if (navigator.canShare({ files: [testFile] })) {
+          await navigator.share({
+            files: [testFile],
+            title: filename,
+          });
+          return { success: true, method: 'web-share', filename };
         }
+      } catch (wsErr) {
+        if (wsErr?.name === 'AbortError') {
+          return { success: true, method: 'web-share-dismissed', filename };
+        }
+        console.warn('Web share note, proceeding with anchor download:', wsErr);
       }
-    } else {
-      const blob = new Blob([content], { type: mimeType });
-      downloadUrl = URL.createObjectURL(blob);
-      shouldRevoke = true;
     }
 
+    const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.setAttribute('download', filename);
@@ -185,9 +194,9 @@ export async function downloadFile({
     setTimeout(() => {
       try {
         document.body.removeChild(link);
-        if (shouldRevoke) URL.revokeObjectURL(downloadUrl);
+        URL.revokeObjectURL(downloadUrl);
       } catch (e) {}
-    }, 1500);
+    }, 2000);
 
     return { success: true, method: 'browser', filename };
   } catch (browserErr) {

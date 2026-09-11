@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { X, RotateCw, Sparkles, CheckCircle2, ShieldCheck, Download, Trash2, Tag, Calendar, Building2, Receipt } from 'lucide-react';
-import { downloadReceiptAsCsv, downloadReceiptImage } from '../../utils/fileDownloader';
+import { downloadReceiptAsExcel, downloadReceiptImage } from '../../utils/fileDownloader';
 import { soundFx } from '../../utils/soundEffects';
 
 export const ReceiptViewer3D = () => {
@@ -489,10 +489,7 @@ export const ReceiptViewer3D = () => {
             <button
               onClick={async () => {
                 soundFx.playLaserHum();
-                await downloadReceiptAsCsv(inspectingDoc);
-                if (inspectingDoc.imageUri) {
-                  await downloadReceiptImage(inspectingDoc);
-                }
+                await downloadReceiptAsExcel(inspectingDoc);
                 soundFx.playSuccessChime();
               }}
               className="liquid-btn liquid-btn-primary"

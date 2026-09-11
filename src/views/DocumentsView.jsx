@@ -18,7 +18,7 @@ import {
   Clock,
   Download,
 } from 'lucide-react';
-import { downloadReceiptAsCsv, downloadReceiptImage } from '../utils/fileDownloader';
+import { downloadReceiptAsExcel, downloadReceiptImage } from '../utils/fileDownloader';
 import { soundFx } from '../utils/soundEffects';
 
 export const DocumentsView = () => {
@@ -50,10 +50,7 @@ export const DocumentsView = () => {
     if (e) e.stopPropagation();
     if (!doc) return;
     soundFx.playLaserHum();
-    await downloadReceiptAsCsv(doc);
-    if (doc.imageUri) {
-      await downloadReceiptImage(doc);
-    }
+    await downloadReceiptAsExcel(doc);
     soundFx.playSuccessChime();
   };
 
