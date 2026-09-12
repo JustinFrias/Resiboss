@@ -6,7 +6,6 @@ import {
   ScanLine,
   FolderArchive,
   BarChart3,
-  Download,
   Settings,
   Globe,
   Sparkles,
@@ -50,7 +49,6 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
     { id: 'scanner', label: t.nav.scanner, icon: ScanLine, highlight: true },
     { id: 'documents', label: t.nav.documents, icon: FolderArchive, badge: documents.length },
     { id: 'analytic', label: t.nav.analytic, icon: BarChart3 },
-    { id: 'export', label: t.nav.export, icon: Download },
   ];
 
   // Live Date & Time for sidebar widget

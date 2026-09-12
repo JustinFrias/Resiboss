@@ -4,7 +4,6 @@ import {
   LayoutGrid,
   ScanLine,
   FileText,
-  Download,
   BarChart3,
   Settings,
 } from 'lucide-react';
@@ -63,20 +62,7 @@ export const MobileBottomNav = () => {
         <span className="mobile-nav-label">Docs</span>
       </button>
 
-      {/* 4. Download Tab */}
-      <button
-        type="button"
-        onClick={() => handleTabClick('export')}
-        className={`mobile-nav-item ${activeTab === 'export' ? 'active' : ''}`}
-        aria-label="Download"
-      >
-        <div className="mobile-nav-icon-wrap">
-          <Download size={20} />
-        </div>
-        <span className="mobile-nav-label">Download</span>
-      </button>
-
-      {/* 5. Stats Tab */}
+      {/* 4. Stats Tab */}
       <button
         type="button"
         onClick={() => handleTabClick('analytic')}
