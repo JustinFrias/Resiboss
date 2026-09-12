@@ -80,6 +80,15 @@ export const SettingsView = () => {
     }
   }, [userProfile]);
 
+  useEffect(() => {
+    const handleOpenSettingsMenu = () => {
+      soundFx?.playClick?.();
+      setIsMobileNavOpen(true);
+    };
+    window.addEventListener('resiboss:open-settings-menu', handleOpenSettingsMenu);
+    return () => window.removeEventListener('resiboss:open-settings-menu', handleOpenSettingsMenu);
+  }, [soundFx]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
   const fileInputRef = useRef(null);
@@ -386,7 +395,7 @@ export const SettingsView = () => {
           marginBottom: '26px',
         }}
       >
-        {/* Card 1: Total Expenses */}
+        {/* Card 1: Documents */}
         <div
           style={{
             background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
@@ -409,7 +418,7 @@ export const SettingsView = () => {
               marginBottom: '6px',
             }}
           >
-            TOTAL EXPENSES
+            DOCUMENTS
           </div>
           <div
             style={{
@@ -419,11 +428,11 @@ export const SettingsView = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            {formatCurrency ? formatCurrency(totalAmount) : `₱${totalAmount.toFixed(2)}`}
+            {documents?.length ?? 6}
           </div>
         </div>
 
-        {/* Card 2: Total Vat */}
+        {/* Card 2: Approx Storage */}
         <div
           style={{
             background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
@@ -446,7 +455,7 @@ export const SettingsView = () => {
               marginBottom: '6px',
             }}
           >
-            TOTAL VAT
+            APPROX STORAGE
           </div>
           <div
             style={{
@@ -456,11 +465,11 @@ export const SettingsView = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            {formatCurrency ? formatCurrency(totalVat) : `₱${totalVat.toFixed(2)}`}
+            {`${((documents?.length ? documents.length * 0.2 : 1.2)).toFixed(1)} MB`}
           </div>
         </div>
 
-        {/* Card 3: Total Documents */}
+        {/* Card 3: Active Sessions */}
         <div
           style={{
             background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
@@ -483,7 +492,7 @@ export const SettingsView = () => {
               marginBottom: '6px',
             }}
           >
-            TOTAL DOCUMENTS
+            ACTIVE SESSIONS
           </div>
           <div
             style={{
@@ -493,7 +502,7 @@ export const SettingsView = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            {documents?.length ?? 0}
+            1
           </div>
         </div>
       </div>
@@ -587,19 +596,7 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'profile' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFx?.playClick?.();
-                    setIsMobileNavOpen(true);
-                  }}
-                  className="settings-mobile-h2-hamburger"
-                  title="Open Settings Sections"
-                  aria-label="Open Settings Sections"
-                >
-                  <Menu size={22} strokeWidth={2.5} />
-                </button>
+              <div style={{ margin: '0 0 16px 0' }}>
                 <h2
                   style={{
                     fontSize: '1.2rem',
@@ -657,15 +654,15 @@ export const SettingsView = () => {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="keep-white"
                     style={{
-                      background: isLight ? '#1e3a8a' : '#0b1e36',
+                      background: '#0b1e36',
                       border: 'none',
-                      borderRadius: '10px',
+                      borderRadius: '12px',
                       padding: '9px 18px',
                       color: '#ffffff',
                       fontSize: '0.86rem',
@@ -675,10 +672,10 @@ export const SettingsView = () => {
                       gap: '8px',
                       cursor: 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.25)' : 'none',
+                      boxShadow: isLight ? '0 2px 8px rgba(11, 30, 54, 0.25)' : 'none',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
                   >
                     <Upload size={15} />
                     <span className="keep-white" style={{ color: '#ffffff' }}>Upload Photo</span>
@@ -695,24 +692,25 @@ export const SettingsView = () => {
                     type="button"
                     onClick={handleRemovePhoto}
                     style={{
-                      background: 'transparent',
-                      border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.18)',
-                      borderRadius: '10px',
-                      padding: '9px 16px',
-                      color: isLight ? '#475569' : '#cbd5e1',
+                      background: isLight ? '#ffffff' : 'transparent',
+                      border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(255, 255, 255, 0.18)',
+                      borderRadius: '12px',
+                      padding: '8px 16px',
+                      color: isLight ? '#1e3a8a' : '#cbd5e1',
                       fontSize: '0.86rem',
-                      fontWeight: 500,
+                      fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
                       cursor: 'pointer',
+                      boxShadow: isLight ? '0 1px 4px rgba(191, 219, 254, 0.25)' : 'none',
                       transition: 'all 0.2s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.06)';
+                      e.currentTarget.style.background = isLight ? '#eff6ff' : 'rgba(255, 255, 255, 0.06)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.background = isLight ? '#ffffff' : 'transparent';
                     }}
                   >
                     <X size={15} />
@@ -737,7 +735,7 @@ export const SettingsView = () => {
                         display: 'block',
                         fontSize: '0.86rem',
                         fontWeight: 600,
-                        color: isLight ? '#334155' : '#cbd5e1',
+                        color: isLight ? '#1e3a8a' : '#cbd5e1',
                         marginBottom: '8px',
                       }}
                     >
@@ -750,14 +748,15 @@ export const SettingsView = () => {
                       placeholder="First Name"
                       style={{
                         width: '100%',
-                        padding: '11px 16px',
-                        borderRadius: '12px',
-                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        padding: '12px 16px',
+                        borderRadius: '14px',
+                        border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(255, 255, 255, 0.15)',
                         background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
                         color: isLight ? '#0f2942' : '#ffffff',
                         fontSize: '0.92rem',
                         outline: 'none',
                         boxSizing: 'border-box',
+                        boxShadow: isLight ? '0 1.5px 4px rgba(191, 219, 254, 0.2)' : 'none',
                       }}
                     />
                   </div>
@@ -768,7 +767,7 @@ export const SettingsView = () => {
                         display: 'block',
                         fontSize: '0.86rem',
                         fontWeight: 600,
-                        color: isLight ? '#334155' : '#cbd5e1',
+                        color: isLight ? '#1e3a8a' : '#cbd5e1',
                         marginBottom: '8px',
                       }}
                     >
@@ -781,14 +780,15 @@ export const SettingsView = () => {
                       placeholder="Last Name"
                       style={{
                         width: '100%',
-                        padding: '11px 16px',
-                        borderRadius: '12px',
-                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        padding: '12px 16px',
+                        borderRadius: '14px',
+                        border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(255, 255, 255, 0.15)',
                         background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
                         color: isLight ? '#0f2942' : '#ffffff',
                         fontSize: '0.92rem',
                         outline: 'none',
                         boxSizing: 'border-box',
+                        boxShadow: isLight ? '0 1.5px 4px rgba(191, 219, 254, 0.2)' : 'none',
                       }}
                     />
                   </div>
@@ -889,19 +889,7 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'categories' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFx?.playClick?.();
-                    setIsMobileNavOpen(true);
-                  }}
-                  className="settings-mobile-h2-hamburger"
-                  title="Open Settings Sections"
-                  aria-label="Open Settings Sections"
-                >
-                  <Menu size={22} strokeWidth={2.5} />
-                </button>
+              <div style={{ margin: '0 0 16px 0' }}>
                 <h2
                   style={{
                     fontSize: '1.2rem',
@@ -1165,19 +1153,7 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'security' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFx?.playClick?.();
-                    setIsMobileNavOpen(true);
-                  }}
-                  className="settings-mobile-h2-hamburger"
-                  title="Open Settings Sections"
-                  aria-label="Open Settings Sections"
-                >
-                  <Menu size={22} strokeWidth={2.5} />
-                </button>
+              <div style={{ margin: '0 0 16px 0' }}>
                 <h2
                   style={{
                     fontSize: '1.2rem',
@@ -1513,19 +1489,7 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'notifications' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFx?.playClick?.();
-                    setIsMobileNavOpen(true);
-                  }}
-                  className="settings-mobile-h2-hamburger"
-                  title="Open Settings Sections"
-                  aria-label="Open Settings Sections"
-                >
-                  <Menu size={22} strokeWidth={2.5} />
-                </button>
+              <div style={{ margin: '0 0 16px 0' }}>
                 <h2
                   style={{
                     fontSize: '1.2rem',

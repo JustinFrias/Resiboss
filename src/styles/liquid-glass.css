@@ -1464,13 +1464,12 @@ input::-ms-clear {
     padding: 20px 16px !important;
   }
 
-  /* Mobile Settings Hamburger & Tab Bar */
+  /* Mobile Settings Hamburger & Tab Bar (Hidden to match user layout) */
   .settings-mobile-tab-bar {
-    display: block !important;
-    border-bottom: 1px solid var(--glass-border);
-    padding: 10px 14px;
-    background: var(--bg-surface);
-    box-sizing: border-box;
+    display: none !important;
+  }
+  .settings-mobile-h2-hamburger {
+    display: none !important;
   }
   [data-theme="light"] .settings-mobile-tab-bar {
     background: #f8fafc;

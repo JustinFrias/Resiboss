@@ -234,7 +234,14 @@ export const TopBar = ({ onOpenMobile }) => {
       {/* 1. Left: Mobile Menu & Desktop Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         <button
-          onClick={onOpenMobile}
+          onClick={() => {
+            soundFx?.playClick?.();
+            if (activeTab === 'settings') {
+              window.dispatchEvent(new CustomEvent('resiboss:open-settings-menu'));
+            } else if (onOpenMobile) {
+              onOpenMobile();
+            }
+          }}
           className="mobile-hamburger-btn"
           style={{
             background: 'rgba(255, 255, 255, 0.08)',
@@ -248,7 +255,7 @@ export const TopBar = ({ onOpenMobile }) => {
             color: 'var(--text-primary)',
             cursor: 'pointer',
           }}
-          title="Open Menu"
+          title={activeTab === 'settings' ? 'Settings Menu' : 'Open Menu'}
         >
           <Menu size={18} />
         </button>
@@ -267,18 +274,20 @@ export const TopBar = ({ onOpenMobile }) => {
           Workspace
         </span>
 
-        {/* Mobile-only brand logo (replacing Workspace on mobile) */}
-        <div
-          className="topbar-mobile-brand"
-          onClick={() => {
-            soundFx?.playClick?.();
-            setActiveTab('dashboard');
-          }}
-          style={{ cursor: 'pointer' }}
-          title="Resiboss Home"
-        >
-          <ResibossLogo size={28} />
-        </div>
+        {/* Mobile-only brand logo (hidden on settings view on mobile) */}
+        {activeTab !== 'settings' && (
+          <div
+            className="topbar-mobile-brand"
+            onClick={() => {
+              soundFx?.playClick?.();
+              setActiveTab('dashboard');
+            }}
+            style={{ cursor: 'pointer' }}
+            title="Resiboss Home"
+          >
+            <ResibossLogo size={28} />
+          </div>
+        )}
       </div>
 
       {/* 2. Right: Search Bar + Theme Toggle + Notifications */}
