@@ -296,20 +296,8 @@ export const TopBar = ({ onOpenMobile }) => {
           <Menu size={18} />
         </button>
 
-        <div
-          className="topbar-breadcrumb"
-          onClick={() => {
-            soundFx.playClick();
-            setActiveTab('dashboard');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: 'pointer' }}
-          title="Go to Dashboard"
-        >
-          <span style={{ color: 'var(--text-muted)' }}>{t.appName || 'Resiboss'}</span>
-          <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <span style={{ color: 'var(--cyan-glow)', fontWeight: 700 }}>{getBreadcrumb()}</span>
-        </div>
+
+
       </div>
 
       {/* 2. Right: Search Bar + Theme Toggle + Notifications */}
