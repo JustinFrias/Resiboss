@@ -1429,13 +1429,32 @@ input::-ms-clear {
     min-height: 36px;
   }
 
-  /* Mobile TopBar minimalism */
+  /* Mobile TopBar - Docked Edge-to-Edge with No Gap */
   .topbar-header {
-    background: transparent !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding: env(safe-area-inset-top, 0px) 16px 0 16px !important;
+    border-radius: 0 !important;
     border: none !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    background: var(--bg-surface) !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
     box-shadow: none !important;
-    padding: 4px 6px !important;
-    margin-bottom: 8px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    z-index: 100 !important;
+  }
+
+  [data-theme="light"] .topbar-header {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
   .topbar-search-container {
     display: none !important;
@@ -1816,23 +1835,25 @@ input::-ms-clear {
     padding-top: 8px;
   }
 
-  /* TopBar Mobile Adaptation - Locked & Fixed at Top */
+  /* TopBar Mobile Adaptation - Locked & Fixed at Top with No Gap */
   .topbar-header {
     position: fixed !important;
-    top: max(8px, env(safe-area-inset-top, 8px)) !important;
-    left: 12px !important;
-    right: 12px !important;
-    width: calc(100% - 24px) !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding: env(safe-area-inset-top, 0px) 14px 0 14px !important;
+    gap: 6px !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     z-index: 100 !important;
-    padding: 8px 10px !important;
-    gap: 6px !important;
-    border-radius: 14px !important;
-    margin: 0 !important;
-    overflow: visible !important;
     backdrop-filter: blur(28px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: none !important;
   }
 
   .topbar-right-actions {
