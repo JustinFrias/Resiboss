@@ -397,24 +397,7 @@ export const TopBar = ({ onOpenMobile }) => {
               >
                 <X size={14} />
               </button>
-            ) : (
-              <span
-                className="topbar-kbd"
-                style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  padding: '2px 6px',
-                  borderRadius: '6px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'var(--text-muted)',
-                  letterSpacing: '0.02em',
-                  flexShrink: 0,
-                }}
-              >
-                ⌘K
-              </span>
-            )}
+            ) : null}
           </div>
 
           {/* Search Results Dropdown Popover */}
