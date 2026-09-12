@@ -596,7 +596,7 @@ export const ScannerView = () => {
 
       {/* 1. When in Idle Mode: Scan Boss Layout */}
       {scanMode === 'idle' ? (
-        <div style={{ maxWidth: '840px', margin: '4px 0 0 0', width: '100%' }}>
+        <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%' }}>
           {/* Left-aligned Title & Subtitle */}
           <div style={{ textAlign: 'left', marginBottom: '22px' }}>
             <h1
