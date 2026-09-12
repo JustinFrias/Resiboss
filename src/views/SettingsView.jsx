@@ -19,6 +19,12 @@ import {
   Sun,
   Globe,
   Coins,
+  Menu,
+  ChevronRight,
+  ChevronDown,
+  User,
+  FolderArchive,
+  Bell,
 } from 'lucide-react';
 
 export const SettingsView = () => {
@@ -53,6 +59,7 @@ export const SettingsView = () => {
   // Active Tab: 'profile' | 'categories' | 'security' | 'notifications'
   const activeTabKey = activeSettingTab || 'profile';
   const setActiveTabKey = setActiveSettingTab || (() => {});
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Form state for Profile (Screenshot 1)
   const [form, setForm] = useState({
@@ -548,6 +555,30 @@ export const SettingsView = () => {
           })}
         </div>
 
+        {/* Mobile Settings Tab Bar Header (Visible only on mobile max-width: 768px) */}
+        <div className="settings-mobile-tab-bar">
+          <button
+            type="button"
+            onClick={() => {
+              soundFx?.playClick?.();
+              setIsMobileNavOpen(true);
+            }}
+            className="settings-mobile-tab-trigger"
+            aria-label="Open Settings Menu"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Menu size={22} strokeWidth={2.5} className="settings-hamburger-icon" />
+              <span className="settings-mobile-active-label">
+                {tabs.find((t) => t.id === activeTabKey)?.label || 'Profile'}
+              </span>
+            </div>
+            <div className="settings-mobile-switch-badge">
+              <span>Switch</span>
+              <ChevronDown size={14} />
+            </div>
+          </button>
+        </div>
+
         {/* Tab Body Content */}
         <div className="settings-content-card" style={{ padding: '28px 32px' }}>
           {/* ============================================================== */}
@@ -555,16 +586,30 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'profile' && (
             <div>
-              <h2
-                style={{
-                  fontSize: '1.2rem',
-                  fontWeight: 700,
-                  color: isLight ? '#0f2942' : '#f8fafc',
-                  margin: '0 0 16px 0',
-                }}
-              >
-                Profile
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx?.playClick?.();
+                    setIsMobileNavOpen(true);
+                  }}
+                  className="settings-mobile-h2-hamburger"
+                  title="Open Settings Sections"
+                  aria-label="Open Settings Sections"
+                >
+                  <Menu size={22} strokeWidth={2.5} />
+                </button>
+                <h2
+                  style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    color: isLight ? '#0f2942' : '#f8fafc',
+                    margin: 0,
+                  }}
+                >
+                  Profile
+                </h2>
+              </div>
               <div
                 style={{
                   height: '1px',
@@ -838,16 +883,30 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'categories' && (
             <div>
-              <h2
-                style={{
-                  fontSize: '1.2rem',
-                  fontWeight: 700,
-                  color: isLight ? '#0f2942' : '#f8fafc',
-                  margin: '0 0 16px 0',
-                }}
-              >
-                Categories
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx?.playClick?.();
+                    setIsMobileNavOpen(true);
+                  }}
+                  className="settings-mobile-h2-hamburger"
+                  title="Open Settings Sections"
+                  aria-label="Open Settings Sections"
+                >
+                  <Menu size={22} strokeWidth={2.5} />
+                </button>
+                <h2
+                  style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    color: isLight ? '#0f2942' : '#f8fafc',
+                    margin: 0,
+                  }}
+                >
+                  Categories
+                </h2>
+              </div>
               <div
                 style={{
                   height: '1px',
@@ -1096,16 +1155,30 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'security' && (
             <div>
-              <h2
-                style={{
-                  fontSize: '1.2rem',
-                  fontWeight: 700,
-                  color: isLight ? '#0f2942' : '#f8fafc',
-                  margin: '0 0 16px 0',
-                }}
-              >
-                Security
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx?.playClick?.();
+                    setIsMobileNavOpen(true);
+                  }}
+                  className="settings-mobile-h2-hamburger"
+                  title="Open Settings Sections"
+                  aria-label="Open Settings Sections"
+                >
+                  <Menu size={22} strokeWidth={2.5} />
+                </button>
+                <h2
+                  style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    color: isLight ? '#0f2942' : '#f8fafc',
+                    margin: 0,
+                  }}
+                >
+                  Security
+                </h2>
+              </div>
               <div
                 style={{
                   height: '1px',
@@ -1424,16 +1497,30 @@ export const SettingsView = () => {
           {/* ============================================================== */}
           {activeTabKey === 'notifications' && (
             <div>
-              <h2
-                style={{
-                  fontSize: '1.2rem',
-                  fontWeight: 700,
-                  color: isLight ? '#0f2942' : '#f8fafc',
-                  margin: '0 0 16px 0',
-                }}
-              >
-                Notifications
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px 0' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx?.playClick?.();
+                    setIsMobileNavOpen(true);
+                  }}
+                  className="settings-mobile-h2-hamburger"
+                  title="Open Settings Sections"
+                  aria-label="Open Settings Sections"
+                >
+                  <Menu size={22} strokeWidth={2.5} />
+                </button>
+                <h2
+                  style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    color: isLight ? '#0f2942' : '#f8fafc',
+                    margin: 0,
+                  }}
+                >
+                  Notifications
+                </h2>
+              </div>
               <div
                 style={{
                   height: '1px',
@@ -1820,6 +1907,274 @@ export const SettingsView = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* ============================================================== */}
+      {/* MOBILE SETTINGS NAVIGATION DRAWER (Slide-in from Left)        */}
+      {/* ============================================================== */}
+      {isMobileNavOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setIsMobileNavOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: isLight ? 'rgba(15, 23, 42, 0.45)' : 'rgba(3, 7, 18, 0.75)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              zIndex: 1100,
+              cursor: 'pointer',
+              animation: 'fadeIn 0.2s ease',
+            }}
+          />
+
+          {/* Drawer Panel */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 'min(310px, 86vw)',
+              background: isLight ? '#ffffff' : 'linear-gradient(180deg, #0b1329 0%, #060a17 100%)',
+              borderRight: isLight ? '1.5px solid #e2e8f0' : '1px solid rgba(0, 242, 254, 0.25)',
+              boxShadow: isLight
+                ? '0 20px 50px rgba(15, 23, 42, 0.18)'
+                : '0 20px 50px rgba(0, 0, 0, 0.85)',
+              zIndex: 1101,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '22px 18px',
+              boxSizing: 'border-box',
+              animation: 'slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            {/* Drawer Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: '16px',
+                borderBottom: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.08)',
+                marginBottom: '16px',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: '1.15rem',
+                    fontWeight: 800,
+                    color: isLight ? '#0f2942' : '#ffffff',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Settings
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    color: isLight ? '#64748b' : '#94a3b8',
+                    marginTop: '2px',
+                  }}
+                >
+                  Choose section
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx?.playClick?.();
+                  setIsMobileNavOpen(false);
+                }}
+                style={{
+                  background: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                  border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: isLight ? '#475569' : '#cbd5e1',
+                }}
+                title="Close menu"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            {/* Menu Navigation List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto' }}>
+              {[
+                { id: 'profile', label: 'Profile', icon: User, desc: 'Personal info & avatar' },
+                { id: 'categories', label: 'Categories', icon: FolderArchive, desc: 'Receipt categories & tags' },
+                { id: 'security', label: 'Security', icon: ShieldCheck, desc: 'Password & 2FA security' },
+                { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'Alerts & email preferences' },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTabKey === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      soundFx?.playClick?.();
+                      setActiveTabKey(item.id);
+                      setIsMobileNavOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: isActive
+                        ? (isLight ? '1.5px solid #93c5fd' : '1px solid rgba(0, 242, 254, 0.4)')
+                        : '1px solid transparent',
+                      background: isActive
+                        ? (isLight ? '#eff6ff' : 'rgba(0, 242, 254, 0.12)')
+                        : 'transparent',
+                      color: isActive
+                        ? (isLight ? '#1e40af' : '#00f2fe')
+                        : (isLight ? '#1e293b' : '#cbd5e1'),
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: isActive
+                            ? (isLight ? '#dbeafe' : 'rgba(0, 242, 254, 0.2)')
+                            : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.06)'),
+                          color: isActive
+                            ? (isLight ? '#2563eb' : '#00f2fe')
+                            : (isLight ? '#64748b' : '#94a3b8'),
+                        }}
+                      >
+                        <Icon size={18} strokeWidth={isActive ? 2.4 : 2} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.94rem', fontWeight: isActive ? 700 : 600 }}>
+                          {item.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '0.74rem',
+                            color: isLight ? '#64748b' : '#94a3b8',
+                            marginTop: '1px',
+                          }}
+                        >
+                          {item.desc}
+                        </div>
+                      </div>
+                    </div>
+
+                    <ChevronRight
+                      size={16}
+                      color={isActive ? (isLight ? '#2563eb' : '#00f2fe') : (isLight ? '#94a3b8' : '#64748b')}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Bottom Footer User Info */}
+            <div
+              style={{
+                paddingTop: '14px',
+                borderTop: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: '#0b1e36',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.2)',
+                  }}
+                >
+                  {userProfile?.photo ? (
+                    <img src={userProfile.photo} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>
+                      {(userProfile?.firstName || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div style={{ overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: isLight ? '#0f2942' : '#ffffff',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {userProfile?.firstName || 'Justin'} {userProfile?.lastName || 'Frias'}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.70rem',
+                      color: isLight ? '#64748b' : '#94a3b8',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {userProfile?.email || 'justinfrias951@gmail.com'}
+                  </div>
+                </div>
+              </div>
+
+              {signOut && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx?.playClick?.();
+                    setIsMobileNavOpen(false);
+                    signOut();
+                  }}
+                  title="Sign Out"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: isLight ? '#ef4444' : '#f87171',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LogOut size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

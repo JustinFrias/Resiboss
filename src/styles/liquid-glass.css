@@ -1295,6 +1295,32 @@ input::-ms-clear {
   display: none;
 }
 
+/* Mobile Settings Navigation Trigger (Hidden on Desktop) */
+.settings-mobile-tab-bar,
+.settings-mobile-h2-hamburger {
+  display: none !important;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   /* Prevent iOS Safari & Android Webview auto-zooming into inputs when tapped */
   input, select, textarea, .liquid-input {
@@ -1400,6 +1426,73 @@ input::-ms-clear {
   }
   .settings-content-card {
     padding: 20px 16px !important;
+  }
+
+  /* Mobile Settings Hamburger & Tab Bar */
+  .settings-mobile-tab-bar {
+    display: block !important;
+    border-bottom: 1px solid var(--glass-border);
+    padding: 10px 14px;
+    background: var(--bg-surface);
+    box-sizing: border-box;
+  }
+  [data-theme="light"] .settings-mobile-tab-bar {
+    background: #f8fafc;
+    border-bottom-color: #e2e8f0;
+  }
+  .settings-mobile-tab-trigger {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 9px 13px;
+    border-radius: 12px;
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    color: var(--text-primary);
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+  [data-theme="light"] .settings-mobile-tab-trigger {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f2942;
+  }
+  [data-theme="light"] .settings-hamburger-icon {
+    color: #1e3a8a !important;
+  }
+  .settings-mobile-switch-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #00f2fe;
+  }
+  [data-theme="light"] .settings-mobile-switch-badge {
+    color: #2563eb;
+  }
+  .settings-mobile-h2-hamburger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+  }
+  [data-theme="light"] .settings-mobile-h2-hamburger {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e3a8a !important;
+  }
+  [data-theme="light"] .settings-mobile-h2-hamburger svg {
+    stroke: #1e3a8a !important;
   }
 
   /* Mobile Bottom Navigation Dock */
