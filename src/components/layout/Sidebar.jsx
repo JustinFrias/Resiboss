@@ -143,15 +143,15 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
         {activeTab === 'settings' ? (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px 14px', boxSizing: 'border-box' }}>
-            {/* Drawer Header (Screenshot 1) */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ResiboBuddyMascot size={36} />
-                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: isLight ? '#0f2942' : '#ffffff', letterSpacing: '-0.02em' }}>
-                  Resibo <span style={{ color: '#0d9488' }}>Buddy</span>
-                </span>
-              </div>
-              {onCloseMobile && (
+            {/* Drawer Header — mobile only */}
+            {isMobileOpen && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ResiboBuddyMascot size={36} />
+                  <span style={{ fontSize: '1.2rem', fontWeight: 800, color: isLight ? '#0f2942' : '#ffffff', letterSpacing: '-0.02em' }}>
+                    Resibo <span style={{ color: '#0d9488' }}>Buddy</span>
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={onCloseMobile}
@@ -169,8 +169,9 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                 >
                   <X size={20} />
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+
 
             {/* Section Title */}
             <div
