@@ -39,6 +39,12 @@ export const MobileAppGatekeeper = ({ children }) => {
     return true;
   });
 
+  // Safety net: always resolve checking within 500ms to prevent a permanent white screen
+  useEffect(() => {
+    const timeout = setTimeout(() => setChecking(false), 500);
+    return () => clearTimeout(timeout);
+  }, []);
+
   useEffect(() => {
     // 0. On localhost or development, always bypass gatekeeper so local development and responsive testing work cleanly
     const isLocalhost =
@@ -134,7 +140,17 @@ export const MobileAppGatekeeper = ({ children }) => {
   };
 
   if (checking) {
-    return null;
+    // Render the background color instead of a blank white page while we detect the environment
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: '#f8fafc',
+          zIndex: 0,
+        }}
+      />
+    );
   }
 
   // If user is already logged in, inside native APK, on desktop, or manually bypassed, render normal application directly
