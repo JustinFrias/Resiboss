@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, RotateCw, Sparkles, CheckCircle2, ShieldCheck, Download, Trash2, Tag, Calendar, Building2, Receipt } from 'lucide-react';
-import { downloadReceiptAsExcel, downloadReceiptImage } from '../../utils/fileDownloader';
+import { X, RotateCw, Sparkles, CheckCircle2, ShieldCheck, Trash2, Tag, Calendar, Building2, Receipt } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
 export const ReceiptViewer3D = () => {
@@ -487,14 +486,10 @@ export const ReceiptViewer3D = () => {
           {/* Action Footer */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--glass-border)' }}>
             <button
-              onClick={async () => {
-                soundFx.playLaserHum();
-                await downloadReceiptAsExcel(inspectingDoc);
-                soundFx.playSuccessChime();
-              }}
-              className="liquid-btn liquid-btn-primary"
+              onClick={() => setInspectingDoc(null)}
+              className="liquid-btn liquid-btn-secondary"
               style={{
-                flex: 1.2,
+                flex: 1,
                 justifyContent: 'center',
                 display: 'flex',
                 alignItems: 'center',
@@ -502,10 +497,8 @@ export const ReceiptViewer3D = () => {
                 padding: '10px 16px',
                 fontSize: '0.88rem',
               }}
-              title="Download receipt to device"
             >
-              <Download size={16} />
-              <span>Download Receipt</span>
+              <span>{t.common?.close || 'Close'}</span>
             </button>
             <button
               onClick={() => {

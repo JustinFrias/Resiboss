@@ -16,9 +16,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Download,
 } from 'lucide-react';
-import { downloadReceiptAsExcel, downloadReceiptImage } from '../utils/fileDownloader';
 import { soundFx } from '../utils/soundEffects';
 
 export const DocumentsView = () => {
@@ -46,13 +44,6 @@ export const DocumentsView = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const handleDownloadDoc = async (doc, e) => {
-    if (e) e.stopPropagation();
-    if (!doc) return;
-    soundFx.playLaserHum();
-    await downloadReceiptAsExcel(doc);
-    soundFx.playSuccessChime();
-  };
 
   return (
     <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
@@ -327,14 +318,6 @@ export const DocumentsView = () => {
                       <span>{t.documents.inspect3D}</span>
                     </button>
                     <button
-                      onClick={(e) => handleDownloadDoc(doc, e)}
-                      className="liquid-btn liquid-btn-secondary"
-                      style={{ padding: '8px 12px', color: 'var(--cyan-glow)', borderColor: 'rgba(0, 242, 254, 0.3)' }}
-                      title="Download receipt to device"
-                    >
-                      <Download size={14} />
-                    </button>
-                    <button
                       onClick={() => deleteDocument(doc.id)}
                       className="liquid-btn liquid-btn-secondary"
                       style={{ padding: '8px 12px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.25)' }}
@@ -409,14 +392,6 @@ export const DocumentsView = () => {
                         title="View 3D Receipt"
                       >
                         <Eye size={13} />
-                      </button>
-                      <button
-                        onClick={(e) => handleDownloadDoc(doc, e)}
-                        className="liquid-btn liquid-btn-secondary"
-                        style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--cyan-glow)' }}
-                        title="Download Receipt"
-                      >
-                        <Download size={13} />
                       </button>
                       <button
                         onClick={() => deleteDocument(doc.id)}
