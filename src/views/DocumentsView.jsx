@@ -70,17 +70,18 @@ export const DocumentsView = () => {
       <div
         className="glass-panel documents-filter-bar resiboss-search-panel"
         style={{
-          padding: '16px 20px',
+          padding: '14px 20px',
           marginBottom: '24px',
           display: 'flex',
           gap: '14px',
           alignItems: 'center',
+          justifyContent: 'space-between',
           flexWrap: 'wrap',
           borderRadius: '20px',
         }}
       >
         {/* Search Input */}
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
           <Search
             size={17}
             strokeWidth={2}

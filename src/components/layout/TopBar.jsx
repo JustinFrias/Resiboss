@@ -315,7 +315,7 @@ export const TopBar = ({ onOpenMobile }) => {
           style={{
             position: 'relative',
             width: '100%',
-            maxWidth: '320px',
+            maxWidth: '280px',
           }}
         >
           <div
