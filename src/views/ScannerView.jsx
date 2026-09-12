@@ -601,11 +601,11 @@ export const ScannerView = () => {
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <h1
               style={{
-                fontSize: '1.95rem',
-                fontWeight: 800,
-                letterSpacing: '-0.025em',
+                fontSize: '1.45rem',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 color: isLight ? '#0f2942' : '#f8fafc',
-                marginBottom: '8px',
+                marginBottom: '6px',
                 fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
               }}
             >
@@ -811,11 +811,12 @@ export const ScannerView = () => {
         <div style={{ marginBottom: '24px', textAlign: 'center' }}>
           <h1
             style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
+              fontSize: '1.45rem',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
               color: 'var(--text-primary)',
               marginBottom: '4px',
+              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
             }}
           >
             {t.scanner.resibossScanTitle}

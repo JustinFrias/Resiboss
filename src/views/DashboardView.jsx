@@ -118,9 +118,9 @@ export const DashboardView = () => {
       <div style={{ marginBottom: '20px' }}>
         <h1
           style={{
-            fontSize: '1.9rem',
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
+            fontSize: '1.45rem',
+            fontWeight: 500,
+            letterSpacing: '-0.01em',
             color: isLight ? '#0f2942' : '#f8fafc',
             marginBottom: '4px',
             fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",

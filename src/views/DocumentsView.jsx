@@ -60,7 +60,7 @@ export const DocumentsView = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--text-primary)', marginBottom: '4px', fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
             {t.documents.auditVaultTitle}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>

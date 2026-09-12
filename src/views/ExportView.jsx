@@ -143,11 +143,12 @@ export const ExportView = () => {
         <div>
           <h1
             style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
+              fontSize: '1.45rem',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
               color: 'var(--text-primary)',
               marginBottom: '2px',
+              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
             }}
           >
             {t.export.exportHeader}

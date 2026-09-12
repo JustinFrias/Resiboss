@@ -57,7 +57,7 @@ export const AnalyticView = () => {
     <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
       {/* Title Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+        <h1 style={{ fontSize: '1.45rem', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--text-primary)', marginBottom: '4px', fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
           {t.analytic.predictiveTitle}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>

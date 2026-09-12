@@ -354,11 +354,12 @@ export const SettingsView = () => {
       <div style={{ marginBottom: '22px' }}>
         <h1
           style={{
-            fontSize: '1.75rem',
-            fontWeight: 800,
+            fontSize: '1.45rem',
+            fontWeight: 500,
             color: isLight ? '#0f2942' : '#f8fafc',
             margin: '0 0 6px 0',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.01em',
+            fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
           }}
         >
           General Settings
