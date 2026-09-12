@@ -269,12 +269,12 @@ export const AnalyticView = () => {
         </div>
       </div>
 
-      {/* Bottom Row: Top Vendors & AI Insights */}
+      {/* Bottom Row: Top Vendors */}
       <div
         className="analytic-bottom-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
+          gridTemplateColumns: '1fr',
           gap: '24px',
         }}
       >
@@ -323,48 +323,6 @@ export const AnalyticView = () => {
                 </span>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* AI Financial Insights */}
-        <div className="glass-panel" style={{ padding: '26px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
-            <Lightbulb size={18} color="#fbbf24" />
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.analytic.insights}</h3>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div
-              style={{
-                padding: '14px',
-                borderRadius: '12px',
-                background: 'rgba(0, 242, 254, 0.06)',
-                border: '1px solid rgba(0, 242, 254, 0.2)',
-                display: 'flex',
-                gap: '12px',
-              }}
-            >
-              <Sparkles size={20} color="#00f2fe" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>
-                {t.analytic.insight1}
-              </div>
-            </div>
-
-            <div
-              style={{
-                padding: '14px',
-                borderRadius: '12px',
-                background: 'rgba(16, 185, 129, 0.06)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                display: 'flex',
-                gap: '12px',
-              }}
-            >
-              <ShieldCheck size={20} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>
-                {t.analytic.insight2}
-              </div>
-            </div>
           </div>
         </div>
       </div>
