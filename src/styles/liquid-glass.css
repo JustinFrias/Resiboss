@@ -888,6 +888,14 @@ html, body {
   width: calc(100% - 76px) !important;
 }
 
+.topbar-mobile-brand {
+  display: none !important;
+}
+
+.topbar-workspace-title {
+  display: inline-block;
+}
+
 [data-theme="light"] .topbar-header {
   border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
   background: rgba(255, 255, 255, 0.96) !important;
@@ -1432,11 +1440,13 @@ input::-ms-clear {
   .topbar-search-container {
     display: none !important;
   }
-  .topbar-breadcrumb {
+  .topbar-breadcrumb,
+  .topbar-workspace-title {
     display: none !important;
   }
   .topbar-mobile-brand {
-    display: none !important;
+    display: flex !important;
+    align-items: center;
   }
   .topbar-user-profile-btn {
     display: none !important;
@@ -1705,8 +1715,10 @@ input::-ms-clear {
 
   .topbar-mobile-brand {
     display: flex !important;
+    align-items: center;
   }
-  .topbar-breadcrumb {
+  .topbar-breadcrumb,
+  .topbar-workspace-title {
     display: none !important;
   }
   .mobile-hamburger-btn {

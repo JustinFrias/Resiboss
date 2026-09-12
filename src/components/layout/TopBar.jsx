@@ -17,6 +17,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
+import { ResibossLogo } from '../ui/ResibossLogo';
 
 export const TopBar = ({ onOpenMobile }) => {
   const {
@@ -265,6 +266,19 @@ export const TopBar = ({ onOpenMobile }) => {
         >
           Workspace
         </span>
+
+        {/* Mobile-only brand logo (replacing Workspace on mobile) */}
+        <div
+          className="topbar-mobile-brand"
+          onClick={() => {
+            soundFx?.playClick?.();
+            setActiveTab('dashboard');
+          }}
+          style={{ cursor: 'pointer' }}
+          title="Resiboss Home"
+        >
+          <ResibossLogo size={28} />
+        </div>
       </div>
 
       {/* 2. Right: Search Bar + Theme Toggle + Notifications */}
