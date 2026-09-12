@@ -812,12 +812,21 @@ html, body {
 }
 
 [data-theme="light"] .topbar-search-box {
-  background: #f1f5f9 !important;
-  border-color: rgba(15, 23, 42, 0.12) !important;
+  background: #ffffff !important;
+  border: 1.5px solid #bfdbfe !important;
+  box-shadow: 0 1px 3px rgba(191, 219, 254, 0.25) !important;
+}
+
+[data-theme="light"] .topbar-search-box input {
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .topbar-search-box input::placeholder {
   color: #64748b !important;
+}
+
+[data-theme="light"] .topbar-search-icon {
+  color: #1e3a8a !important;
 }
 
 [data-theme="light"] .topbar-kbd {
@@ -1335,13 +1344,52 @@ input::-ms-clear {
   /* Hamburger & Close mobile buttons */
   .mobile-hamburger-btn {
     display: flex !important;
-    min-width: 36px;
-    min-height: 36px;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-primary) !important;
+    padding: 0 !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    box-shadow: none !important;
+    cursor: pointer;
   }
   .mobile-close-btn {
     display: flex !important;
     min-width: 36px;
     min-height: 36px;
+  }
+
+  /* Mobile TopBar minimalism */
+  .topbar-header {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 4px 6px !important;
+    margin-bottom: 8px !important;
+  }
+  .topbar-search-container {
+    display: none !important;
+  }
+  .topbar-breadcrumb {
+    display: none !important;
+  }
+  .topbar-mobile-brand {
+    display: none !important;
+  }
+  .topbar-user-profile-btn {
+    display: none !important;
+  }
+
+  /* Mobile Settings stack rules */
+  .settings-metrics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .settings-tabs-desktop {
+    display: none !important;
+  }
+  .settings-content-card {
+    padding: 20px 16px !important;
   }
 
   /* Mobile Bottom Navigation Dock */
@@ -1391,11 +1439,11 @@ input::-ms-clear {
   }
 
   .mobile-nav-item.active {
-    color: #20f8a1;
+    color: #00f2fe;
   }
 
   [data-theme="light"] .mobile-nav-item.active {
-    color: #059669;
+    color: #0284c7;
   }
 
   .mobile-nav-icon-wrap {
@@ -1408,11 +1456,11 @@ input::-ms-clear {
 
   .mobile-nav-item.active .mobile-nav-icon-wrap {
     transform: translateY(-2px);
-    filter: drop-shadow(0 2px 8px rgba(32, 248, 161, 0.5));
+    filter: drop-shadow(0 2px 8px rgba(0, 242, 254, 0.5));
   }
 
   [data-theme="light"] .mobile-nav-item.active .mobile-nav-icon-wrap {
-    filter: drop-shadow(0 2px 6px rgba(5, 150, 105, 0.35));
+    filter: drop-shadow(0 2px 6px rgba(2, 132, 199, 0.4));
   }
 
   .mobile-nav-label {
@@ -1526,17 +1574,31 @@ input::-ms-clear {
     min-height: 40px;
   }
 
+  .topbar-mobile-brand {
+    display: flex !important;
+  }
+  .topbar-breadcrumb {
+    display: none !important;
+  }
+  .mobile-hamburger-btn {
+    display: none !important;
+  }
+  .topbar-search-container {
+    display: none !important;
+  }
+
   .dashboard-stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
   }
 
   .dashboard-stats-grid .glass-panel {
-    padding: 14px 12px !important;
+    padding: 22px 20px !important;
+    border-radius: 22px !important;
   }
 
   .dashboard-stats-grid .stat-card-value {
-    font-size: 1.35rem !important;
+    font-size: 2.1rem !important;
   }
 
   .dashboard-page {
@@ -2187,3 +2249,89 @@ input::-ms-clear {
     height: 11px !important;
   }
 }
+
+/* ==========================================================================
+   Resiboss Reference Search Bar Styling (Pill Outline & Soft Sky Accents)
+   ========================================================================== */
+.resiboss-search-panel {
+  border-radius: 20px !important;
+  transition: all 0.25s ease;
+}
+
+[data-theme="light"] .resiboss-search-panel {
+  background: #f8fafc !important;
+  border: 1.5px solid #bfdbfe !important;
+  box-shadow: 0 4px 20px rgba(191, 219, 254, 0.25) !important;
+}
+
+.resiboss-search-input {
+  width: 100%;
+  border-radius: 9999px !important;
+  padding: 10px 20px 10px 44px !important;
+  font-size: 0.9rem !important;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+[data-theme="light"] .resiboss-search-input {
+  background: #ffffff !important;
+  border: 1.5px solid #bfdbfe !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(191, 219, 254, 0.2);
+}
+
+[data-theme="light"] .resiboss-search-input::placeholder {
+  color: #64748b !important;
+  font-weight: 400;
+}
+
+[data-theme="light"] .resiboss-search-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.18) !important;
+}
+
+[data-theme="light"] .resiboss-search-icon {
+  color: #1e3a8a !important;
+}
+
+[data-theme="light"] .documents-filter-row select {
+  border: 1.5px solid #bfdbfe !important;
+  border-radius: 9999px !important;
+  padding: 9px 18px !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Dark theme styles for search bar */
+[data-theme="dark"] .resiboss-search-panel {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.25) !important;
+}
+
+[data-theme="dark"] .resiboss-search-input {
+  background: rgba(30, 41, 59, 0.75) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.3) !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .resiboss-search-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .resiboss-search-input:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+}
+
+[data-theme="dark"] .resiboss-search-icon {
+  color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .documents-filter-row select {
+  border: 1.5px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 9999px !important;
+  padding: 9px 18px !important;
+}
+

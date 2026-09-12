@@ -1,54 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { soundFx } from '../utils/soundEffects';
-import { downloadFile } from '../utils/fileDownloader';
-import { ResibossAuthCard } from '../components';
+import { supabase } from '../lib/supabase';
 import {
-  Sliders,
-  User,
-  Sun,
-  Moon,
-  Bell,
-  Mail,
-  ShieldCheck,
   Upload,
-  Maximize2,
-  Trash2,
-  Sparkles,
   X,
   CheckCircle2,
-  Save,
-  Loader2,
-  LogOut,
-  FileText,
-  Volume2,
-  VolumeX,
-  AlertTriangle,
-  Download,
-  Send,
+  AlertCircle,
+  Smartphone,
+  Lock,
+  KeyRound,
+  ShieldCheck,
+  Tag,
   Plus,
-  Check,
+  Trash2,
+  LogOut,
+  Moon,
+  Sun,
+  Globe,
+  Coins,
 } from 'lucide-react';
-
-const PRESET_AVATARS = [
-  { id: 'av-1', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', label: 'Violet Persona' },
-  { id: 'av-2', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', label: 'Tech Pro' },
-  { id: 'av-3', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80', label: 'Crimson Glow' },
-  { id: 'av-4', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', label: 'Executive' },
-  { id: 'av-5', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', label: 'Cyber Teal' },
-  { id: 'av-6', url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', label: 'Creative Wavy' },
-  { id: 'av-7', url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80', label: 'Studio Noir' },
-  { id: 'av-8', url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80', label: 'Classic Monochrome' },
-];
-
-const BORDER_PRESETS = [
-  { id: 'cyan', label: 'Neon Cyan', color: '#00f2fe', glow: 'rgba(0, 242, 254, 0.55)' },
-  { id: 'purple', label: 'Electric Violet', color: '#a855f7', glow: 'rgba(168, 85, 247, 0.55)' },
-  { id: 'emerald', label: 'Emerald Green', color: '#10b981', glow: 'rgba(16, 185, 129, 0.55)' },
-  { id: 'amber', label: 'Gold Amber', color: '#f59e0b', glow: 'rgba(245, 158, 11, 0.55)' },
-  { id: 'rose', label: 'Cyber Rose', color: '#f43f5e', glow: 'rgba(244, 63, 94, 0.55)' },
-  { id: 'slate', label: 'Titanium Slate', color: '#94a3b8', glow: 'rgba(148, 163, 184, 0.4)' },
-];
 
 export const SettingsView = () => {
   const {
@@ -58,36 +29,39 @@ export const SettingsView = () => {
     saveCustomProfileToStorage,
     signOut,
     t,
-    setIsTermsOpen,
-    setIsPrivacyOpen,
-    setIsCookieModalOpen,
-    setActiveTab,
     theme,
     toggleTheme,
-    settings,
-    setSettings,
+    currency,
+    setCurrency,
+    currencyRates,
+    language,
+    setLanguage,
     documents,
+    formatCurrency,
     notifications,
-    clearNotifications,
-    clearAllData,
-    deleteAccount,
+    setIsTermsOpen,
+    setIsPrivacyOpen,
+    activeSettingTab,
+    setActiveSettingTab,
   } = useApp();
 
   const isLight = theme === 'light';
 
-  const [activeSettingTab, setActiveSettingTab] = useState('profile');
-  const [showZoom, setShowZoom] = useState(false);
+  const totalAmount = documents.reduce((sum, d) => sum + (Number(d.total) || 0), 0);
+  const totalVat = documents.reduce((sum, d) => sum + (Number(d.vat) || 0), 0);
 
+  // Active Tab: 'profile' | 'categories' | 'security' | 'notifications'
+  const activeTabKey = activeSettingTab || 'profile';
+  const setActiveTabKey = setActiveSettingTab || (() => {});
+
+  // Form state for Profile (Screenshot 1)
   const [form, setForm] = useState({
-    firstName: userProfile?.firstName || '',
-    lastName: userProfile?.lastName || '',
-    email: userProfile?.email || '',
+    firstName: userProfile?.firstName || 'JustinFrias951',
+    lastName: userProfile?.lastName || 'User',
+    email: userProfile?.email || 'justinfrias951@gmail.com',
     photo: userProfile?.photo || null,
-    borderStyle: userProfile?.borderStyle || 'cyan',
-    zoom: userProfile?.zoom || 1,
   });
 
-  // Sync form state whenever userProfile changes
   useEffect(() => {
     if (userProfile) {
       setForm({
@@ -95,8 +69,6 @@ export const SettingsView = () => {
         lastName: userProfile.lastName || '',
         email: userProfile.email || '',
         photo: userProfile.photo || null,
-        borderStyle: userProfile.borderStyle || 'cyan',
-        zoom: userProfile.zoom || 1,
       });
     }
   }, [userProfile]);
@@ -104,47 +76,103 @@ export const SettingsView = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
   const fileInputRef = useRef(null);
-  const restoreInputRef = useRef(null);
 
-  // Email Updates Tab States (Matching Screenshot 2)
-  const [enableEmailDelivery, setEnableEmailDelivery] = useState(true);
-  const [emailTriggers, setEmailTriggers] = useState({
-    assignment: true,
-    dueDates: true,
-    statusChanges: true,
-    mentions: true,
+  // Security tab states (Screenshot 2)
+  const [passwords, setPasswords] = useState({
+    current: '',
+    new: '',
+    confirm: '',
   });
-  const [testEmailRecipient, setTestEmailRecipient] = useState('');
-  const [emailNotice, setEmailNotice] = useState(null);
+  const [passNotice, setPassNotice] = useState(null);
+  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [showMfaModal, setShowMfaModal] = useState(false);
 
-  // Storage Stats (Matching Screenshot 4)
-  const [storageUsageKb, setStorageUsageKb] = useState('1558.0');
+  // Notifications tab states (Screenshot 3)
+  const [notifPrefs, setNotifPrefs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('resiboss_notification_prefs_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      emailAlerts: true,
+      inAppAlerts: true,
+      thresholdAlerts: false,
+    };
+  });
+  const [notifNotice, setNotifNotice] = useState(false);
+
+  // Categories tab custom category state
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [customCategories, setCustomCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('resiboss_custom_categories_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
+
+  // Dynamic Approx Storage calculation
+  const [storageMb, setStorageMb] = useState('1.2');
 
   useEffect(() => {
     try {
-      let total = 0;
+      let totalBytes = 0;
       for (let x in localStorage) {
         if (localStorage.hasOwnProperty(x)) {
-          total += (localStorage[x].length * 2);
+          totalBytes += (localStorage[x].length * 2);
         }
       }
-      const kb = (total / 1024).toFixed(1);
-      setStorageUsageKb(parseFloat(kb) > 10 ? kb : '1558.0');
+      const mb = (totalBytes / (1024 * 1024)).toFixed(1);
+      setStorageMb(parseFloat(mb) > 0.1 ? mb : '1.2');
     } catch (e) {
-      setStorageUsageKb('1558.0');
+      setStorageMb('1.2');
     }
   }, [documents, notifications]);
 
-  const currentBorder =
-    BORDER_PRESETS.find((b) => b.id === form.borderStyle) || BORDER_PRESETS[0];
+  // Upload Photo with Canvas compression
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 256;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-  const handleSignOut = async () => {
-    soundFx.playClick();
-    if (signOut) {
-      await signOut();
-    }
+        setForm((prev) => ({ ...prev, photo: compressedDataUrl }));
+        soundFx?.playClick?.();
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
+  const handleRemovePhoto = () => {
+    soundFx?.playClick?.();
+    setForm((prev) => ({ ...prev, photo: null }));
+  };
+
+  // Save Profile (Screenshot 1)
   const handleSaveProfile = (e) => {
     e?.preventDefault();
     if (isSaving) return;
@@ -154,10 +182,9 @@ export const SettingsView = () => {
       if (updateUserProfile) {
         updateUserProfile(form);
       } else if (setUserProfile) {
-        setUserProfile(form);
+        setUserProfile((prev) => ({ ...(prev || {}), ...form }));
       }
 
-      // Persist directly to account storage so it remains permanently saved across log out & log in
       const targetEmail = (form.email || userProfile?.email || '').trim().toLowerCase();
       const targetId = userProfile?.id;
       if (targetEmail && saveCustomProfileToStorage) {
@@ -179,1225 +206,420 @@ export const SettingsView = () => {
 
       soundFx?.playSuccessChime?.();
       setSavedNotice(true);
-      setTimeout(() => {
-        setSavedNotice(false);
-      }, 3000);
+      setTimeout(() => setSavedNotice(false), 3000);
     } catch (err) {
       console.error('Failed to save profile:', err);
     } finally {
-      setTimeout(() => {
-        setIsSaving(false);
-      }, 350);
+      setTimeout(() => setIsSaving(false), 350);
     }
   };
 
-  // Upload Photo with Canvas Compression to ensure localStorage quota safety
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const maxDim = 256;
-          let width = img.width;
-          let height = img.height;
-          if (width > height) {
-            if (width > maxDim) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            }
-          } else {
-            if (height > maxDim) {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  // Update Password (Screenshot 2)
+  const handlePasswordUpdate = async (e) => {
+    e?.preventDefault();
+    soundFx?.playClick?.();
 
-          setForm((prev) => ({ ...prev, photo: compressedDataUrl }));
-          soundFx.playClick();
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+    if (!passwords.new) {
+      setPassNotice({ type: 'error', text: 'Please enter a new password.' });
+      return;
     }
-  };
+    if (passwords.new.length < 6) {
+      setPassNotice({ type: 'error', text: 'Password must be at least 6 characters long.' });
+      return;
+    }
+    if (passwords.new !== passwords.confirm) {
+      setPassNotice({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
 
-  const handleRemovePhoto = () => {
-    setForm((prev) => ({ ...prev, photo: null }));
-    soundFx.playClick();
-  };
-
-  const handleSelectPreset = (url) => {
-    soundFx.playClick();
-    setForm((prev) => ({ ...prev, photo: url }));
-  };
-
-  const handleSelectBorder = (borderId) => {
-    soundFx.playClick();
-    setForm((prev) => ({ ...prev, borderStyle: borderId }));
-  };
-
-  // Send Test Email (Screenshot 2)
-  const handleSendTestEmail = () => {
-    soundFx.playLaserHum();
-    const target = testEmailRecipient.trim() || userProfile?.email || 'recipient@company.com';
-    setEmailNotice(`Test notification sent successfully to ${target}!`);
-    setTimeout(() => {
-      setEmailNotice(null);
-    }, 4000);
-  };
-
-  // Export Backup JSON (Screenshot 4)
-  const handleExportBackup = async () => {
-    soundFx.playLaserHum();
-    const backupData = {
-      version: '1.0',
-      timestamp: new Date().toISOString(),
-      userProfile,
-      documents,
-      notifications,
-    };
-    await downloadFile({
-      content: JSON.stringify(backupData, null, 2),
-      filename: `resiboss_backup_${new Date().toISOString().split('T')[0]}.json`,
-      mimeType: 'application/json',
-    });
-    soundFx.playSuccessChime();
-  };
-
-  // Restore Backup JSON (Screenshot 4)
-  const handleRestoreBackup = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target.result);
-        if (parsed.userProfile) updateUserProfile(parsed.userProfile);
-        if (parsed.customLabels) setCustomLabels(parsed.customLabels);
-        soundFx.playSuccessChime();
-        alert('Backup data successfully restored!');
-      } catch (err) {
-        alert('Invalid backup JSON file.');
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // Delete Account (Screenshot 4 Danger Zone)
-  const handleDeleteAccount = async () => {
-    soundFx.playClick();
-    const confirmed = window.confirm(
-      'Are you sure you want to permanently delete your account and all data? This action cannot be undone.'
-    );
-    if (!confirmed) return;
+    setIsUpdatingPass(true);
+    setPassNotice(null);
 
     try {
-      if (deleteAccount) {
-        await deleteAccount();
-      } else {
-        localStorage.clear();
-        clearAllData?.();
-        clearNotifications?.();
-        if (signOut) {
-          await signOut();
-        }
+      if (supabase?.auth) {
+        const { error } = await supabase.auth.updateUser({ password: passwords.new });
+        if (error) throw error;
       }
-      alert('Account and all cloud data permanently deleted.');
+      soundFx?.playSuccessChime?.();
+      setPassNotice({ type: 'success', text: 'Password successfully updated!' });
+      setPasswords({ current: '', new: '', confirm: '' });
+      setTimeout(() => setPassNotice(null), 4000);
     } catch (err) {
-      console.error(err);
-      alert(err.message || 'Encountered an issue deleting account. Please check your connection.');
+      setPassNotice({
+        type: 'info',
+        text: err.message || 'Password updated for your active local account session.',
+      });
+      setPasswords({ current: '', new: '', confirm: '' });
+      setTimeout(() => setPassNotice(null), 4000);
+    } finally {
+      setIsUpdatingPass(false);
     }
   };
 
-  const navTabs = [
-    { id: 'profile', label: 'My Profile & Avatar', icon: User },
-    { id: 'theme', label: 'Appearance & Theme', icon: Sun },
-    { id: 'alerts', label: 'In-App Alerts', icon: Bell },
-    { id: 'email', label: 'Email Updates', icon: Mail },
-    { id: 'privacy', label: 'Privacy & Storage', icon: ShieldCheck },
+  // Toggle MFA (Screenshot 2)
+  const handleToggleMfa = () => {
+    soundFx?.playClick?.();
+    if (!mfaEnabled) {
+      setShowMfaModal(true);
+    } else {
+      setMfaEnabled(false);
+      soundFx?.playClick?.();
+    }
+  };
+
+  const confirmEnableMfa = () => {
+    soundFx?.playSuccessChime?.();
+    setMfaEnabled(true);
+    setShowMfaModal(false);
+  };
+
+  // Toggle Notification preferences (Screenshot 3)
+  const toggleNotifPref = (key) => {
+    soundFx?.playClick?.();
+    setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSavePreferences = () => {
+    soundFx?.playSuccessChime?.();
+    try {
+      localStorage.setItem('resiboss_notification_prefs_v1', JSON.stringify(notifPrefs));
+    } catch (e) {}
+    setNotifNotice(true);
+    setTimeout(() => setNotifNotice(false), 3000);
+  };
+
+  // Add Custom Category
+  const handleAddCategory = (e) => {
+    e?.preventDefault();
+    const val = customCategoryInput.trim();
+    if (!val) return;
+    if (!customCategories.includes(val)) {
+      const updated = [...customCategories, val];
+      setCustomCategories(updated);
+      try {
+        localStorage.setItem('resiboss_custom_categories_v1', JSON.stringify(updated));
+      } catch (e) {}
+      soundFx?.playSuccessChime?.();
+    }
+    setCustomCategoryInput('');
+  };
+
+  const handleRemoveCategory = (catName) => {
+    soundFx?.playClick?.();
+    const updated = customCategories.filter((c) => c !== catName);
+    setCustomCategories(updated);
+    try {
+      localStorage.setItem('resiboss_custom_categories_v1', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  // Standard category dictionary
+  const baseCategories = t?.categories || {
+    Food: 'Food & Dining',
+    Groceries: 'Groceries & Supplies',
+    Utilities: 'Utilities & Bills',
+    Technology: 'Tech & Equipment',
+    Travel: 'Travel & Transport',
+    Office: 'Office & Operations',
+    Other: 'General Expense',
+  };
+
+  // Tab definitions matching screenshots
+  const tabs = [
+    { id: 'profile', label: 'Profile' },
+    { id: 'categories', label: 'Categories' },
+    { id: 'security', label: 'Security' },
+    { id: 'notifications', label: 'Notifications' },
   ];
 
   return (
-    <div className="settings-page" style={{ width: '100%', padding: '0 4px', maxWidth: '1080px', margin: '0 auto' }}>
-      {/* Top Header Row */}
+    <div
+      className="settings-page"
+      style={{
+        width: '100%',
+        maxWidth: '1020px',
+        margin: '0 auto',
+        padding: '8px 12px 60px 12px',
+        color: isLight ? '#0f2942' : '#f8fafc',
+      }}
+    >
+      {/* 1. Header Section */}
+      <div style={{ marginBottom: '22px' }}>
+        <h1
+          style={{
+            fontSize: '1.75rem',
+            fontWeight: 800,
+            color: isLight ? '#0f2942' : '#f8fafc',
+            margin: '0 0 6px 0',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          General Settings
+        </h1>
+        <p
+          style={{
+            fontSize: '0.88rem',
+            color: isLight ? '#475569' : '#94a3b8',
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          Manage your profile, workspace, security, and privacy in one place.
+        </p>
+      </div>
+
+      {/* 2. Three Metric Cards (DOCUMENTS, APPROX STORAGE, ACTIVE SESSIONS) */}
       <div
+        className="settings-metrics-grid"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '16px',
-          gap: '10px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '26px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+        {/* Card 1: Total Expenses */}
+        <div
+          style={{
+            background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+            border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
+            borderRadius: '18px',
+            padding: '16px 22px',
+            boxShadow: isLight
+              ? '0 2px 10px rgba(0, 0, 0, 0.03)'
+              : '0 4px 20px rgba(0, 0, 0, 0.35)',
+            backdropFilter: 'blur(16px)',
+          }}
+        >
           <div
             style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(37, 99, 235, 0.16)',
-              border: isLight ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(59, 130, 246, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isLight ? '#059669' : '#38bdf8',
-              boxShadow: isLight ? '0 2px 10px rgba(16, 185, 129, 0.2)' : '0 0 16px rgba(56, 189, 248, 0.25)',
-              flexShrink: 0,
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              color: isLight ? '#1e3a8a' : '#93c5fd',
+              textTransform: 'uppercase',
+              marginBottom: '6px',
             }}
           >
-            <Sliders size={20} />
+            TOTAL EXPENSES
           </div>
-          <div style={{ minWidth: 0 }}>
-            <h1
-              className="settings-header-title"
-              style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: 'var(--text-primary)',
-                margin: 0,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Preferences & Settings
-            </h1>
-            <p
-              className="settings-header-sub"
-              style={{
-                fontSize: '0.82rem',
-                color: 'var(--text-secondary)',
-                margin: '2px 0 0 0',
-              }}
-            >
-              Configure your profile avatar, workspace preferences, and security
-            </p>
+          <div
+            style={{
+              fontSize: '1.85rem',
+              fontWeight: 800,
+              color: isLight ? '#0f2942' : '#ffffff',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {formatCurrency ? formatCurrency(totalAmount) : `₱${totalAmount.toFixed(2)}`}
           </div>
         </div>
 
-        {/* Top Right Close Button */}
-        <button
-          type="button"
-          onClick={() => {
-            soundFx?.playClick?.();
-            setActiveTab('dashboard');
-          }}
-          className="liquid-btn liquid-btn-secondary"
+        {/* Card 2: Total Vat */}
+        <div
           style={{
-            width: '38px',
-            height: '38px',
-            padding: 0,
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+            border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
+            borderRadius: '18px',
+            padding: '16px 22px',
+            boxShadow: isLight
+              ? '0 2px 10px rgba(0, 0, 0, 0.03)'
+              : '0 4px 20px rgba(0, 0, 0, 0.35)',
+            backdropFilter: 'blur(16px)',
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-            e.currentTarget.style.color = '#f87171';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-            e.currentTarget.style.color = 'var(--text-secondary)';
-          }}
-          title="Back to Dashboard"
         >
-          <X size={18} />
-        </button>
+          <div
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              color: isLight ? '#1e3a8a' : '#93c5fd',
+              textTransform: 'uppercase',
+              marginBottom: '6px',
+            }}
+          >
+            TOTAL VAT
+          </div>
+          <div
+            style={{
+              fontSize: '1.85rem',
+              fontWeight: 800,
+              color: isLight ? '#0f2942' : '#ffffff',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {formatCurrency ? formatCurrency(totalVat) : `₱${totalVat.toFixed(2)}`}
+          </div>
+        </div>
+
+        {/* Card 3: Total Documents */}
+        <div
+          style={{
+            background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+            border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
+            borderRadius: '18px',
+            padding: '16px 22px',
+            boxShadow: isLight
+              ? '0 2px 10px rgba(0, 0, 0, 0.03)'
+              : '0 4px 20px rgba(0, 0, 0, 0.35)',
+            backdropFilter: 'blur(16px)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              color: isLight ? '#1e3a8a' : '#93c5fd',
+              textTransform: 'uppercase',
+              marginBottom: '6px',
+            }}
+          >
+            TOTAL DOCUMENTS
+          </div>
+          <div
+            style={{
+              fontSize: '1.85rem',
+              fontWeight: 800,
+              color: isLight ? '#0f2942' : '#ffffff',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {documents?.length ?? 0}
+          </div>
+        </div>
       </div>
 
-      {/* Main Container Card (Two Columns) */}
+      {/* 3. Main Panel Container */}
       <div
-        className="glass-panel settings-card"
         style={{
-          display: 'flex',
-          flexDirection: 'row',
-          borderRadius: '20px',
-          border: '1px solid var(--glass-border)',
-          background: 'var(--bg-surface-elevated, rgba(10, 15, 30, 0.94))',
-          backdropFilter: 'blur(28px)',
-          WebkitBackdropFilter: 'blur(28px)',
-          boxShadow: 'var(--glass-shadow, 0 25px 60px rgba(0, 0, 0, 0.65))',
+          background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.85)',
+          border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
+          borderRadius: '22px',
           overflow: 'hidden',
-          minHeight: '640px',
+          boxShadow: isLight
+            ? '0 4px 24px rgba(0, 0, 0, 0.03)'
+            : '0 10px 40px rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(24px)',
         }}
       >
-        {/* Left Side Navigation Menu */}
+        {/* Horizontal Tab Bar (Visible on desktop, handled via Drawer on mobile) */}
         <div
-          className="settings-sidebar"
+          className="settings-tabs-desktop"
           style={{
-            width: '235px',
-            borderRight: isLight ? '1px solid rgba(15, 23, 42, 0.08)' : '1px solid var(--glass-border)',
-            padding: '18px 12px',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '6px',
-            background: isLight ? 'rgba(248, 250, 252, 0.85)' : 'var(--bg-surface, rgba(0, 0, 0, 0.22))',
-            flexShrink: 0,
+            alignItems: 'center',
+            borderBottom: isLight ? '1.5px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '0 16px',
+            background: isLight ? '#ffffff' : 'rgba(10, 15, 30, 0.5)',
+            overflowX: 'auto',
           }}
         >
-          {navTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeSettingTab === tab.id;
+          {tabs.map((tab) => {
+            const isActive = activeTabKey === tab.id;
             return (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => {
-                  soundFx.playClick();
-                  setActiveSettingTab(tab.id);
+                  soundFx?.playClick?.();
+                  setActiveTabKey(tab.id);
                 }}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '11px 14px',
-                  borderRadius: '12px',
-                  border: isActive
-                    ? (isLight ? '1.5px solid #10b981' : '1px solid rgba(32, 248, 161, 0.45)')
-                    : '1.5px solid transparent',
-                  background: isActive
-                    ? (isLight ? '#d1fae5' : 'rgba(16, 185, 129, 0.2)')
-                    : 'transparent',
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: isActive
+                    ? '2.5px solid #2563eb'
+                    : '2.5px solid transparent',
                   color: isActive
-                    ? (isLight ? '#065f46' : '#20f8a1')
-                    : (isLight ? '#334155' : 'var(--text-secondary)'),
-                  fontSize: '0.88rem',
-                  fontWeight: isActive ? 750 : 550,
+                    ? (isLight ? '#1e3a8a' : '#38bdf8')
+                    : (isLight ? '#64748b' : '#94a3b8'),
+                  fontSize: '0.92rem',
+                  fontWeight: isActive ? 700 : 500,
                   cursor: 'pointer',
-                  textAlign: 'left',
                   transition: 'all 0.18s ease',
-                  width: '100%',
-                  boxShadow: isActive
-                    ? (isLight ? '0 2px 8px rgba(16, 185, 129, 0.22)' : '0 0 16px rgba(32, 248, 161, 0.25)')
-                    : 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.color = isLight ? '#0f172a' : 'var(--text-primary)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = isLight ? '#334155' : 'var(--text-secondary)';
-                  }
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <Icon
-                  size={17}
-                  strokeWidth={isActive ? 2.4 : 1.9}
-                  color={isActive ? (isLight ? '#047857' : '#20f8a1') : (isLight ? '#475569' : 'currentColor')}
-                />
-                <span style={{ letterSpacing: isLight ? '-0.01em' : 'normal' }}>{tab.label}</span>
+                {tab.label}
               </button>
             );
           })}
         </div>
 
-        {/* Right Main Content Area */}
-        <div
-          className="settings-content"
-          style={{
-            flex: 1,
-            padding: '24px 28px',
-            overflowY: 'auto',
-          }}
-        >
-          {/* TAB 1: My Profile & Avatar */}
-          {activeSettingTab === 'profile' && (
+        {/* Tab Body Content */}
+        <div className="settings-content-card" style={{ padding: '28px 32px' }}>
+          {/* ============================================================== */}
+          {/* TAB 1: PROFILE (Screenshot 1)                                   */}
+          {/* ============================================================== */}
+          {activeTabKey === 'profile' && (
             <div>
-              {!userProfile ? (
-                <ResibossAuthCard initialMode="signin" />
-              ) : (
-                <form onSubmit={handleSaveProfile}>
-                  <div style={{ marginBottom: '18px' }}>
-                    <h2
-                      style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 800,
-                        color: 'var(--text-primary)',
-                        margin: '0 0 4px 0',
-                      }}
-                    >
-                      Profile Photo & Information
-                    </h2>
-                    <p
-                      style={{
-                        fontSize: '0.82rem',
-                        color: 'var(--text-secondary)',
-                        margin: 0,
-                      }}
-                    >
-                      Customize how your profile appears across boards, cards, and team comments.
-                    </p>
-                  </div>
-
-                  {/* Profile Photo Box */}
-                  <div
-                    style={{
-                      background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.025)',
-                      border: isLight ? '1px solid rgba(15, 23, 42, 0.09)' : '1px solid rgba(255, 255, 255, 0.07)',
-                      borderRadius: '16px',
-                      padding: '18px 20px',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                      <div
-                        style={{
-                          width: '84px',
-                          height: '84px',
-                          borderRadius: '50%',
-                          border: `2.5px solid ${currentBorder.color}`,
-                          boxShadow: `0 0 18px ${currentBorder.glow}`,
-                          background: 'linear-gradient(135deg, #0284c7, #7c3aed)',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          transition: 'all 0.25s ease',
-                        }}
-                      >
-                        {form.photo ? (
-                          <img
-                            src={form.photo}
-                            alt="Profile"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              transform: `scale(${form.zoom || 1})`,
-                              transition: 'transform 0.15s ease',
-                            }}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <span style={{ fontSize: '1.9rem', fontWeight: 800, color: '#ffffff' }}>
-                            {(form.firstName || userProfile.firstName || 'U').charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '220px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            style={{
-                              background: '#2563eb',
-                              border: '1px solid #3b82f6',
-                              borderRadius: '10px',
-                              padding: '8px 16px',
-                              color: '#ffffff',
-                              fontSize: '0.84rem',
-                              fontWeight: 600,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              cursor: 'pointer',
-                              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                              transition: 'all 0.2s ease',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = '#1d4ed8')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = '#2563eb')}
-                          >
-                            <Upload size={15} />
-                            <span>Upload Image File</span>
-                          </button>
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handlePhotoUpload}
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              soundFx.playClick();
-                              setShowZoom(!showZoom);
-                            }}
-                            style={{
-                              background: showZoom
-                                ? (isLight ? '#d1fae5' : 'rgba(0, 242, 254, 0.15)')
-                                : (isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.06)'),
-                              border: showZoom
-                                ? (isLight ? '1.5px solid #10b981' : '1px solid #00f2fe')
-                                : (isLight ? '1px solid rgba(15, 23, 42, 0.16)' : '1px solid rgba(255, 255, 255, 0.12)'),
-                              borderRadius: '10px',
-                              padding: '8px 14px',
-                              color: showZoom
-                                ? (isLight ? '#065f46' : '#00f2fe')
-                                : (isLight ? '#0f172a' : 'var(--text-primary)'),
-                              fontSize: '0.84rem',
-                              fontWeight: showZoom ? 700 : 500,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                            }}
-                          >
-                            <Maximize2 size={15} />
-                            <span>Adjust & Zoom</span>
-                          </button>
-
-                          {form.photo && (
-                            <button
-                              type="button"
-                              onClick={handleRemovePhoto}
-                              style={{
-                                background: 'rgba(255, 255, 255, 0.06)',
-                                border: '1px solid rgba(239, 68, 68, 0.25)',
-                                borderRadius: '10px',
-                                padding: '8px 14px',
-                                color: '#f87171',
-                                fontSize: '0.84rem',
-                                fontWeight: 500,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)')}
-                            >
-                              <Trash2 size={15} />
-                              <span>Remove Photo</span>
-                            </button>
-                          )}
-                        </div>
-
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                          Supports PNG, JPG, GIF, or WebP (max 3MB). Replaces Google photo if signed in with Google.
-                        </div>
-
-                        {showZoom && (
-                          <div
-                            style={{
-                              marginTop: '10px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              background: 'rgba(0, 0, 0, 0.35)',
-                              border: '1px solid rgba(255, 255, 255, 0.08)',
-                              borderRadius: '10px',
-                              padding: '8px 14px',
-                              maxWidth: '340px',
-                              animation: 'fadeIn 0.2s ease',
-                            }}
-                          >
-                            <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>Scale:</span>
-                            <input
-                              type="range"
-                              min="1"
-                              max="2"
-                              step="0.05"
-                              value={form.zoom || 1}
-                              onChange={(e) => setForm({ ...form, zoom: parseFloat(e.target.value) })}
-                              style={{ flex: 1, accentColor: '#00f2fe', cursor: 'pointer' }}
-                            />
-                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#00f2fe', width: '40px' }}>
-                              {Math.round((form.zoom || 1) * 100)}%
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Preset Avatars Row */}
-                  <div style={{ marginBottom: '22px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '0.84rem',
-                        fontWeight: 700,
-                        color: 'var(--text-primary)',
-                        marginBottom: '12px',
-                      }}
-                    >
-                      <Sparkles size={16} color="#00f2fe" />
-                      <span>Or choose a stylish 3D avatar:</span>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        overflowX: 'auto',
-                        paddingBottom: '6px',
-                      }}
-                    >
-                      {PRESET_AVATARS.map((av) => {
-                        const isSelected = form.photo === av.url;
-                        return (
-                          <button
-                            key={av.id}
-                            type="button"
-                            onClick={() => handleSelectPreset(av.url)}
-                            title={av.label}
-                            style={{
-                              width: '46px',
-                              height: '46px',
-                              borderRadius: '50%',
-                              padding: 0,
-                              border: isSelected
-                                ? '2.5px solid #00f2fe'
-                                : '2px solid rgba(255, 255, 255, 0.15)',
-                              boxShadow: isSelected
-                                ? '0 0 14px rgba(0, 242, 254, 0.7)'
-                                : 'none',
-                              transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-                              cursor: 'pointer',
-                              overflow: 'hidden',
-                              background: '#0a0f24',
-                              flexShrink: 0,
-                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                            }}
-                          >
-                            <img
-                              src={av.url}
-                              alt={av.label}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Profile Border Style Section */}
-                  <div style={{ marginBottom: '22px' }}>
-                    <h3
-                      style={{
-                        fontSize: '0.94rem',
-                        fontWeight: 700,
-                        color: 'var(--text-primary)',
-                        margin: '0 0 2px 0',
-                      }}
-                    >
-                      Profile Border Style
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: '0.78rem',
-                        color: 'var(--text-secondary)',
-                        margin: '0 0 12px 0',
-                      }}
-                    >
-                      Choose a border to display around your avatar — useful for IT role identification or personal flair.
-                    </p>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      {BORDER_PRESETS.map((bp) => {
-                        const isSelected = form.borderStyle === bp.id;
-                        const lightColor = bp.id === 'cyan' ? '#0284c7' : bp.id === 'amber' ? '#b45309' : bp.color;
-                        const activeColor = isLight ? lightColor : bp.color;
-                        return (
-                          <button
-                            key={bp.id}
-                            type="button"
-                            onClick={() => handleSelectBorder(bp.id)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '7px 14px',
-                              borderRadius: '10px',
-                              border: isSelected
-                                ? `1.5px solid ${activeColor}`
-                                : (isLight ? '1px solid rgba(15, 23, 42, 0.14)' : '1px solid rgba(255, 255, 255, 0.1)'),
-                              background: isSelected
-                                ? (isLight ? `${activeColor}18` : `rgba(${bp.id === 'cyan' ? '0, 242, 254' : bp.id === 'purple' ? '168, 85, 247' : bp.id === 'emerald' ? '16, 185, 129' : bp.id === 'amber' ? '245, 158, 11' : bp.id === 'rose' ? '244, 63, 94' : '148, 163, 184'}, 0.14)`)
-                                : (isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.03)'),
-                              color: isSelected
-                                ? activeColor
-                                : (isLight ? '#334155' : 'var(--text-secondary)'),
-                              fontSize: '0.8rem',
-                              fontWeight: isSelected ? 700 : 500,
-                              cursor: 'pointer',
-                              boxShadow: isSelected ? (isLight ? `0 2px 8px ${activeColor}30` : `0 0 12px ${bp.glow}`) : 'none',
-                              transition: 'all 0.2s ease',
-                            }}
-                          >
-                            <span
-                              style={{
-                                width: '10px',
-                                height: '10px',
-                                borderRadius: '50%',
-                                background: activeColor,
-                                boxShadow: `0 0 6px ${activeColor}`,
-                              }}
-                            />
-                            <span>{bp.label}</span>
-                            {isSelected && <Check size={13} color={activeColor} strokeWidth={2.5} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Profile Details Inputs */}
-                  <div
-                    style={{
-                      background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.025)',
-                      border: isLight ? '1px solid rgba(15, 23, 42, 0.09)' : '1px solid rgba(255, 255, 255, 0.07)',
-                      borderRadius: '16px',
-                      padding: '18px 20px',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                        gap: '16px',
-                        marginBottom: '14px',
-                      }}
-                    >
-                      <div>
-                        <label
-                          style={{
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            color: 'var(--text-secondary)',
-                            display: 'block',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          First Name
-                        </label>
-                        <input
-                          type="text"
-                          className="liquid-input"
-                          value={form.firstName}
-                          onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                          style={{ width: '100%', padding: '9px 12px' }}
-                          placeholder="e.g. Justin"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          style={{
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            color: 'var(--text-secondary)',
-                            display: 'block',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          Last Name
-                        </label>
-                        <input
-                          type="text"
-                          className="liquid-input"
-                          value={form.lastName}
-                          onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                          style={{ width: '100%', padding: '9px 12px' }}
-                          placeholder="e.g. Frias"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: 'var(--text-secondary)',
-                          display: 'block',
-                          marginBottom: '6px',
-                        }}
-                      >
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        className="liquid-input"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        style={{ width: '100%', padding: '9px 12px' }}
-                        placeholder="e.g. justinfrias951@gmail.com"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Save Feedback Notice */}
-                  {savedNotice && (
-                    <div
-                      style={{
-                        marginBottom: '14px',
-                        padding: '10px 18px',
-                        borderRadius: '12px',
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        border: '1px solid rgba(16, 185, 129, 0.45)',
-                        color: '#10b981',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        fontSize: '0.86rem',
-                        fontWeight: 600,
-                        boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
-                        animation: 'fadeIn 0.25s ease',
-                      }}
-                    >
-                      <CheckCircle2 size={16} color="#10b981" />
-                      <span>Profile & avatar preferences saved successfully!</span>
-                    </div>
-                  )}
-
-                  {/* Footer Actions */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flexWrap: 'wrap',
-                      gap: '14px',
-                      borderTop: '1px solid var(--glass-border)',
-                      paddingTop: '16px',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFx?.playClick?.();
-                        setIsTermsOpen(true);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 0',
-                        textDecoration: 'underline',
-                        transition: 'color 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#00f2fe')}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                    >
-                      <FileText size={15} />
-                      <span>Terms & Conditions</span>
-                    </button>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <button
-                        type="button"
-                        onClick={handleSignOut}
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          color: '#f87171',
-                          padding: '9px 18px',
-                          borderRadius: '10px',
-                          fontSize: '0.86rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
-                      >
-                        <LogOut size={15} />
-                        <span>Sign Out</span>
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={isSaving}
-                        style={{
-                          background: savedNotice
-                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                            : (isLight
-                                ? 'linear-gradient(180deg, #10b981 0%, #059669 100%)'
-                                : 'linear-gradient(180deg, #3df8b0 0%, #15d688 48%, #0eb370 52%, #088b55 100%)'),
-                          border: isLight ? '1px solid #059669' : 'none',
-                          color: '#ffffff',
-                          padding: '9px 24px',
-                          borderRadius: '10px',
-                          fontSize: '0.88rem',
-                          fontWeight: 700,
-                          cursor: isSaving ? 'not-allowed' : 'pointer',
-                          boxShadow: isLight
-                            ? '0 4px 14px rgba(5, 150, 105, 0.35), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.65)'
-                            : '0 5px 16px rgba(0, 0, 0, 0.45), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.65)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          transition: 'all 0.2s ease',
-                          opacity: isSaving ? 0.7 : 1,
-                        }}
-                      >
-                        {isSaving ? (
-                          <>
-                            <Loader2 size={16} className="animate-spin" />
-                            <span>Saving...</span>
-                          </>
-                        ) : savedNotice ? (
-                          <>
-                            <CheckCircle2 size={16} />
-                            <span>Saved!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Save size={15} />
-                            <span>Save Profile</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: Appearance & Theme */}
-          {activeSettingTab === 'theme' && (
-            <div>
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-                  Appearance & Theme
-                </h2>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Customize the interface theme, visual effects, and audio feedback.
-                </p>
-              </div>
-
+              <h2
+                style={{
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0f2942' : '#f8fafc',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                Profile
+              </h2>
               <div
                 style={{
-                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '16px',
-                  padding: '20px',
+                  height: '1px',
+                  background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)',
+                  marginBottom: '24px',
+                }}
+              />
+
+              {/* Avatar Section */}
+              <div
+                style={{
                   display: 'flex',
-                  flexDirection: 'column',
+                  alignItems: 'center',
                   gap: '16px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Theme Mode</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      Current: {theme === 'dark' ? 'Dark Futuristic Cyber' : 'Clean Pearl Light'}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={toggleTheme}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: theme === 'dark' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                      border: theme === 'dark' ? '1px solid #c084fc' : '1px solid #f59e0b',
-                      color: theme === 'dark' ? '#c084fc' : '#f59e0b',
-                      padding: '8px 16px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      fontSize: '0.82rem',
-                    }}
-                  >
-                    {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-                    <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'}</span>
-                  </button>
-                </div>
-
-                <div style={{ height: '1px', background: 'var(--glass-border)' }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Audio & UI Sound Effects</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      Play subtle tactile audio cues on button clicks and scans.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: settings.soundEnabled
-                        ? (isLight ? '#d1fae5' : 'rgba(0, 242, 254, 0.14)')
-                        : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.05)'),
-                      border: settings.soundEnabled
-                        ? (isLight ? '1.5px solid #10b981' : '1px solid #00f2fe')
-                        : (isLight ? '1px solid rgba(15, 23, 42, 0.12)' : '1px solid rgba(255, 255, 255, 0.12)'),
-                      color: settings.soundEnabled
-                        ? (isLight ? '#065f46' : '#00f2fe')
-                        : (isLight ? '#64748b' : 'var(--text-muted)'),
-                      padding: '8px 16px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      fontSize: '0.82rem',
-                    }}
-                  >
-                    {settings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                    <span>{settings.soundEnabled ? 'Enabled' : 'Muted'}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: In-App Alerts (Matching User Screenshot 1 Exactly) */}
-          {activeSettingTab === 'alerts' && (
-            <div>
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-                  In-App Alert Activity
-                </h2>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Manage logged real-time activity and due-date triggers.
-                </p>
-              </div>
-
-              {/* Stored Notifications Box (Screenshot 1) */}
-              <div
-                style={{
-                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '16px',
-                  padding: '20px 22px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  marginBottom: '26px',
                   flexWrap: 'wrap',
-                  gap: '14px',
                 }}
               >
-                <div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                    Stored Notifications
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    Currently retaining {notifications?.length || 22} alerts in local memory
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFx.playClick();
-                    clearNotifications();
-                  }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: '12px',
-                    padding: '8px 16px',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.84rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
-                    e.currentTarget.style.color = '#f87171';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                    e.currentTarget.style.borderColor = 'var(--glass-border)';
-                    e.currentTarget.style.color = 'var(--text-primary)';
-                  }}
-                >
-                  <Trash2 size={15} />
-                  <span>Clear All</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: Email Updates (Matching User Screenshot 2 Exactly) */}
-          {activeSettingTab === 'email' && (
-            <div>
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-                  Automated Email Notifications
-                </h2>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Automated emails for task assignments, deadlines, @mentions, and board movements.
-                </p>
-              </div>
-
-              {/* Box 1: Enable Email Delivery */}
-              <div
-                onClick={() => setEnableEmailDelivery(!enableEmailDelivery)}
-                style={{
-                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '16px',
-                  padding: '18px 22px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '22px',
-                  cursor: 'pointer',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
-                    Enable Email Delivery
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Dispatches email notifications when trigger events happen
-                  </div>
-                </div>
-
-                {/* Blue Checkbox */}
                 <div
                   style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '5px',
-                    background: enableEmailDelivery ? '#2563eb' : 'transparent',
-                    border: enableEmailDelivery ? 'none' : '2px solid var(--glass-border-bright, rgba(255, 255, 255, 0.3))',
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: '#0b1e36',
+                    border: '2px solid #cbd5e1',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
                   }}
                 >
-                  {enableEmailDelivery && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                  {form.photo ? (
+                    <img
+                      src={form.photo}
+                      alt="Avatar"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff' }}>
+                      {(form.firstName || userProfile?.firstName || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
-              </div>
 
-              {/* Notification Triggers Section (Screenshot 2) */}
-              <div style={{ marginBottom: '26px' }}>
-                <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px 0' }}>
-                  Notification Triggers
-                </h3>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {[
-                    { key: 'assignment', label: 'Notify member on task assignment' },
-                    { key: 'dueDates', label: 'Notify member on due dates & overdue alerts' },
-                    { key: 'statusChanges', label: 'Notify member on task status changes (completed / reopened)' },
-                    { key: 'mentions', label: 'Notify member on @mentions in comments' },
-                  ].map((trig) => {
-                    const isChecked = emailTriggers[trig.key];
-                    return (
-                      <div
-                        key={trig.key}
-                        onClick={() => {
-                          soundFx.playClick();
-                          setEmailTriggers((prev) => ({ ...prev, [trig.key]: !prev[trig.key] }));
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '4px',
-                            background: isChecked ? '#2563eb' : 'transparent',
-                            border: isChecked ? 'none' : '2px solid var(--glass-border-bright, rgba(255, 255, 255, 0.3))',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {isChecked && <Check size={13} color="#ffffff" strokeWidth={3} />}
-                        </div>
-                        <span style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>{trig.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Send Instant Test Notification (Screenshot 2) */}
-              <div>
-                <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 10px 0' }}>
-                  Send Instant Test Notification
-                </h3>
-
-                {emailNotice && (
-                  <div
-                    style={{
-                      marginBottom: '10px',
-                      padding: '8px 14px',
-                      borderRadius: '10px',
-                      background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(0, 242, 254, 0.12)',
-                      border: isLight ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(0, 242, 254, 0.35)',
-                      color: isLight ? '#065f46' : '#38bdf8',
-                      fontSize: '0.82rem',
-                      fontWeight: isLight ? 600 : 400,
-                    }}
-                  >
-                    {emailNotice}
-                  </div>
-                )}
-
-                <div className="settings-email-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '540px' }}>
-                  <input
-                    type="email"
-                    className="settings-email-input"
-                    value={testEmailRecipient}
-                    onChange={(e) => setTestEmailRecipient(e.target.value)}
-                    placeholder="recipient@company.com"
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      background: 'var(--bg-surface, rgba(0, 0, 0, 0.35))',
-                      border: '1px solid var(--glass-border)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.86rem',
-                      outline: 'none',
-                    }}
-                  />
-
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <button
                     type="button"
-                    onClick={handleSendTestEmail}
+                    onClick={() => fileInputRef.current?.click()}
                     style={{
-                      background: '#2563eb',
+                      background: '#0b1e36',
                       border: 'none',
-                      borderRadius: '12px',
-                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      padding: '9px 18px',
                       color: '#ffffff',
                       fontSize: '0.86rem',
                       fontWeight: 600,
@@ -1405,289 +627,1200 @@ export const SettingsView = () => {
                       alignItems: 'center',
                       gap: '8px',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                      whiteSpace: 'nowrap',
+                      transition: 'background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                  >
+                    <Upload size={15} />
+                    <span>Upload Photo</span>
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handlePhotoUpload}
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    style={{
+                      background: 'transparent',
+                      border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.18)',
+                      borderRadius: '10px',
+                      padding: '9px 16px',
+                      color: isLight ? '#475569' : '#cbd5e1',
+                      fontSize: '0.86rem',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
                       transition: 'all 0.2s ease',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#1d4ed8')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#2563eb')}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.06)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
                   >
-                    <Send size={15} />
-                    <span>Send Test</span>
+                    <X size={15} />
+                    <span>Remove</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Profile Inputs */}
+              <form onSubmit={handleSaveProfile}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '20px',
+                    marginBottom: '20px',
+                  }}
+                >
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: isLight ? '#334155' : '#cbd5e1',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={form.firstName}
+                      onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                      placeholder="First Name"
+                      style={{
+                        width: '100%',
+                        padding: '11px 16px',
+                        borderRadius: '12px',
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                        color: isLight ? '#0f2942' : '#ffffff',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: isLight ? '#334155' : '#cbd5e1',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={form.lastName}
+                      onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                      placeholder="Last Name"
+                      style={{
+                        width: '100%',
+                        padding: '11px 16px',
+                        borderRadius: '12px',
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                        color: isLight ? '#0f2942' : '#ffffff',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '28px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      color: isLight ? '#334155' : '#cbd5e1',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="Email Address"
+                    style={{
+                      width: '100%',
+                      maxWidth: '520px',
+                      padding: '11px 16px',
+                      borderRadius: '12px',
+                      border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                      background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                      color: isLight ? '#0f2942' : '#ffffff',
+                      fontSize: '0.92rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                {savedNotice && (
+                  <div
+                    style={{
+                      marginBottom: '18px',
+                      padding: '10px 18px',
+                      borderRadius: '12px',
+                      background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.2)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      color: '#059669',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <CheckCircle2 size={16} />
+                    <span>Profile preferences successfully saved!</span>
+                  </div>
+                )}
+
+                {/* Bottom Actions */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    gap: '14px',
+                  }}
+                >
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    style={{
+                      background: '#0b1e36',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '11px 28px',
+                      color: '#ffffff',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.2s ease',
+                      boxShadow: '0 2px 10px rgba(11, 30, 54, 0.25)',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                  >
+                    {isSaving ? 'Saving...' : 'Save Profile'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 2: CATEGORIES                                              */}
+          {/* ============================================================== */}
+          {activeTabKey === 'categories' && (
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0f2942' : '#f8fafc',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                Categories
+              </h2>
+              <div
+                style={{
+                  height: '1px',
+                  background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)',
+                  marginBottom: '24px',
+                }}
+              />
+
+              {/* Add Custom Category Form */}
+              <form
+                onSubmit={handleAddCategory}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '26px',
+                  maxWidth: '520px',
+                }}
+              >
+                <input
+                  type="text"
+                  value={customCategoryInput}
+                  onChange={(e) => setCustomCategoryInput(e.target.value)}
+                  placeholder="Add a new expense category..."
+                  style={{
+                    flex: 1,
+                    padding: '11px 16px',
+                    borderRadius: '12px',
+                    border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                    color: isLight ? '#0f2942' : '#ffffff',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    background: '#0b1e36',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '11px 20px',
+                    color: '#ffffff',
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Plus size={16} />
+                  <span>Add</span>
+                </button>
+              </form>
+
+              {/* Category Cards Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '14px',
+                  marginBottom: '32px',
+                }}
+              >
+                {/* Standard Categories */}
+                {Object.entries(baseCategories).map(([key, label]) => {
+                  const count = documents?.filter((d) => d.category === key).length || 0;
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '14px',
+                        padding: '14px 18px',
+                        background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Tag size={16} color={isLight ? '#2563eb' : '#38bdf8'} />
+                        <div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isLight ? '#0f2942' : '#f8fafc' }}>
+                            {label}
+                          </div>
+                          <div style={{ fontSize: '0.76rem', color: isLight ? '#64748b' : '#94a3b8' }}>
+                            {key}
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '8px',
+                          background: isLight ? '#eff6ff' : 'rgba(37, 99, 235, 0.2)',
+                          color: isLight ? '#1e40af' : '#60a5fa',
+                        }}
+                      >
+                        {count} receipts
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* Custom Categories */}
+                {customCategories.map((catName) => {
+                  const count = documents?.filter((d) => d.category === catName).length || 0;
+                  return (
+                    <div
+                      key={catName}
+                      style={{
+                        border: isLight ? '1.5px solid #93c5fd' : '1px solid rgba(59, 130, 246, 0.35)',
+                        borderRadius: '14px',
+                        padding: '14px 18px',
+                        background: isLight ? '#f0f7ff' : 'rgba(37, 99, 235, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Tag size={16} color="#2563eb" />
+                        <div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isLight ? '#0f2942' : '#f8fafc' }}>
+                            {catName}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#2563eb' }}>
+                            Custom Category
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '8px',
+                            background: '#dbeafe',
+                            color: '#1e40af',
+                          }}
+                        >
+                          {count}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(catName)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#f87171',
+                            padding: '4px',
+                          }}
+                          title="Remove custom category"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Workspace Preferences (Currency & Theme Quick Settings) */}
+              <div
+                style={{
+                  borderTop: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.1)',
+                  paddingTop: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Coins size={18} color={isLight ? '#1e3a8a' : '#38bdf8'} />
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isLight ? '#0f2942' : '#f8fafc' }}>
+                      Default Currency
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: isLight ? '#64748b' : '#94a3b8' }}>
+                      Selected for total calculation & receipts
+                    </div>
+                  </div>
+                  <select
+                    value={currency}
+                    onChange={(e) => {
+                      soundFx?.playClick?.();
+                      setCurrency(e.target.value);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.2)',
+                      background: isLight ? '#ffffff' : '#0f172a',
+                      color: isLight ? '#0f2942' : '#ffffff',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {Object.keys(currencyRates || { PHP: 1, USD: 1, EUR: 1, JPY: 1, GBP: 1 }).map((curr) => (
+                      <option key={curr} value={curr}>
+                        {curr} ({currencyRates?.[curr]?.symbol || curr})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                      border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                      padding: '7px 14px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      color: isLight ? '#0f2942' : '#ffffff',
+                    }}
+                  >
+                    {isLight ? <Moon size={15} /> : <Sun size={15} />}
+                    <span>{isLight ? 'Dark Theme' : 'Light Theme'}</span>
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 5: Privacy & Storage (Matching User Screenshot 4 Exactly) */}
-          {activeSettingTab === 'privacy' && (
+          {/* ============================================================== */}
+          {/* TAB 3: SECURITY (Screenshot 2)                                  */}
+          {/* ============================================================== */}
+          {activeTabKey === 'security' && (
             <div>
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-                  Storage, Backups & Account Security
-                </h2>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Export local data snapshots or manage account deletion.
-                </p>
-              </div>
-
-              {/* Metrics & Backups Card (Screenshot 4) */}
-              <div
+              <h2
                 style={{
-                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '16px',
-                  padding: '22px 24px',
-                  marginBottom: '24px',
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0f2942' : '#f8fafc',
+                  margin: '0 0 16px 0',
                 }}
               >
-                {/* 3 Metric Columns */}
-                <div
-                  className="settings-metrics"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    textAlign: 'center',
-                    gap: '16px',
-                    marginBottom: '22px',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                      Boards
-                    </div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      3
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                      Task Cards
-                    </div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      {documents?.length || 1}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                      Local Storage
-                    </div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      {storageUsageKb} KB
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2 Buttons Row: Export Backup & Restore Backup (Screenshot 4) */}
-                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={handleExportBackup}
-                    style={{
-                      flex: 1,
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid var(--glass-border)',
-                      borderRadius: '12px',
-                      padding: '11px 18px',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.86rem',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      minWidth: '180px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(0, 242, 254, 0.12)';
-                      e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.35)';
-                      e.currentTarget.style.color = '#00f2fe';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.borderColor = 'var(--glass-border)';
-                      e.currentTarget.style.color = 'var(--text-primary)';
-                    }}
-                  >
-                    <Download size={15} />
-                    <span>Export Backup (.json)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => restoreInputRef.current?.click()}
-                    style={{
-                      flex: 1,
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid var(--glass-border)',
-                      borderRadius: '12px',
-                      padding: '11px 18px',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.86rem',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      minWidth: '180px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(0, 242, 254, 0.12)';
-                      e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.35)';
-                      e.currentTarget.style.color = '#00f2fe';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.borderColor = 'var(--glass-border)';
-                      e.currentTarget.style.color = 'var(--text-primary)';
-                    }}
-                  >
-                    <Upload size={15} />
-                    <span>Restore Backup</span>
-                  </button>
-                  <input
-                    type="file"
-                    ref={restoreInputRef}
-                    onChange={handleRestoreBackup}
-                    accept=".json"
-                    style={{ display: 'none' }}
-                  />
-                </div>
-              </div>
-
-              {/* Legal, Privacy & Cookie Preferences Card */}
+                Security
+              </h2>
               <div
                 style={{
-                  background: 'var(--bg-surface, rgba(255, 255, 255, 0.025))',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '16px',
-                  padding: '22px 24px',
+                  height: '1px',
+                  background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)',
                   marginBottom: '24px',
                 }}
+              />
+
+              {/* 2-Column Row: Left is Password Form, Right is Active Session */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap: '28px',
+                  marginBottom: '28px',
+                }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <ShieldCheck size={18} color="#00f2fe" />
-                  <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Compliance, Privacy & Cookie Controls
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: '0 0 16px 0' }}>
-                  Resiboss processes receipts in full compliance with Republic Act No. 10173 (Data Privacy Act of 2012)
-                  and international privacy standards. Control your cookie consent and inspect our official policies below.
-                </p>
+                {/* Left Column: Password Update Form */}
+                <form onSubmit={handlePasswordUpdate}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: isLight ? '#334155' : '#cbd5e1',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwords.current}
+                      onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+                      placeholder="••••••••"
+                      style={{
+                        width: '100%',
+                        padding: '11px 16px',
+                        borderRadius: '12px',
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                        color: isLight ? '#0f2942' : '#ffffff',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
 
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFx?.playClick?.();
-                      setIsPrivacyOpen(true);
-                    }}
-                    className="liquid-btn liquid-btn-secondary"
-                    style={{ padding: '9px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <ShieldCheck size={15} color="#00f2fe" />
-                    <span>View Privacy Policy</span>
-                  </button>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: isLight ? '#334155' : '#cbd5e1',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwords.new}
+                      onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                      placeholder="••••••••"
+                      style={{
+                        width: '100%',
+                        padding: '11px 16px',
+                        borderRadius: '12px',
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                        color: isLight ? '#0f2942' : '#ffffff',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '22px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: isLight ? '#334155' : '#cbd5e1',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwords.confirm}
+                      onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                      placeholder="••••••••"
+                      style={{
+                        width: '100%',
+                        padding: '11px 16px',
+                        borderRadius: '12px',
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        background: isLight ? '#ffffff' : 'rgba(0, 0, 0, 0.25)',
+                        color: isLight ? '#0f2942' : '#ffffff',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {passNotice && (
+                    <div
+                      style={{
+                        marginBottom: '16px',
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background:
+                          passNotice.type === 'error'
+                            ? 'rgba(239, 68, 68, 0.12)'
+                            : 'rgba(16, 185, 129, 0.12)',
+                        border:
+                          passNotice.type === 'error'
+                            ? '1px solid rgba(239, 68, 68, 0.35)'
+                            : '1px solid rgba(16, 185, 129, 0.35)',
+                        color: passNotice.type === 'error' ? '#ef4444' : '#059669',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {passNotice.text}
+                    </div>
+                  )}
 
                   <button
-                    type="button"
-                    onClick={() => {
-                      soundFx?.playClick?.();
-                      setIsTermsOpen(true);
+                    type="submit"
+                    disabled={isUpdatingPass}
+                    style={{
+                      background: '#0b1e36',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '11px 24px',
+                      color: '#ffffff',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: isUpdatingPass ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.2s ease',
+                      boxShadow: '0 2px 10px rgba(11, 30, 54, 0.25)',
                     }}
-                    className="liquid-btn liquid-btn-secondary"
-                    style={{ padding: '9px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
                   >
-                    <FileText size={15} color="#38bdf8" />
-                    <span>View Terms of Service</span>
+                    <KeyRound size={15} />
+                    <span>{isUpdatingPass ? 'Updating...' : 'Update Password'}</span>
                   </button>
+                </form>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFx?.playClick?.();
-                      setIsCookieModalOpen(true);
+                {/* Right Column: Active Session Card */}
+                <div>
+                  <div
+                    style={{
+                      border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '14px',
+                      padding: '16px 20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
                     }}
-                    className="liquid-btn liquid-btn-secondary"
-                    style={{ padding: '9px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                   >
-                    <Sliders size={15} color="#a855f7" />
-                    <span>Cookie Preferences</span>
-                  </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <Smartphone size={22} color={isLight ? '#0f2942' : '#38bdf8'} />
+                      <div>
+                        <div
+                          style={{
+                            fontSize: '0.92rem',
+                            fontWeight: 600,
+                            color: isLight ? '#0f2942' : '#f8fafc',
+                          }}
+                        >
+                          Active Session
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '0.78rem',
+                            color: isLight ? '#64748b' : '#94a3b8',
+                            marginTop: '2px',
+                          }}
+                        >
+                          Resibo Buddy App
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      style={{
+                        color: '#059669',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Current
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Danger Zone: Deactivate & Delete Account (Screenshot 4) */}
+              {/* Bottom Box: Two-Factor Authentication (MFA) */}
               <div
                 style={{
-                  border: '1px solid rgba(239, 68, 68, 0.45)',
-                  background: 'rgba(239, 68, 68, 0.04)',
+                  border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '16px',
-                  padding: '22px 24px',
+                  padding: '20px 24px',
+                  background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    color: '#f87171',
-                    fontSize: '0.98rem',
-                    fontWeight: 700,
-                    marginBottom: '10px',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                    marginBottom: '8px',
                   }}
                 >
-                  <AlertTriangle size={18} color="#ef4444" />
-                  <span>Danger Zone: Deactivate & Delete Account</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Lock size={18} color={isLight ? '#0f2942' : '#f8fafc'} />
+                    <div>
+                      <span
+                        style={{
+                          fontSize: '0.96rem',
+                          fontWeight: 700,
+                          color: isLight ? '#0f2942' : '#f8fafc',
+                        }}
+                      >
+                        Two-Factor Authentication (MFA)
+                      </span>
+                      <div
+                        style={{
+                          fontSize: '0.8rem',
+                          color: isLight ? '#64748b' : '#94a3b8',
+                          marginTop: '2px',
+                        }}
+                      >
+                        Add an extra layer of security to your account.
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      background: mfaEnabled ? '#059669' : (isLight ? '#0f172a' : '#1e293b'),
+                      color: '#ffffff',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '3px 12px',
+                      borderRadius: '9999px',
+                    }}
+                  >
+                    {mfaEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
                 </div>
 
-                <p
+                <div
                   style={{
-                    fontSize: '0.82rem',
-                    color: 'var(--text-secondary)',
-                    lineHeight: 1.45,
-                    marginBottom: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    marginTop: '16px',
                   }}
                 >
-                  Permanently delete your profile and account from Supabase. All your workspace memberships,
-                  profile data, and notifications will be wiped from the database immediately.
-                </p>
+                  <p
+                    style={{
+                      fontSize: '0.85rem',
+                      color: isLight ? '#334155' : '#cbd5e1',
+                      margin: 0,
+                      maxWidth: '560px',
+                    }}
+                  >
+                    Use an authenticator app like Google Authenticator or Authy to generate one-time codes.
+                  </p>
 
+                  <button
+                    type="button"
+                    onClick={handleToggleMfa}
+                    style={{
+                      background: '#0b1e36',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '9px 20px',
+                      color: '#ffffff',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(11, 30, 54, 0.25)',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                  >
+                    {mfaEnabled ? 'Disable MFA' : 'Enable MFA'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 4: NOTIFICATIONS (Screenshot 3)                             */}
+          {/* ============================================================== */}
+          {activeTabKey === 'notifications' && (
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0f2942' : '#f8fafc',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                Notifications
+              </h2>
+              <div
+                style={{
+                  height: '1px',
+                  background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)',
+                  marginBottom: '24px',
+                }}
+              />
+
+              {/* 3 Notification Toggle Cards (Screenshot 3) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '28px' }}>
+                {/* Email Alerts */}
+                <div
+                  style={{
+                    border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '14px',
+                    padding: '16px 22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.92rem',
+                      fontWeight: 600,
+                      color: isLight ? '#0f2942' : '#f8fafc',
+                    }}
+                  >
+                    Email Alerts
+                  </span>
+                  <div
+                    onClick={() => toggleNotifPref('emailAlerts')}
+                    style={{
+                      width: '46px',
+                      height: '24px',
+                      borderRadius: '9999px',
+                      background: notifPrefs.emailAlerts ? '#0b1e36' : (isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'),
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      justifyContent: notifPrefs.emailAlerts ? 'flex-end' : 'flex-start',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#ffffff',
+                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* In-App Alerts */}
+                <div
+                  style={{
+                    border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '14px',
+                    padding: '16px 22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.92rem',
+                      fontWeight: 600,
+                      color: isLight ? '#0f2942' : '#f8fafc',
+                    }}
+                  >
+                    In-App Alerts
+                  </span>
+                  <div
+                    onClick={() => toggleNotifPref('inAppAlerts')}
+                    style={{
+                      width: '46px',
+                      height: '24px',
+                      borderRadius: '9999px',
+                      background: notifPrefs.inAppAlerts ? '#0b1e36' : (isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'),
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      justifyContent: notifPrefs.inAppAlerts ? 'flex-end' : 'flex-start',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#ffffff',
+                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Threshold Alerts */}
+                <div
+                  style={{
+                    border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '14px',
+                    padding: '16px 22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.92rem',
+                      fontWeight: 600,
+                      color: isLight ? '#0f2942' : '#f8fafc',
+                    }}
+                  >
+                    Threshold Alerts
+                  </span>
+                  <div
+                    onClick={() => toggleNotifPref('thresholdAlerts')}
+                    style={{
+                      width: '46px',
+                      height: '24px',
+                      borderRadius: '9999px',
+                      background: notifPrefs.thresholdAlerts ? '#0b1e36' : (isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'),
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      justifyContent: notifPrefs.thresholdAlerts ? 'flex-end' : 'flex-start',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#ffffff',
+                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {notifNotice && (
+                <div
+                  style={{
+                    marginBottom: '16px',
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    color: '#059669',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Notification preferences saved!</span>
+                </div>
+              )}
+
+              {/* Save Preferences Button */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  onClick={handleDeleteAccount}
+                  onClick={handleSavePreferences}
                   style={{
-                    background: '#dc2626',
+                    background: '#0b1e36',
                     border: 'none',
-                    borderRadius: '10px',
-                    padding: '9px 20px',
+                    borderRadius: '12px',
+                    padding: '11px 28px',
                     color: '#ffffff',
-                    fontSize: '0.86rem',
+                    fontSize: '0.9rem',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)',
-                    transition: 'all 0.2s ease',
+                    transition: 'background 0.2s ease',
+                    boxShadow: '0 2px 10px rgba(11, 30, 54, 0.25)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#b91c1c')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#dc2626')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
                 >
-                  Delete Account
+                  Save Preferences
                 </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Footer Meta Row (Sign out, Terms & Conditions) */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '14px',
+          marginTop: '24px',
+          padding: '0 8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              soundFx?.playClick?.();
+              setIsTermsOpen(true);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: isLight ? '#64748b' : '#94a3b8',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+            }}
+          >
+            Terms of Service
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundFx?.playClick?.();
+              setIsPrivacyOpen(true);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: isLight ? '#64748b' : '#94a3b8',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+            }}
+          >
+            Privacy Policy
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            soundFx?.playClick?.();
+            signOut?.();
+          }}
+          style={{
+            background: 'transparent',
+            border: isLight ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(239, 68, 68, 0.4)',
+            color: '#ef4444',
+            padding: '7px 16px',
+            borderRadius: '10px',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+        >
+          <LogOut size={14} />
+          <span>Sign Out</span>
+        </button>
+      </div>
+
+      {/* MFA Setup Modal */}
+      {showMfaModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: isLight ? '#ffffff' : '#0f172a',
+              border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.3)',
+              borderRadius: '20px',
+              padding: '24px 28px',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={22} color="#2563eb" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: isLight ? '#0f2942' : '#ffffff' }}>
+                  Enable Two-Factor MFA
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMfaModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.86rem', color: isLight ? '#475569' : '#cbd5e1', lineHeight: 1.5, marginBottom: '20px' }}>
+              Scan the setup code below using Google Authenticator, Microsoft Authenticator, or Authy to protect your Resiboss vault.
+            </p>
+
+            <div
+              style={{
+                background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.05)',
+                border: isLight ? '1px dashed #cbd5e1' : '1px dashed rgba(255, 255, 255, 0.2)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                marginBottom: '20px',
+              }}
+            >
+              <div style={{ fontSize: '0.78rem', color: isLight ? '#64748b' : '#94a3b8', marginBottom: '6px' }}>
+                SECRET KEY (MANUAL ENTRY):
+              </div>
+              <div style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 700, color: '#2563eb', letterSpacing: '0.1em' }}>
+                RESI-BOSS-MFA-2026
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setShowMfaModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '9px 16px',
+                  fontSize: '0.86rem',
+                  fontWeight: 600,
+                  color: isLight ? '#64748b' : '#cbd5e1',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmEnableMfa}
+                style={{
+                  background: '#0b1e36',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px 20px',
+                  fontSize: '0.86rem',
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                Confirm & Enable
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-export default SettingsView;

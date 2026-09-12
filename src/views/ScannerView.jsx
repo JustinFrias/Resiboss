@@ -29,7 +29,8 @@ import {
 } from 'lucide-react';
 
 export const ScannerView = () => {
-  const { addDocument, addNotification, formatCurrency, t } = useApp();
+  const { addDocument, addNotification, formatCurrency, t, theme } = useApp();
+  const isLight = theme === 'light';
 
   // Mode: 'idle' (Clean Scan Buddy) | 'camera' (taking live photo) | 'scanned' (extracted results)
   const [scanMode, setScanMode] = useState('idle');
@@ -593,23 +594,31 @@ export const ScannerView = () => {
         style={{ display: 'none' }}
       />
 
-      {/* 1. When in Idle Mode: Centered Resiboss Scan Layout */}
+      {/* 1. When in Idle Mode: Scan Buddy Layout */}
       {scanMode === 'idle' ? (
-        <div style={{ maxWidth: '720px', margin: '12px auto 0 auto', width: '100%' }}>
-          {/* Centered Title & Subtitle */}
-          <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+        <div style={{ maxWidth: '840px', margin: '4px 0 0 0', width: '100%' }}>
+          {/* Left-aligned Title & Subtitle */}
+          <div style={{ textAlign: 'left', marginBottom: '22px' }}>
             <h1
               style={{
-                fontSize: '2.1rem',
+                fontSize: '1.95rem',
                 fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: 'var(--text-primary)',
-                marginBottom: '4px',
+                letterSpacing: '-0.025em',
+                color: isLight ? '#0f2942' : '#f8fafc',
+                marginBottom: '6px',
+                fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
               }}
             >
               {t.scanner.resibossScanTitle}
             </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', margin: 0 }}>
+            <p
+              style={{
+                color: isLight ? '#475569' : '#94a3b8',
+                fontSize: '0.92rem',
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
               {t.scanner.resibossScanDesc}
             </p>
           </div>
@@ -644,99 +653,155 @@ export const ScannerView = () => {
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: '18px',
-              marginBottom: '14px',
+              gap: '20px',
+              marginBottom: '18px',
             }}
           >
             {/* Card 1: Take Photo */}
             <div
               onClick={handleStartCamera}
-              className="glass-panel glass-panel-interactive"
+              className="glass-panel-interactive"
               style={{
-                padding: '28px 18px',
-                borderRadius: '16px',
-                border: '1px solid var(--glass-border)',
-                background: 'var(--bg-surface)',
+                padding: '42px 20px',
+                borderRadius: '24px',
+                border: isLight ? '1px solid rgba(203, 213, 225, 0.9)' : '1px solid rgba(255, 255, 255, 0.14)',
+                background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
                 cursor: 'pointer',
-                boxShadow: 'var(--shadow-glass)',
-                transition: 'all 0.3s ease',
+                boxShadow: isLight
+                  ? '0 4px 20px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02)'
+                  : '0 8px 30px rgba(0, 0, 0, 0.45)',
+                transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '58px',
+                  height: '58px',
                   borderRadius: '50%',
-                  background: 'var(--cyan-subtle)',
-                  border: '1px solid var(--cyan-glow)',
+                  background: isLight ? 'rgba(148, 163, 184, 0.22)' : 'rgba(148, 163, 184, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '12px',
-                  boxShadow: '0 0 16px var(--cyan-subtle)',
+                  marginBottom: '16px',
                 }}
               >
-                <Camera size={24} color="var(--cyan-glow)" />
+                <Camera size={26} color={isLight ? '#1e3a8a' : '#93c5fd'} />
               </div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+              <h2
+                style={{
+                  fontSize: '1.18rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0f2942' : '#f8fafc',
+                  marginBottom: '6px',
+                  fontFamily: "'Outfit', sans-serif",
+                }}
+              >
                 {t.scanner.takePhoto}
               </h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.86rem', color: isLight ? '#64748b' : '#94a3b8', margin: 0, lineHeight: 1.4 }}>
                 {t.scanner.takePhotoDesc}
               </p>
             </div>
 
-            {/* Card 2: Upload File */}
+            {/* Card 2: Upload File (with dashed border) */}
             <div
               onClick={handleScanAnother}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className="glass-panel glass-panel-interactive"
+              className="glass-panel-interactive"
               style={{
-                padding: '28px 18px',
-                borderRadius: '16px',
-                border: isDragOver ? '2px dashed var(--cyan-glow)' : '1px solid var(--glass-border)',
+                padding: '42px 20px',
+                borderRadius: '24px',
+                border: isDragOver
+                  ? '2px dashed #0284c7'
+                  : (isLight ? '1.5px dashed rgba(203, 213, 225, 0.95)' : '1.5px dashed rgba(255, 255, 255, 0.22)'),
                 background: isDragOver
-                  ? 'radial-gradient(circle at 50% 30%, var(--cyan-subtle), var(--bg-surface-elevated))'
-                  : 'var(--bg-surface)',
+                  ? (isLight ? 'rgba(224, 242, 254, 0.45)' : 'rgba(14, 165, 233, 0.12)')
+                  : (isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)'),
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
                 cursor: 'pointer',
-                boxShadow: isDragOver ? '0 0 30px var(--cyan-subtle)' : 'var(--shadow-glass)',
-                transition: 'all 0.3s ease',
+                boxShadow: isDragOver
+                  ? '0 0 25px rgba(2, 132, 199, 0.25)'
+                  : (isLight ? '0 4px 20px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02)' : '0 8px 30px rgba(0, 0, 0, 0.45)'),
+                transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '58px',
+                  height: '58px',
                   borderRadius: '50%',
-                  background: 'var(--cyan-subtle)',
-                  border: '1px solid var(--cyan-glow)',
+                  background: isLight ? 'rgba(148, 163, 184, 0.22)' : 'rgba(148, 163, 184, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '12px',
-                  boxShadow: '0 0 16px var(--cyan-subtle)',
+                  marginBottom: '16px',
                 }}
               >
-                <FileText size={24} color="var(--cyan-glow)" />
+                <FileText size={26} color={isLight ? '#1e3a8a' : '#93c5fd'} />
               </div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+              <h2
+                style={{
+                  fontSize: '1.18rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0f2942' : '#f8fafc',
+                  marginBottom: '6px',
+                  fontFamily: "'Outfit', sans-serif",
+                }}
+              >
                 {t.scanner.uploadFile}
               </h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.86rem', color: isLight ? '#64748b' : '#94a3b8', margin: 0, lineHeight: 1.4 }}>
                 {t.scanner.uploadFileFormats}
               </p>
+            </div>
+          </div>
+
+          {/* AI-Powered Document Extraction Banner */}
+          <div
+            style={{
+              borderRadius: '20px',
+              background: isLight ? 'rgba(240, 249, 255, 0.75)' : 'rgba(14, 165, 233, 0.08)',
+              border: isLight ? '1px solid #bae6fd' : '1px solid rgba(56, 189, 248, 0.25)',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              textAlign: 'left',
+            }}
+          >
+            <Sparkles size={18} color="#0284c7" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <div
+                style={{
+                  fontSize: '0.92rem',
+                  fontWeight: 700,
+                  color: isLight ? '#0369a1' : '#38bdf8',
+                  marginBottom: '3px',
+                  fontFamily: "'Outfit', sans-serif",
+                }}
+              >
+                {t.scanner.aiExtractionTitle}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  color: isLight ? '#0c4a6e' : '#94a3b8',
+                  lineHeight: 1.45,
+                }}
+              >
+                {t.scanner.aiExtractionDesc}
+              </div>
             </div>
           </div>
         </div>

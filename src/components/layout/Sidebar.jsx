@@ -22,13 +22,22 @@ import {
   FileText,
   Calendar,
   Clock,
+  User,
+  Bell,
+  LogOut,
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
+import { ResiboBuddyMascot } from '../ui/ResiboBuddyMascot';
 
 export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
   const {
     activeTab,
     setActiveTab,
+    activeSettingTab,
+    setActiveSettingTab,
+    userProfile,
+    signOut,
+    theme,
     language,
     setLanguage,
     currency,
@@ -41,6 +50,8 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
     toggleSidebar,
     setIsTermsOpen,
   } = useApp();
+
+  const isLight = theme === 'light';
 
   const navItems = [
     { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard },
@@ -130,10 +141,209 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
       )}
 
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
-        {/* Top Brand Logo Section */}
-        <div>
-          {sidebarCollapsed ? (
-            /* Collapsed Header */
+        {activeTab === 'settings' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px 14px', boxSizing: 'border-box' }}>
+            {/* Drawer Header (Screenshot 1) */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ResiboBuddyMascot size={36} />
+                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: isLight ? '#0f2942' : '#ffffff', letterSpacing: '-0.02em' }}>
+                  Resibo <span style={{ color: '#0d9488' }}>Buddy</span>
+                </span>
+              </div>
+              {onCloseMobile && (
+                <button
+                  type="button"
+                  onClick={onCloseMobile}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: isLight ? '#475569' : '#cbd5e1',
+                    padding: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title="Close Settings Menu"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* Section Title */}
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: isLight ? '#64748b' : '#94a3b8',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                marginBottom: '12px',
+                paddingLeft: '4px',
+              }}
+            >
+              SETTINGS
+            </div>
+
+            {/* Navigation List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {[
+                { id: 'profile', label: 'Profile', icon: User, chevron: true },
+                { id: 'categories', label: 'Categories', icon: FolderArchive },
+                { id: 'security', label: 'Security', icon: ShieldCheck },
+                { id: 'notifications', label: 'Notifications', icon: Bell },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = activeSettingTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      soundFx?.playClick?.();
+                      setActiveSettingTab(item.id);
+                      if (onCloseMobile) onCloseMobile();
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: isActive
+                        ? (isLight ? '#eff6ff' : 'rgba(37, 99, 235, 0.22)')
+                        : 'transparent',
+                      color: isActive
+                        ? (isLight ? '#1e40af' : '#38bdf8')
+                        : (isLight ? '#334155' : '#cbd5e1'),
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: '0.94rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Icon
+                        size={19}
+                        color={isActive ? (isLight ? '#1e40af' : '#38bdf8') : (isLight ? '#475569' : '#94a3b8')}
+                      />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.chevron && (
+                      <ChevronRight
+                        size={17}
+                        color={isActive ? (isLight ? '#1e40af' : '#38bdf8') : '#94a3b8'}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Drawer Bottom Area: Sign Out & User Profile */}
+            <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx?.playClick?.();
+                  if (onCloseMobile) onCloseMobile();
+                  signOut?.();
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 14px',
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: isLight ? '#0f2942' : '#f87171',
+                  fontSize: '0.94rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  marginBottom: '16px',
+                  textAlign: 'left',
+                }}
+              >
+                <LogOut size={18} />
+                <span>Sign Out</span>
+              </button>
+
+              <div
+                style={{
+                  height: '1px',
+                  background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)',
+                  marginBottom: '16px',
+                }}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 6px' }}>
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: '#0b1e36',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.2)',
+                  }}
+                >
+                  {userProfile?.photo ? (
+                    <img
+                      src={userProfile.photo}
+                      alt="Avatar"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <span style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>
+                      {(userProfile?.firstName || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      color: isLight ? '#0f2942' : '#ffffff',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {userProfile?.firstName || 'Justinfrias951'} {userProfile?.lastName || 'User'}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.76rem',
+                      color: isLight ? '#64748b' : '#94a3b8',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {userProfile?.email || 'justinfrias951@gmail.com'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+          {/* Top Brand Logo Section */}
+          <div>
+            {sidebarCollapsed ? (
+              /* Collapsed Header */
             <div
               style={{
                 display: 'flex',
@@ -722,6 +932,8 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
             </div>
           </div>
         )}
+        </>
+      )}
       </aside>
     </>
   );

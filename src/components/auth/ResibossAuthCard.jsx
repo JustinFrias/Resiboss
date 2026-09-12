@@ -20,6 +20,7 @@ import { validateEmailAddress } from '../../utils/emailValidator';
 export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
   const {
     theme,
+    setActiveTab,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
@@ -128,13 +129,16 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
       return;
     }
 
-    // Mark account as created and terms as accepted
+    // Mark account as created, terms as accepted, and bypass mobile gatekeeper
     try {
       localStorage.setItem('resiboss_account_created_v1', 'true');
       localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+      localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+      sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
     } catch (e) {}
     setHasCreatedAccount(true);
     setIsTermsAccepted?.(true);
+    setActiveTab?.('dashboard');
 
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -210,16 +214,42 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
           } catch (e) {}
           setHasCreatedAccount(true);
 
-          if (res?.user && !res?.session) {
-            setSuccessMsg(
+          // Check if email is already registered (Supabase returns empty identities array when user already exists)
+          if (res?.user && Array.isArray(res.user.identities) && res.user.identities.length === 0) {
+            setErrorMsg(
               isFil
-                ? 'Napadala na ang confirmation link sa iyong email! Paki-click muna ang link sa iyong Gmail inbox bago mag-sign in dito.'
-                : 'Confirmation link sent to your email! Please click the verification link in your inbox before signing in.'
+                ? 'Mayroon nang account gamit ang email na ito. Pakilagay ang iyong password para mag-sign in.'
+                : 'An account with this email already exists. Please enter your password to sign in.'
             );
             setMode('signin');
+            setPassword('');
             setIsLoading(false);
             return;
           }
+
+          // Always switch to Sign In mode and clear inputs so the user types their credentials to sign in
+          setMode('signin');
+          setEmail('');
+          setPassword('');
+          setFullName('');
+          setShowPassword(false);
+          setIsAgreed(false);
+
+          if (res?.user && !res?.session) {
+            setSuccessMsg(
+              isFil
+                ? 'Matagumpay na nagawa ang iyong account! Pakisuri ang iyong email para sa confirmation link, pagkatapos ay i-type ang iyong email at password para mag-sign in.'
+                : 'Account created successfully! Please check your email to confirm, then type your email and password to sign in.'
+            );
+          } else {
+            setSuccessMsg(
+              isFil
+                ? 'Matagumpay na nagawa ang iyong account! Mangyaring i-type ang iyong email at password para mag-sign in.'
+                : 'Account created successfully! Please type your email and password to sign in.'
+            );
+          }
+          setIsLoading(false);
+          return;
         }
       }
     } catch (err) {

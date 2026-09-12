@@ -31,20 +31,20 @@ export const DocumentsView = () => {
 
   // Filtering
   const filteredDocs = documents.filter((doc) => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      doc.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (doc.tin && doc.tin.includes(searchQuery)) ||
-      doc.id.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      (doc.merchant && doc.merchant.toLowerCase().includes(q)) ||
+      (doc.tin && doc.tin.includes(q)) ||
+      (doc.receiptNumber && doc.receiptNumber.toLowerCase().includes(q)) ||
+      (doc.invoiceNumber && doc.invoiceNumber.toLowerCase().includes(q)) ||
+      (doc.id && doc.id.toLowerCase().includes(q));
 
     const matchesCategory = selectedCategory === 'ALL' || doc.category === selectedCategory;
     const matchesStatus = selectedStatus === 'ALL' || doc.status === selectedStatus;
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
-
-  const totalVaultValue = filteredDocs.reduce((acc, d) => acc + (d.total || 0), 0);
-  const totalDeductibleVat = filteredDocs.reduce((acc, d) => acc + (d.vat || 0), 0);
-  const approxStorageMB = Math.max(documents.length * 0.2, 0.5).toFixed(1);
 
   const handleDownloadDoc = async (doc, e) => {
     if (e) e.stopPropagation();
@@ -57,76 +57,18 @@ export const DocumentsView = () => {
   return (
     <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
       {/* Title Header */}
-      <div className="view-title-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
-            {t.documents.auditVaultTitle}
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            {t.documents.subtitle}
-          </p>
-        </div>
-
-        {/* Total Vault Stats */}
-        <div className="view-title-stats" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '12px 18px',
-              border: '1px solid rgba(168, 85, 247, 0.25)',
-              textAlign: 'right',
-            }}
-          >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalDocuments}</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#c084fc', fontFamily: 'var(--font-mono)' }}>
-              {documents.length}
-            </div>
-          </div>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '12px 18px',
-              border: '1px solid rgba(0, 242, 254, 0.25)',
-              textAlign: 'right',
-            }}
-          >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.approxStorage}</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
-              {approxStorageMB} MB
-            </div>
-          </div>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '12px 18px',
-              border: '1px solid rgba(0, 242, 254, 0.25)',
-              textAlign: 'right',
-            }}
-          >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.filteredVolume}</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
-              {formatCurrency(totalVaultValue)}
-            </div>
-          </div>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '12px 18px',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              textAlign: 'right',
-            }}
-          >
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalDeductibleVat}</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-              {formatCurrency(totalDeductibleVat)}
-            </div>
-          </div>
-        </div>
+      <div className="view-title-header" style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+          {t.documents.auditVaultTitle}
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+          {t.documents.subtitle}
+        </p>
       </div>
 
       {/* Filter & Search Bar */}
       <div
-        className="glass-panel documents-filter-bar"
+        className="glass-panel documents-filter-bar resiboss-search-panel"
         style={{
           padding: '16px 20px',
           marginBottom: '24px',
@@ -134,22 +76,52 @@ export const DocumentsView = () => {
           gap: '14px',
           alignItems: 'center',
           flexWrap: 'wrap',
+          borderRadius: '20px',
         }}
       >
         {/* Search Input */}
-        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
           <Search
-            size={16}
-            color="var(--text-muted)"
-            style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
+            size={17}
+            strokeWidth={2}
+            className="resiboss-search-icon"
+            style={{
+              position: 'absolute',
+              left: '16px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              zIndex: 2,
+            }}
           />
           <input
-            className="liquid-input"
-            style={{ paddingLeft: '40px' }}
-            placeholder={t.documents.searchPlaceholder}
+            className="resiboss-search-input"
+            type="text"
+            placeholder={t.documents?.searchPlaceholder || "Search vendor, doc number..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                fontSize: '14px',
+                lineHeight: 1,
+                padding: '4px',
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Category & Status Filter Row on Mobile */}

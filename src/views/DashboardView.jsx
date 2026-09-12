@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components';
 import {
@@ -10,19 +10,101 @@ import {
   ShieldCheck,
   Clock,
   Eye,
+  Calendar,
+  ChevronDown,
+  Check,
+  FileText,
 } from 'lucide-react';
 
 export const DashboardView = () => {
-  const { documents, setActiveTab, setInspectingDoc, formatCurrency, t } = useApp();
+  const { documents, setActiveTab, setInspectingDoc, formatCurrency, t, theme, soundFx } = useApp();
+  const isLight = theme === 'light';
+
+  // Time Range Filter State ('all' | 'month' | '30days' | 'year')
+  const [timeRange, setTimeRange] = useState('all');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef(null);
+
+  // Close filter popover on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, []);
+
+  // Filter documents according to selected range
+  const filteredDocuments = useMemo(() => {
+    if (timeRange === 'all') return documents;
+    const now = new Date();
+    if (timeRange === 'month') {
+      const currentMonth = now.toISOString().slice(0, 7);
+      return documents.filter((d) => d.date && d.date.startsWith(currentMonth));
+    }
+    if (timeRange === '30days') {
+      const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return documents.filter((d) => d.date && new Date(d.date) >= past30);
+    }
+    if (timeRange === 'year') {
+      const currentYear = now.getFullYear().toString();
+      return documents.filter((d) => d.date && d.date.startsWith(currentYear));
+    }
+    return documents;
+  }, [documents, timeRange]);
 
   // Calculations
-  const totalAmount = documents.reduce((acc, doc) => acc + (doc.total || 0), 0);
-  const totalVat = documents.reduce((acc, doc) => acc + (doc.vat || 0), 0);
-  const avgAmount = documents.length > 0 ? totalAmount / documents.length : 0;
-  const verifiedCount = documents.filter((d) => d.status === 'Verified').length;
+  const totalAmount = filteredDocuments.reduce((acc, doc) => acc + (doc.total || 0), 0);
+  const totalVat = filteredDocuments.reduce((acc, doc) => acc + (doc.vat || 0), 0);
+  const docCount = filteredDocuments.length;
+  const avgAmount = docCount > 0 ? totalAmount / docCount : 0;
+  const verifiedCount = filteredDocuments.filter((d) => d.status === 'Verified').length;
+
+  // Format compact number (e.g. ₱3.0K)
+  const formatCompact = (val) => {
+    if (!val || val === 0) return '₱0.00';
+    if (val >= 1000000) {
+      return `₱${(val / 1000000).toFixed(1)}M`;
+    }
+    if (val >= 1000) {
+      return `₱${(val / 1000).toFixed(1)}K`;
+    }
+    return formatCurrency(val);
+  };
+
+  // 14-Day History for Daily Document Expenses
+  const dailyHistory = useMemo(() => {
+    const days = [];
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayNum = d.getDate();
+
+      const dayTotal = documents
+        .filter((doc) => doc.date && doc.date.startsWith(dateStr))
+        .reduce((sum, doc) => sum + (doc.total || 0), 0);
+
+      days.push({
+        dateStr,
+        dayNum,
+        total: dayTotal,
+      });
+    }
+    return days;
+  }, [documents]);
+
+  const maxDailyExpense = Math.max(...dailyHistory.map((d) => d.total), 4000);
 
   // Category breakdown for chart
-  const categoryTotals = documents.reduce((acc, doc) => {
+  const categoryTotals = filteredDocuments.reduce((acc, doc) => {
     const cat = doc.category || 'Other';
     acc[cat] = (acc[cat] || 0) + (doc.total || 0);
     return acc;
@@ -32,141 +114,400 @@ export const DashboardView = () => {
 
   return (
     <div className="dashboard-page" style={{ width: '100%', padding: '0 0 100px 0' }}>
-      {/* 4 Stat Cards */}
+      {/* 1. Header: Title, Subtitle, and Time Range Filter */}
+      <div style={{ marginBottom: '20px' }}>
+        <h1
+          style={{
+            fontSize: '1.9rem',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            color: isLight ? '#0f2942' : '#f8fafc',
+            marginBottom: '4px',
+            fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+          }}
+        >
+          Dashboard
+        </h1>
+        <p
+          style={{
+            fontSize: '0.92rem',
+            color: isLight ? '#475569' : '#94a3b8',
+            margin: '0 0 14px 0',
+            lineHeight: 1.45,
+          }}
+        >
+          Financial overview and processing health
+        </p>
+
+        {/* Time Filter Dropdown Pill */}
+        <div ref={filterRef} style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsFilterOpen(!isFilterOpen);
+              soundFx?.playClick?.();
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '7px 14px',
+              borderRadius: '14px',
+              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.85)',
+              border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.14)',
+              color: isLight ? '#1e293b' : '#e2e8f0',
+              fontSize: '0.86rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: isLight ? '0 2px 6px rgba(15, 23, 42, 0.04)' : 'none',
+              outline: 'none',
+              transition: 'all 0.18s ease',
+            }}
+          >
+            <Calendar size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+            <span>
+              {timeRange === 'all' && 'All Time'}
+              {timeRange === 'month' && 'This Month'}
+              {timeRange === '30days' && 'Last 30 Days'}
+              {timeRange === 'year' && 'This Year'}
+            </span>
+            <ChevronDown size={14} color={isLight ? '#64748b' : '#94a3b8'} />
+          </button>
+
+          {isFilterOpen && (
+            <div
+              className="glass-panel"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                left: 0,
+                zIndex: 50,
+                background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.96)',
+                border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.16)',
+                borderRadius: '14px',
+                padding: '6px',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+                minWidth: '150px',
+              }}
+            >
+              {[
+                { id: 'all', label: 'All Time' },
+                { id: 'month', label: 'This Month' },
+                { id: '30days', label: 'Last 30 Days' },
+                { id: 'year', label: 'This Year' },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    setTimeRange(opt.id);
+                    setIsFilterOpen(false);
+                    soundFx?.playClick?.();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: timeRange === opt.id ? (isLight ? '#f1f5f9' : 'rgba(56, 189, 248, 0.15)') : 'transparent',
+                    color: timeRange === opt.id ? (isLight ? '#0284c7' : '#38bdf8') : (isLight ? '#1e293b' : '#e2e8f0'),
+                    fontSize: '0.84rem',
+                    fontWeight: timeRange === opt.id ? 700 : 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {timeRange === opt.id && <Check size={14} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 2. 3 Stat Cards (Stacked on Mobile) */}
       <div
         className="dashboard-stats-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '16px',
-          marginBottom: '28px',
+          marginBottom: '18px',
         }}
       >
+        {/* Card 1: Total Expenses */}
         <TiltCard>
-          <div className="glass-panel" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {t.dashboard.totalExpenses}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px 22px',
+              borderRadius: '24px',
+              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+              border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <span style={{ fontSize: '0.94rem', color: isLight ? '#1e293b' : '#94a3b8', fontWeight: 600 }}>
+                Total Expenses
               </span>
               <div
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'rgba(0, 242, 254, 0.12)',
-                  color: '#00f2fe',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(244, 63, 94, 0.18)',
+                  color: '#f43f5e',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid rgba(0, 242, 254, 0.25)',
+                  fontWeight: 800,
+                  fontSize: '1.05rem',
                 }}
               >
-                <Wallet size={18} />
+                ₱
               </div>
             </div>
-            <div className="stat-card-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-              {formatCurrency(totalAmount)}
+            <div
+              className="stat-card-value"
+              style={{
+                fontSize: '2.1rem',
+                fontWeight: 800,
+                color: isLight ? '#0f2942' : '#ffffff',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '-0.02em',
+                marginBottom: '8px',
+              }}
+            >
+              {formatCompact(totalAmount)}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.75rem', color: '#34d399' }}>
-              <TrendingUp size={14} />
-              <span>{t.dashboard.vsLastMonth}</span>
+            <div style={{ fontSize: '0.82rem', color: isLight ? '#64748b' : '#94a3b8' }}>
+              — No prior month data
             </div>
           </div>
         </TiltCard>
 
+        {/* Card 2: Total Vat */}
         <TiltCard>
-          <div className="glass-panel" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {t.dashboard.scannedReceipts}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px 22px',
+              borderRadius: '24px',
+              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+              border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <span style={{ fontSize: '0.94rem', color: isLight ? '#1e293b' : '#94a3b8', fontWeight: 600 }}>
+                Total Vat
               </span>
               <div
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'rgba(168, 85, 247, 0.12)',
-                  color: '#a855f7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid rgba(168, 85, 247, 0.25)',
-                }}
-              >
-                <Receipt size={18} />
-              </div>
-            </div>
-            <div className="stat-card-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-              {documents.length}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <ShieldCheck size={14} color="#34d399" />
-              <span>{verifiedCount} {t.dashboard.verifiedLedger}</span>
-            </div>
-          </div>
-        </TiltCard>
-
-        <TiltCard>
-          <div className="glass-panel" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {t.dashboard.recoverableVat}
-              </span>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'rgba(16, 185, 129, 0.12)',
-                  color: '#10b981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                }}
-              >
-                <PiggyBank size={18} />
-              </div>
-            </div>
-            <div className="stat-card-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-              {formatCurrency(totalVat)}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <span>{t.dashboard.taxCreditDesc}</span>
-            </div>
-          </div>
-        </TiltCard>
-
-        <TiltCard>
-          <div className="glass-panel" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {t.dashboard.avgReceipt}
-              </span>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'rgba(245, 158, 11, 0.12)',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(245, 158, 11, 0.18)',
                   color: '#f59e0b',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  fontWeight: 800,
+                  fontSize: '1.05rem',
                 }}
               >
-                <TrendingUp size={18} />
+                ₱
               </div>
             </div>
-            <div className="stat-card-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-              {formatCurrency(avgAmount)}
+            <div
+              className="stat-card-value"
+              style={{
+                fontSize: '2.1rem',
+                fontWeight: 800,
+                color: isLight ? '#0f2942' : '#ffffff',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '-0.02em',
+                marginBottom: '8px',
+              }}
+            >
+              {formatCurrency(totalVat)}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <span>{t.dashboard.acrossCategories}</span>
+            <div style={{ fontSize: '0.82rem', color: isLight ? '#64748b' : '#94a3b8' }}>
+              — No prior month data
             </div>
           </div>
         </TiltCard>
+
+        {/* Card 3: Total Documents */}
+        <TiltCard>
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px 22px',
+              borderRadius: '24px',
+              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+              border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <span style={{ fontSize: '0.94rem', color: isLight ? '#1e293b' : '#94a3b8', fontWeight: 600 }}>
+                Total Documents
+              </span>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.2)',
+                  color: isLight ? '#1e3a8a' : '#93c5fd',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileText size={19} />
+              </div>
+            </div>
+            <div
+              className="stat-card-value"
+              style={{
+                fontSize: '2.1rem',
+                fontWeight: 800,
+                color: isLight ? '#0f2942' : '#ffffff',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '-0.02em',
+                marginBottom: '8px',
+              }}
+            >
+              {docCount}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#10b981', fontWeight: 600 }}>
+              <TrendingUp size={15} />
+              <span>Successfully processed</span>
+            </div>
+          </div>
+        </TiltCard>
+      </div>
+
+      {/* 3. Card 4: Daily Document Expenses (Last 14 Days) */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '24px 22px',
+          borderRadius: '24px',
+          background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+          border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
+          marginBottom: '28px',
+        }}
+      >
+        <div style={{ marginBottom: '20px' }}>
+          <h3
+            style={{
+              fontSize: '1.1rem',
+              fontWeight: 800,
+              color: isLight ? '#0f2942' : '#f8fafc',
+              marginBottom: '4px',
+              fontFamily: "'Outfit', sans-serif",
+            }}
+          >
+            Daily Document Expenses
+          </h3>
+          <div style={{ fontSize: '0.84rem', color: isLight ? '#64748b' : '#94a3b8' }}>
+            Last 14 days — based on scanned documents
+          </div>
+        </div>
+
+        {/* 14-Day Visual Expenses SVG Chart with Y-Axis */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', height: '180px', width: '100%' }}>
+          {/* Y-Axis Labels */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              height: '140px',
+              paddingBottom: '24px',
+              fontSize: '0.74rem',
+              color: isLight ? '#94a3b8' : '#64748b',
+              fontWeight: 600,
+              textAlign: 'right',
+              userSelect: 'none',
+              minWidth: '28px',
+            }}
+          >
+            <span>₱4K</span>
+            <span>₱3K</span>
+            <span>₱2K</span>
+            <span>₱1K</span>
+            <span>0</span>
+          </div>
+
+          {/* Bar Columns Container */}
+          <div
+            style={{
+              display: 'flex',
+              flex: 1,
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              height: '100%',
+              gap: '4px',
+              borderBottom: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.1)',
+              paddingBottom: '6px',
+            }}
+          >
+            {dailyHistory.map((item, idx) => {
+              const heightPct = Math.max(Math.min((item.total / maxDailyExpense) * 100, 100), 4);
+              const hasData = item.total > 0;
+
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    height: '100%',
+                    flex: 1,
+                    gap: '6px',
+                  }}
+                  title={`${item.dateStr}: ${formatCurrency(item.total)}`}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '18px',
+                      height: `${heightPct}%`,
+                      minHeight: '6px',
+                      borderRadius: '4px 4px 0 0',
+                      background: hasData
+                        ? (isLight ? 'linear-gradient(180deg, #0284c7, #38bdf8)' : 'linear-gradient(180deg, #00f2fe, #0284c7)')
+                        : (isLight ? 'rgba(203, 213, 225, 0.4)' : 'rgba(255, 255, 255, 0.08)'),
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      color: hasData ? (isLight ? '#0284c7' : '#00f2fe') : (isLight ? '#94a3b8' : '#64748b'),
+                      fontWeight: hasData ? 700 : 500,
+                    }}
+                  >
+                    {item.dayNum}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Middle Grid: Spending Curve & Category Allocation */}

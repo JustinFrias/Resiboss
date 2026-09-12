@@ -170,6 +170,7 @@ export const AppProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(getInitialUserProfile);
   const userProfileRef = useRef(userProfile);
+  const isSigningUpRef = useRef(false);
 
   useEffect(() => {
     userProfileRef.current = userProfile;
@@ -226,6 +227,7 @@ export const AppProvider = ({ children }) => {
   }, [userProfile?.id, userProfile?.email]);
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeSettingTab, setActiveSettingTab] = useState('profile');
   const [currency, setCurrency] = useState('PHP');
   const [language, setLanguageState] = useState(() => {
     try {
@@ -458,18 +460,26 @@ export const AppProvider = ({ children }) => {
         }
 
         setCurrentUser(session.user);
-        const provider = session.user.app_metadata?.provider || 'google';
+        const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
         const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
+        setActiveTab('dashboard');
+        setIsTermsAccepted(true);
         try {
           localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+          localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+          localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+          sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
         } catch (e) {}
       }
       // Note: If session is null, do NOT wipe userProfile because user may be logged in via Pipedream or Guest mode.
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (isSigningUpRef.current) {
+        return;
+      }
       if (session?.user) {
         if (checkIsSignupConfirmation()) {
           const confirmedEmail = session.user.email || '';
@@ -485,12 +495,17 @@ export const AppProvider = ({ children }) => {
         }
 
         setCurrentUser(session.user);
-        const provider = session.user.app_metadata?.provider || 'email';
+        const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
         const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
+        setActiveTab('dashboard');
+        setIsTermsAccepted(true);
         try {
           localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
           sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+          localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+          localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+          sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
         } catch (e) {}
       } else if (event === 'SIGNED_OUT') {
         // Clear profile on sign out
@@ -523,7 +538,7 @@ export const AppProvider = ({ children }) => {
           }
         } catch (e) {}
 
-        if (url.includes('com.resiboss.app://') || url.includes('resiboss.vercel.app')) {
+        if (url.includes('com.resiboss.app://') || url.includes('resiboss.vercel.app') || url.includes('localhost') || url.includes('127.0.0.1')) {
           // 1. PKCE Code Exchange Flow (?code=...)
           const queryPart = url.includes('?') ? url.split('?')[1].split('#')[0] : '';
           const queryParams = new URLSearchParams(queryPart);
@@ -622,12 +637,18 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const signInWithGoogle = async () => {
+    isSigningUpRef.current = false;
+    setActiveTab('dashboard');
     if (!isTermsAccepted) {
       setIsTermsAccepted(true);
       try {
         localStorage.setItem('resiboss_terms_accepted_v1', 'true');
       } catch (e) {}
     }
+    try {
+      localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+      sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
+    } catch (e) {}
 
     if (!supabase) {
       throw new Error('Supabase is not configured.');
@@ -736,53 +757,72 @@ export const AppProvider = ({ children }) => {
   };
 
   const signUpWithEmail = async (email, password, fullName = '') => {
-    if (!isTermsAccepted) {
-      setIsTermsAccepted(true);
-      try {
-        localStorage.setItem('resiboss_terms_accepted_v1', 'true');
-      } catch (e) {}
-    }
-
-    if (!email || !password) {
-      throw new Error(language === 'fil' ? 'Pakilagay ang email at password.' : 'Please enter your email and password.');
-    }
-
-    const emailValidation = validateEmailAddress(email, language);
-    if (!emailValidation.isValid) {
-      throw new Error(emailValidation.error);
-    }
-
-    if (password.length < 6) {
-      throw new Error(language === 'fil' ? 'Ang password ay dapat hindi bababa sa 6 characters.' : 'Password must be at least 6 characters.');
-    }
-
-    if (!supabase) {
-      throw new Error('Supabase is not configured.');
-    }
-
-    const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}` : 'https://resiboss.vercel.app';
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        data: {
-          full_name: fullName?.trim() || email.split('@')[0],
-        },
-        emailRedirectTo: redirectUrl,
-      },
-    });
-
-    if (error) {
-      if (error.message?.includes('Error sending confirmation email')) {
-        throw new Error(
-          language === 'fil'
-            ? 'Hindi maipadala ang confirmation email ng Supabase. Pakisiguradong naka-configure ang Custom SMTP sa Supabase Dashboard o naabot na ang hourly email limit.'
-            : 'Error sending confirmation email. Please configure Custom SMTP in your Supabase Dashboard or wait for the hourly rate limit to reset.'
-        );
+    isSigningUpRef.current = true;
+    try {
+      if (!isTermsAccepted) {
+        setIsTermsAccepted(true);
+        try {
+          localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+        } catch (e) {}
       }
-      throw error;
+
+      if (!email || !password) {
+        throw new Error(language === 'fil' ? 'Pakilagay ang email at password.' : 'Please enter your email and password.');
+      }
+
+      const emailValidation = validateEmailAddress(email, language);
+      if (!emailValidation.isValid) {
+        throw new Error(emailValidation.error);
+      }
+
+      if (password.length < 6) {
+        throw new Error(language === 'fil' ? 'Ang password ay dapat hindi bababa sa 6 characters.' : 'Password must be at least 6 characters.');
+      }
+
+      if (!supabase) {
+        throw new Error('Supabase is not configured.');
+      }
+
+      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}` : 'https://resiboss.vercel.app';
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: {
+            full_name: fullName?.trim() || email.split('@')[0],
+          },
+          emailRedirectTo: redirectUrl,
+        },
+      });
+
+      if (error) {
+        if (error.message?.includes('Error sending confirmation email')) {
+          throw new Error(
+            language === 'fil'
+              ? 'Hindi maipadala ang confirmation email ng Supabase. Pakisiguradong naka-configure ang Custom SMTP sa Supabase Dashboard o naabot na ang hourly email limit.'
+              : 'Error sending confirmation email. Please configure Custom SMTP in your Supabase Dashboard or wait for the hourly rate limit to reset.'
+          );
+        }
+        throw error;
+      }
+
+      // Explicitly sign out newly registered session so the user is required to sign in manually
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+      setCurrentUser(null);
+      setUserProfile(null);
+      try {
+        sessionStorage.removeItem(SESSION_PROFILE_KEY);
+        localStorage.removeItem(SESSION_PROFILE_KEY);
+      } catch (e) {}
+
+      return data;
+    } finally {
+      setTimeout(() => {
+        isSigningUpRef.current = false;
+      }, 500);
     }
-    return data;
   };
 
   const resetPasswordForEmail = async (email) => {
@@ -1044,6 +1084,11 @@ export const AppProvider = ({ children }) => {
         setActiveTab: (tab) => {
           soundFx.playClick();
           setActiveTab(tab);
+        },
+        activeSettingTab,
+        setActiveSettingTab: (stab) => {
+          soundFx.playClick();
+          setActiveSettingTab(stab);
         },
         language,
         setLanguage: (lang) => {

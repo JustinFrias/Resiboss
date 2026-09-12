@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { useApp } from '../../context/AppContext';
 import {
   Smartphone,
   Download,
@@ -13,11 +14,46 @@ import {
 } from 'lucide-react';
 
 export const MobileAppGatekeeper = ({ children }) => {
+  const { userProfile } = useApp();
   const [isMobileBrowser, setIsMobileBrowser] = useState(false);
-  const [isBypassed, setIsBypassed] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [isBypassed, setIsBypassed] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const h = window.location.hostname;
+        if (h === 'localhost' || h === '127.0.0.1' || h.includes('192.168.') || h.includes('.local')) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  });
+  const [checking, setChecking] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const h = window.location.hostname;
+      if (h === 'localhost' || h === '127.0.0.1' || h.includes('192.168.') || h.includes('.local')) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   useEffect(() => {
+    // 0. On localhost or development, always bypass gatekeeper so local development and responsive testing work cleanly
+    const isLocalhost =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('192.168.') ||
+        window.location.hostname.includes('.local'));
+
+    if (isLocalhost) {
+      setIsBypassed(true);
+      setChecking(false);
+      return;
+    }
+
     // 1. Check if running inside the native Android Capacitor APK
     const isNative = Capacitor.isNativePlatform();
 
@@ -101,8 +137,8 @@ export const MobileAppGatekeeper = ({ children }) => {
     return null;
   }
 
-  // If inside native APK, on desktop, or bypassed, render normal web application
-  if (!isMobileBrowser || isBypassed) {
+  // If user is already logged in, inside native APK, on desktop, or manually bypassed, render normal application directly
+  if (userProfile || !isMobileBrowser || isBypassed) {
     return children;
   }
 

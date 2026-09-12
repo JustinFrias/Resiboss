@@ -230,8 +230,50 @@ export const TopBar = ({ onOpenMobile }) => {
         overflow: 'visible',
       }}
     >
-      {/* 1. Left: Mobile Menu & Breadcrumb */}
+      {/* 1. Left: Mobile Brand & Desktop Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        {/* Mobile Brand Emblem & Name */}
+        <div
+          className="topbar-mobile-brand"
+          onClick={() => {
+            soundFx.playClick();
+            setActiveTab('dashboard');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+        >
+          <img
+            src="/resiboss-emblem.png"
+            alt="Resiboss"
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+              fontSize: '1.25rem',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: isLight ? '#0f2942' : '#ffffff',
+            }}
+          >
+            Resi<span style={{ color: isLight ? '#0284c7' : '#00f2fe' }}>boss</span>
+          </span>
+        </div>
+
         <button
           onClick={onOpenMobile}
           className="mobile-hamburger-btn"
@@ -287,24 +329,26 @@ export const TopBar = ({ onOpenMobile }) => {
           }}
         >
           <div
-            className="topbar-search-box"
+            className="topbar-search-box resiboss-topbar-search"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '7px 14px',
-              borderRadius: '999px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: isSearchFocused ? '1px solid var(--cyan-glow)' : '1px solid var(--glass-border)',
-              boxShadow: isSearchFocused ? '0 0 16px var(--cyan-subtle)' : 'none',
+              gap: '10px',
+              padding: '8px 16px',
+              borderRadius: '9999px',
               transition: 'all 0.2s ease',
             }}
           >
-            <Search size={15} color={isSearchFocused ? 'var(--cyan-glow)' : 'var(--text-muted)'} style={{ flexShrink: 0 }} />
+            <Search
+              size={16}
+              strokeWidth={2}
+              className="topbar-search-icon"
+              style={{ flexShrink: 0 }}
+            />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder={t.topbar?.searchPlaceholder || t.documents?.searchPlaceholder || "Search receipts, TIN, merchant..."}
+              placeholder={t.topbar?.searchPlaceholder || "Search vendor, doc number..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -312,8 +356,8 @@ export const TopBar = ({ onOpenMobile }) => {
                 background: 'transparent',
                 border: 'none',
                 outline: 'none',
-                fontSize: '0.84rem',
-                color: 'var(--text-primary)',
+                fontSize: '0.86rem',
+                color: 'inherit',
                 width: '100%',
               }}
             />
@@ -810,7 +854,7 @@ export const TopBar = ({ onOpenMobile }) => {
         </div>
 
         {/* User Profile Avatar with Dropdown Menu (Matching User Screenshot) */}
-        <div ref={profileContainerRef} style={{ position: 'relative' }}>
+        <div ref={profileContainerRef} className="topbar-user-profile-btn" style={{ position: 'relative' }}>
           <button
             type="button"
             onClick={() => {
