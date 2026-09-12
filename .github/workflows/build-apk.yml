@@ -13,9 +13,6 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
-    env:
-      OUTPUT_DIR: 'android/app/build/outputs/apk/release'
-
 
     steps:
       - name: Checkout Repository
@@ -40,10 +37,14 @@ jobs:
         run: |
           npm run build
           ls -la dist/
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+          VITE_APP_ENV: production
 
       - name: Ensure Android Assets Directory
-        run: |
-          mkdir -p android/app/src/main/assets
+        run: mkdir -p android/app/src/main/assets
 
       - name: Sync Capacitor to Android
         run: npx --yes cap sync android
@@ -51,27 +52,47 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./android/gradlew
 
-      - name: Generate Release Keystore
+      - name: Generate Release Keystore (if not present)
         run: |
-          keytool -genkeypair -v -keystore android/app/resiboss-release.jks -alias resiboss -keyalg RSA -keysize 2048 -validity 10000 -storepass resiboss2026 -keypass resiboss2026 -dname "CN=Resiboss, OU=Finance, O=Resiboss, L=Manila, ST=NCR, C=PH"
+          if [ ! -f android/app/resiboss-release.jks ]; then
+            echo "Keystore not found, generating..."
+            keytool -genkeypair -v \
+              -keystore android/app/resiboss-release.jks \
+              -alias resiboss \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass resiboss2026 \
+              -keypass resiboss2026 \
+              -dname "CN=Resiboss, OU=Finance, O=Resiboss, L=Manila, ST=NCR, C=PH"
+          else
+            echo "Keystore already exists, skipping generation."
+          fi
 
       - name: Build Android APK
         run: |
           cd android
           ./gradlew assembleRelease assembleDebug --stacktrace
-          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
-            cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/Resiboss.apk
-            cd app/build/outputs/apk/release
+
+      - name: Package APK
+        id: package
+        run: |
+          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/Resiboss.apk
+            cd android/app/build/outputs/apk/release
             zip Resiboss-APK.zip Resiboss.apk
             echo "OUTPUT_DIR=android/app/build/outputs/apk/release" >> $GITHUB_ENV
+            echo "APK_TYPE=release" >> $GITHUB_OUTPUT
           else
-            cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Resiboss.apk
-            cd app/build/outputs/apk/debug
+            echo "Release APK not found, falling back to debug."
+            cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/Resiboss.apk
+            cd android/app/build/outputs/apk/debug
             zip Resiboss-APK.zip Resiboss.apk
             echo "OUTPUT_DIR=android/app/build/outputs/apk/debug" >> $GITHUB_ENV
+            echo "APK_TYPE=debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload APK Artifact (ZIP)
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Resiboss-Android-APK
@@ -84,7 +105,7 @@ jobs:
         with:
           tag_name: latest
           name: "Resiboss Android App (Latest Release APK)"
-          body: "Download official Resiboss APK in .apk or .zip format."
+          body: "Download the official Resiboss APK in .apk or .zip format."
           make_latest: true
           prerelease: false
           files: |
@@ -92,4 +113,3 @@ jobs:
             ${{ env.OUTPUT_DIR }}/Resiboss-APK.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
