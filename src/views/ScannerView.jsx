@@ -596,9 +596,9 @@ export const ScannerView = () => {
 
       {/* 1. When in Idle Mode: Scan Boss Layout */}
       {scanMode === 'idle' ? (
-        <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%' }}>
-          {/* Centered Title & Subtitle */}
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ maxWidth: '840px', margin: '4px 0 0 0', width: '100%' }}>
+          {/* Left-aligned Title & Subtitle */}
+          <div style={{ textAlign: 'left', marginBottom: '22px' }}>
             <h1
               style={{
                 fontSize: '1.45rem',
@@ -615,7 +615,7 @@ export const ScannerView = () => {
               style={{
                 color: isLight ? '#475569' : '#94a3b8',
                 fontSize: '0.92rem',
-                margin: '0 auto',
+                margin: 0,
                 maxWidth: '600px',
                 lineHeight: 1.5,
               }}
@@ -808,7 +808,7 @@ export const ScannerView = () => {
         </div>
       ) : (
         /* Header when in camera or scanned mode */
-        <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+        <div style={{ marginBottom: '24px', textAlign: 'left' }}>
           <h1
             style={{
               fontSize: '1.45rem',
@@ -821,7 +821,7 @@ export const ScannerView = () => {
           >
             {t.scanner.resibossScanTitle}
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', margin: '0 auto', maxWidth: '600px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', margin: 0, maxWidth: '600px' }}>
             {t.scanner.resibossScanDesc}
           </p>
         </div>
