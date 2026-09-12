@@ -296,8 +296,19 @@ export const TopBar = ({ onOpenMobile }) => {
           <Menu size={18} />
         </button>
 
-
-
+        <span
+          className="topbar-workspace-title"
+          style={{
+            fontSize: '1rem',
+            fontWeight: 600,
+            color: isLight ? '#1e3a8a' : '#f8fafc',
+            letterSpacing: '-0.01em',
+            fontFamily: "'Inter', 'Plus Jakarta Sans', sans-serif",
+            userSelect: 'none',
+          }}
+        >
+          Workspace
+        </span>
       </div>
 
       {/* 2. Right: Search Bar + Theme Toggle + Notifications */}
@@ -315,7 +326,7 @@ export const TopBar = ({ onOpenMobile }) => {
           style={{
             position: 'relative',
             width: '100%',
-            maxWidth: '280px',
+            maxWidth: '240px',
           }}
         >
           <div
@@ -323,22 +334,22 @@ export const TopBar = ({ onOpenMobile }) => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '8px 16px',
+              gap: '8px',
+              padding: '6px 14px',
               borderRadius: '9999px',
               transition: 'all 0.2s ease',
             }}
           >
             <Search
-              size={16}
-              strokeWidth={2}
+              size={15}
+              strokeWidth={1.8}
               className="topbar-search-icon"
               style={{ flexShrink: 0 }}
             />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder={t.topbar?.searchPlaceholder || "Search vendor, doc number..."}
+              placeholder="Search documents, vendors..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -346,7 +357,7 @@ export const TopBar = ({ onOpenMobile }) => {
                 background: 'transparent',
                 border: 'none',
                 outline: 'none',
-                fontSize: '0.86rem',
+                fontSize: '0.84rem',
                 color: 'inherit',
                 width: '100%',
               }}
@@ -501,24 +512,24 @@ export const TopBar = ({ onOpenMobile }) => {
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           className="topbar-action-btn topbar-theme-btn"
           style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '12px',
-            background: theme === 'dark' ? 'rgba(168, 85, 247, 0.12)' : 'rgba(245, 158, 11, 0.16)',
-            border: theme === 'dark' ? '1px solid rgba(168, 85, 247, 0.35)' : '1px solid rgba(245, 158, 11, 0.4)',
+            width: '32px',
+            height: '32px',
+            background: 'none',
+            border: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            color: theme === 'dark' ? '#c084fc' : '#f59e0b',
-            boxShadow: theme === 'dark' ? '0 0 15px rgba(168, 85, 247, 0.25)' : '0 0 15px rgba(245, 158, 11, 0.25)',
-            transition: 'all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)',
+            color: isLight ? '#1e3a8a' : 'var(--text-secondary)',
+            borderRadius: '8px',
+            transition: 'all 0.2s ease',
             flexShrink: 0,
+            padding: 0,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          onMouseEnter={(e) => (e.currentTarget.style.color = isLight ? '#0284c7' : '#00f2fe')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = isLight ? '#1e3a8a' : 'var(--text-secondary)')}
         >
-          {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+          {theme === 'dark' ? <Moon size={18} strokeWidth={1.8} /> : <Sun size={18} strokeWidth={1.8} />}
         </button>
 
         {/* Notifications Button & Dropdown */}
@@ -531,31 +542,34 @@ export const TopBar = ({ onOpenMobile }) => {
             title="System Notifications"
             className="topbar-action-btn topbar-notif-btn"
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
-              background: isNotifOpen ? 'rgba(0, 242, 254, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-              border: isNotifOpen ? '1px solid var(--cyan-glow)' : '1px solid var(--glass-border)',
+              width: '32px',
+              height: '32px',
+              background: 'none',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: isNotifOpen ? 'var(--cyan-glow)' : 'var(--text-secondary)',
+              color: isNotifOpen ? (isLight ? '#0284c7' : '#00f2fe') : (isLight ? '#1e3a8a' : 'var(--text-secondary)'),
+              borderRadius: '8px',
               position: 'relative',
-              transition: 'all 0.25s ease',
+              transition: 'all 0.2s ease',
+              padding: 0,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = isLight ? '#0284c7' : '#00f2fe')}
+            onMouseLeave={(e) => {
+              if (!isNotifOpen) e.currentTarget.style.color = isLight ? '#1e3a8a' : 'var(--text-secondary)';
+            }}
           >
-            <Bell size={18} />
+            <Bell size={18} strokeWidth={1.8} />
             {unreadCount > 0 && (
               <span
                 style={{
                   position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  minWidth: '18px',
-                  height: '18px',
+                  top: '1px',
+                  right: '1px',
+                  minWidth: '14px',
+                  height: '14px',
                   borderRadius: '999px',
                   background: 'linear-gradient(135deg, #ef4444, #f43f5e)',
                   color: '#ffffff',
@@ -826,8 +840,8 @@ export const TopBar = ({ onOpenMobile }) => {
           )}
         </div>
 
-        {/* User Profile Avatar with Dropdown Menu (Matching User Screenshot) */}
-        <div ref={profileContainerRef} className="topbar-user-profile-btn" style={{ position: 'relative' }}>
+        {/* User Profile Avatar with Dropdown Menu (Hidden on Topbar to match clean header) */}
+        <div ref={profileContainerRef} className="topbar-user-profile-btn" style={{ display: 'none' }}>
           <button
             type="button"
             onClick={() => {

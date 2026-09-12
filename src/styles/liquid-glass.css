@@ -812,9 +812,9 @@ html, body {
 }
 
 [data-theme="light"] .topbar-search-box {
-  background: #ffffff !important;
-  border: 1.5px solid #bfdbfe !important;
-  box-shadow: 0 1px 3px rgba(191, 219, 254, 0.25) !important;
+  background: rgba(224, 242, 254, 0.55) !important;
+  border: 1px solid rgba(186, 230, 253, 0.8) !important;
+  box-shadow: none !important;
 }
 
 [data-theme="light"] .topbar-search-box input {
