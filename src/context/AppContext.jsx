@@ -226,8 +226,43 @@ export const AppProvider = ({ children }) => {
     }
   }, [userProfile?.id, userProfile?.email]);
 
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [activeSettingTab, setActiveSettingTab] = useState('profile');
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('resiboss_active_tab_v1') || localStorage.getItem('resiboss_active_tab_v1');
+      if (saved && ['dashboard', 'scanner', 'documents', 'analytic', 'export', 'settings'].includes(saved)) {
+        return saved;
+      }
+    } catch (e) {}
+    return 'dashboard';
+  });
+
+  const setActiveTab = (tab) => {
+    if (!tab) return;
+    setActiveTabState(tab);
+    try {
+      sessionStorage.setItem('resiboss_active_tab_v1', tab);
+      localStorage.setItem('resiboss_active_tab_v1', tab);
+    } catch (e) {}
+  };
+
+  const [activeSettingTab, setActiveSettingTabState] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('resiboss_active_setting_tab_v1') || localStorage.getItem('resiboss_active_setting_tab_v1');
+      if (saved && ['profile', 'categories', 'security', 'notifications'].includes(saved)) {
+        return saved;
+      }
+    } catch (e) {}
+    return 'profile';
+  });
+
+  const setActiveSettingTab = (stab) => {
+    if (!stab) return;
+    setActiveSettingTabState(stab);
+    try {
+      sessionStorage.setItem('resiboss_active_setting_tab_v1', stab);
+      localStorage.setItem('resiboss_active_setting_tab_v1', stab);
+    } catch (e) {}
+  };
   const [currency, setCurrency] = useState('PHP');
   const [language, setLanguageState] = useState(() => {
     try {
@@ -463,7 +498,6 @@ export const AppProvider = ({ children }) => {
         const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
         const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
-        setActiveTab('dashboard');
         setIsTermsAccepted(true);
         try {
           localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
@@ -498,7 +532,6 @@ export const AppProvider = ({ children }) => {
         const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
         const profile = buildUserProfile(session.user, provider);
         setUserProfile(profile);
-        setActiveTab('dashboard');
         setIsTermsAccepted(true);
         try {
           localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
