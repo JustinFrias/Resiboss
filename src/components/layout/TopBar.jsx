@@ -52,6 +52,8 @@ export const TopBar = ({ onOpenMobile }) => {
   const profileContainerRef = useRef(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const isLight = theme === 'light';
+
 
   const getBreadcrumb = () => {
     switch (activeTab) {
