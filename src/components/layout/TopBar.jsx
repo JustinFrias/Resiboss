@@ -232,50 +232,8 @@ export const TopBar = ({ onOpenMobile }) => {
         overflow: 'visible',
       }}
     >
-      {/* 1. Left: Mobile Brand & Desktop Breadcrumb */}
+      {/* 1. Left: Mobile Menu & Desktop Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        {/* Mobile Brand Emblem & Name */}
-        <div
-          className="topbar-mobile-brand"
-          onClick={() => {
-            soundFx.playClick();
-            setActiveTab('dashboard');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          style={{
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            userSelect: 'none',
-          }}
-        >
-          <img
-            src="/resiboss-emblem.png"
-            alt="Resiboss"
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '8px',
-              objectFit: 'contain',
-              display: 'block',
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-              fontSize: '1.25rem',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              color: isLight ? '#0f2942' : '#ffffff',
-            }}
-          >
-            Resi<span style={{ color: isLight ? '#0284c7' : '#00f2fe' }}>boss</span>
-          </span>
-        </div>
-
         <button
           onClick={onOpenMobile}
           className="mobile-hamburger-btn"
