@@ -660,8 +660,9 @@ export const SettingsView = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
+                    className="keep-white"
                     style={{
-                      background: '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#0b1e36',
                       border: 'none',
                       borderRadius: '10px',
                       padding: '9px 18px',
@@ -673,12 +674,13 @@ export const SettingsView = () => {
                       gap: '8px',
                       cursor: 'pointer',
                       transition: 'background 0.2s ease',
+                      boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.25)' : 'none',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
                   >
                     <Upload size={15} />
-                    <span>Upload Photo</span>
+                    <span className="keep-white" style={{ color: '#ffffff' }}>Upload Photo</span>
                   </button>
                   <input
                     type="file"
@@ -856,8 +858,9 @@ export const SettingsView = () => {
                   <button
                     type="submit"
                     disabled={isSaving}
+                    className="keep-white"
                     style={{
-                      background: '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#0b1e36',
                       border: 'none',
                       borderRadius: '12px',
                       padding: '11px 28px',
@@ -866,12 +869,14 @@ export const SettingsView = () => {
                       fontWeight: 700,
                       cursor: isSaving ? 'not-allowed' : 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: '0 2px 10px rgba(11, 30, 54, 0.25)',
+                      boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(11, 30, 54, 0.25)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
                   >
-                    {isSaving ? 'Saving...' : 'Save Profile'}
+                    <span className="keep-white" style={{ color: '#ffffff' }}>
+                      {isSaving ? 'Saving...' : 'Save Profile'}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -944,8 +949,9 @@ export const SettingsView = () => {
                 />
                 <button
                   type="submit"
+                  className="keep-white"
                   style={{
-                    background: '#0b1e36',
+                    background: isLight ? '#1e3a8a' : '#0b1e36',
                     border: 'none',
                     borderRadius: '12px',
                     padding: '11px 20px',
@@ -957,10 +963,13 @@ export const SettingsView = () => {
                     gap: '6px',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
+                    boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.2)' : 'none',
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
                 >
                   <Plus size={16} />
-                  <span>Add</span>
+                  <span className="keep-white" style={{ color: '#ffffff' }}>Add</span>
                 </button>
               </form>
 
@@ -1317,8 +1326,9 @@ export const SettingsView = () => {
                   <button
                     type="submit"
                     disabled={isUpdatingPass}
+                    className="keep-white"
                     style={{
-                      background: '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#0b1e36',
                       border: 'none',
                       borderRadius: '12px',
                       padding: '11px 24px',
@@ -1330,13 +1340,15 @@ export const SettingsView = () => {
                       gap: '8px',
                       cursor: isUpdatingPass ? 'not-allowed' : 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: '0 2px 10px rgba(11, 30, 54, 0.25)',
+                      boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(11, 30, 54, 0.25)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
                   >
                     <KeyRound size={15} />
-                    <span>{isUpdatingPass ? 'Updating...' : 'Update Password'}</span>
+                    <span className="keep-white" style={{ color: '#ffffff' }}>
+                      {isUpdatingPass ? 'Updating...' : 'Update Password'}
+                    </span>
                   </button>
                 </form>
 
@@ -1470,8 +1482,9 @@ export const SettingsView = () => {
                   <button
                     type="button"
                     onClick={handleToggleMfa}
+                    className="keep-white"
                     style={{
-                      background: '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#0b1e36',
                       border: 'none',
                       borderRadius: '10px',
                       padding: '9px 20px',
@@ -1480,12 +1493,14 @@ export const SettingsView = () => {
                       fontWeight: 600,
                       cursor: 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: '0 2px 8px rgba(11, 30, 54, 0.25)',
+                      boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.25)' : '0 2px 8px rgba(11, 30, 54, 0.25)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
                   >
-                    {mfaEnabled ? 'Disable MFA' : 'Enable MFA'}
+                    <span className="keep-white" style={{ color: '#ffffff' }}>
+                      {mfaEnabled ? 'Disable MFA' : 'Enable MFA'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1705,8 +1720,9 @@ export const SettingsView = () => {
                 <button
                   type="button"
                   onClick={handleSavePreferences}
+                  className="keep-white"
                   style={{
-                    background: '#0b1e36',
+                    background: isLight ? '#1e3a8a' : '#0b1e36',
                     border: 'none',
                     borderRadius: '12px',
                     padding: '11px 28px',
@@ -1715,12 +1731,12 @@ export const SettingsView = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     transition: 'background 0.2s ease',
-                    boxShadow: '0 2px 10px rgba(11, 30, 54, 0.25)',
+                    boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(11, 30, 54, 0.25)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
                 >
-                  Save Preferences
+                  <span className="keep-white" style={{ color: '#ffffff' }}>Save Preferences</span>
                 </button>
               </div>
             </div>

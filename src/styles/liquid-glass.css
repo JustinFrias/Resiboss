@@ -148,12 +148,40 @@
   font-weight: 700;
 }
 
-/* Override all hardcoded white text in light mode (except solid buttons) */
-[data-theme="light"] [style*="color: #ffffff"]:not(.keep-white):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not([style*="background: linear-gradient(135deg, #ef4444"]):not(.liquid-btn-primary),
-[data-theme="light"] [style*="color: #fff"]:not(.keep-white):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary),
-[data-theme="light"] [style*="color: white"]:not(.keep-white):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary),
-[data-theme="light"] [style*="color: rgb(255, 255, 255)"]:not(.keep-white):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary) {
+/* Override hardcoded white text on non-buttons in light mode */
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not([style*="background: linear-gradient(135deg, #ef4444"]):not(.liquid-btn-primary)[style*="color: #ffffff"],
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: #fff"],
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: white"],
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: rgb(255, 255, 255)"] {
   color: #0f172a !important;
+}
+
+/* Ensure all buttons with dark backgrounds always retain crisp white text and stroke in light mode */
+[data-theme="light"] button[style*="background: #0b1e36"],
+[data-theme="light"] button[style*="background: #0b1e36"] *,
+[data-theme="light"] button[style*="background: #1e3a8a"],
+[data-theme="light"] button[style*="background: #1e3a8a"] *,
+[data-theme="light"] button[style*="background: #0f2942"],
+[data-theme="light"] button[style*="background: #0f2942"] *,
+[data-theme="light"] button[style*="background: #2563eb"],
+[data-theme="light"] button[style*="background: #2563eb"] *,
+[data-theme="light"] button[style*="background: #0284c7"],
+[data-theme="light"] button[style*="background: #0284c7"] *,
+[data-theme="light"] button[style*="background: #0f172a"],
+[data-theme="light"] button[style*="background: #0f172a"] *,
+[data-theme="light"] .keep-white,
+[data-theme="light"] .keep-white * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+[data-theme="light"] button[style*="background: #0b1e36"] svg,
+[data-theme="light"] button[style*="background: #1e3a8a"] svg,
+[data-theme="light"] button[style*="background: #0f2942"] svg,
+[data-theme="light"] button[style*="background: #2563eb"] svg,
+[data-theme="light"] button[style*="background: #0284c7"] svg,
+[data-theme="light"] .keep-white svg {
+  stroke: #ffffff !important;
 }
 
 /* Subtitle and secondary muted text contrast */
