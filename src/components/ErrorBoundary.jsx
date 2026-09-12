@@ -2,12 +2,12 @@ import React from 'react';
 
 /**
  * Global Error Boundary – catches any unhandled render crash in the React tree
- * and shows a recovery screen instead of a blank white page.
+ * and shows a recovery screen with the exact error message for debugging.
  */
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, info: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -16,11 +16,11 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error('[Resiboss ErrorBoundary]', error, info);
+    this.setState({ info });
   }
 
   handleReload = () => {
     try {
-      // Clear any potentially corrupt state before reloading
       sessionStorage.clear();
     } catch (e) {}
     window.location.reload();
@@ -28,6 +28,11 @@ export class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      const errMsg = this.state.error
+        ? (this.state.error.message || this.state.error.toString())
+        : 'Unknown error';
+      const stack = this.state.info?.componentStack || '';
+
       return (
         <div
           style={{
@@ -43,77 +48,67 @@ export class ErrorBoundary extends React.Component {
             color: '#f8fafc',
             textAlign: 'center',
             zIndex: 99999,
+            overflowY: 'auto',
           }}
         >
-          {/* Glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '15%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '500px',
-              height: '300px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(56,189,248,0.12), transparent 70%)',
-              filter: 'blur(60px)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* Logo */}
           <img
             src="/resiboss-emblem.png"
             alt="Resiboss"
-            style={{ width: '72px', height: '72px', objectFit: 'contain', marginBottom: '24px', opacity: 0.9 }}
+            style={{ width: '64px', height: '64px', objectFit: 'contain', marginBottom: '20px', opacity: 0.9 }}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
 
-          <h1
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 800,
-              margin: '0 0 10px 0',
-              letterSpacing: '-0.02em',
-            }}
-          >
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
             Resiboss encountered an error
           </h1>
-          <p
-            style={{
-              fontSize: '0.88rem',
-              color: '#94a3b8',
-              maxWidth: '380px',
-              lineHeight: 1.6,
-              margin: '0 0 28px 0',
-            }}
-          >
-            Something went wrong while loading the app. This is usually temporary — try reloading the page.
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '380px', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+            Something went wrong. Error details below:
           </p>
 
-          {/* Error detail (collapsed) */}
-          {this.state.error && (
-            <details
+          {/* Error message — always visible */}
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '500px',
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              marginBottom: '16px',
+              textAlign: 'left',
+              fontSize: '0.8rem',
+              color: '#fca5a5',
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            <strong style={{ color: '#f87171', display: 'block', marginBottom: '6px' }}>Error:</strong>
+            {errMsg}
+          </div>
+
+          {/* Component stack */}
+          {stack && (
+            <div
               style={{
-                marginBottom: '24px',
-                fontSize: '0.72rem',
-                color: '#64748b',
-                maxWidth: '400px',
+                width: '100%',
+                maxWidth: '500px',
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '10px',
-                padding: '10px 14px',
+                padding: '12px 14px',
+                marginBottom: '20px',
                 textAlign: 'left',
-                cursor: 'pointer',
+                fontSize: '0.68rem',
+                color: '#64748b',
+                wordBreak: 'break-all',
+                whiteSpace: 'pre-wrap',
+                maxHeight: '160px',
+                overflowY: 'auto',
               }}
             >
-              <summary style={{ cursor: 'pointer', color: '#94a3b8', marginBottom: '6px' }}>
-                View error details
-              </summary>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {this.state.error.toString()}
-              </pre>
-            </details>
+              <strong style={{ color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Component stack:</strong>
+              {stack}
+            </div>
           )}
 
           <button
@@ -128,7 +123,6 @@ export class ErrorBoundary extends React.Component {
               border: 'none',
               cursor: 'pointer',
               boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)',
-              letterSpacing: '0.01em',
             }}
           >
             Reload Resiboss
