@@ -219,15 +219,13 @@ export const TopBar = ({ onOpenMobile }) => {
 
   return (
     <header
-      className="glass-panel topbar-header"
+      className="topbar-header"
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 20px',
-        borderRadius: '16px',
-        border: '1px solid var(--glass-border)',
-        background: 'var(--bg-surface)',
+        padding: '0 24px',
+        height: '60px',
         gap: '16px',
         overflow: 'visible',
       }}
