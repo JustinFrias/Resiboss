@@ -47,32 +47,127 @@ export const DocumentsView = () => {
 
   return (
     <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
-      {/* Title Header */}
-      <div className="view-title-header" style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
-          {t.documents.auditVaultTitle}
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-          {t.documents.subtitle}
-        </p>
+      {/* Title Header with Combined Controls at Top Right */}
+      <div
+        className="view-title-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          flexWrap: 'wrap',
+          gap: '16px',
+          marginBottom: '20px',
+        }}
+      >
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            {t.documents.auditVaultTitle}
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
+            {t.documents.subtitle}
+          </p>
+        </div>
+
+        {/* Combined Controls: Categories + Status + View Toggle (Top Right of Searchbar) */}
+        <div
+          className="documents-top-controls"
+          style={{
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* Category Filter */}
+          <select
+            className="liquid-input"
+            style={{ width: 'auto', minWidth: '130px', cursor: 'pointer' }}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
+              {t.documents.allCategories}
+            </option>
+            {Object.keys(t.categories).map((cat) => (
+              <option key={cat} value={cat} style={{ background: '#090d1a', color: '#fff' }}>
+                {t.categories[cat]}
+              </option>
+            ))}
+          </select>
+
+          {/* Status Filter */}
+          <select
+            className="liquid-input"
+            style={{ width: 'auto', minWidth: '120px', cursor: 'pointer' }}
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
+              {t.documents.allStatus}
+            </option>
+            <option value="Verified" style={{ background: '#090d1a', color: '#fff' }}>
+              {t.dashboard.verified}
+            </option>
+            <option value="Pending" style={{ background: '#090d1a', color: '#fff' }}>
+              {t.dashboard.pending}
+            </option>
+          </select>
+
+          {/* View Mode Toggle */}
+          <div
+            style={{
+              display: 'flex',
+              background: 'rgba(10, 15, 30, 0.6)',
+              padding: '3px',
+              borderRadius: '10px',
+              border: '1px solid var(--glass-border)',
+            }}
+          >
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '7px',
+                border: 'none',
+                background: viewMode === 'grid' ? 'rgba(0, 242, 254, 0.2)' : 'transparent',
+                color: viewMode === 'grid' ? '#00f2fe' : 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+              title="Grid View"
+            >
+              <Grid size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '7px',
+                border: 'none',
+                background: viewMode === 'table' ? 'rgba(0, 242, 254, 0.2)' : 'transparent',
+                color: viewMode === 'table' ? '#00f2fe' : 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+              title="Table View"
+            >
+              <List size={16} />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Filter & Search Bar */}
+      {/* Standalone Search Bar */}
       <div
-        className="glass-panel documents-filter-bar resiboss-search-panel"
+        className="glass-panel resiboss-search-panel"
         style={{
-          padding: '14px 20px',
+          padding: '12px 18px',
           marginBottom: '24px',
           display: 'flex',
-          gap: '14px',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
           borderRadius: '20px',
         }}
       >
         {/* Search Input */}
-        <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '340px' }}>
           <Search
             size={17}
             strokeWidth={2}
@@ -114,84 +209,6 @@ export const DocumentsView = () => {
               ✕
             </button>
           )}
-        </div>
-
-        {/* Category & Status Filter Row on Mobile */}
-        <div className="documents-filter-row" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {/* Category Filter */}
-          <select
-            className="liquid-input"
-            style={{ width: 'auto', minWidth: '130px', cursor: 'pointer' }}
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
-              {t.documents.allCategories}
-            </option>
-            {Object.keys(t.categories).map((cat) => (
-              <option key={cat} value={cat} style={{ background: '#090d1a', color: '#fff' }}>
-                {t.categories[cat]}
-              </option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            className="liquid-input"
-            style={{ width: 'auto', minWidth: '120px', cursor: 'pointer' }}
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-          >
-            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
-              {t.documents.allStatus}
-            </option>
-            <option value="Verified" style={{ background: '#090d1a', color: '#fff' }}>
-              {t.dashboard.verified}
-            </option>
-            <option value="Pending" style={{ background: '#090d1a', color: '#fff' }}>
-              {t.dashboard.pending}
-            </option>
-          </select>
-        </div>
-
-        {/* View Mode Toggle */}
-        <div
-          style={{
-            display: 'flex',
-            background: 'rgba(10, 15, 30, 0.6)',
-            padding: '3px',
-            borderRadius: '10px',
-            border: '1px solid var(--glass-border)',
-          }}
-        >
-          <button
-            onClick={() => setViewMode('grid')}
-            style={{
-              padding: '6px 10px',
-              borderRadius: '7px',
-              border: 'none',
-              background: viewMode === 'grid' ? 'rgba(0, 242, 254, 0.2)' : 'transparent',
-              color: viewMode === 'grid' ? '#00f2fe' : 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
-            title="Grid View"
-          >
-            <Grid size={16} />
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            style={{
-              padding: '6px 10px',
-              borderRadius: '7px',
-              border: 'none',
-              background: viewMode === 'table' ? 'rgba(0, 242, 254, 0.2)' : 'transparent',
-              color: viewMode === 'table' ? '#00f2fe' : 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
-            title="Table View"
-          >
-            <List size={16} />
-          </button>
         </div>
       </div>
 
