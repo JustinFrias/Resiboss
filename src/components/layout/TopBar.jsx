@@ -233,32 +233,56 @@ export const TopBar = ({ onOpenMobile }) => {
     >
       {/* 1. Left: Mobile Menu & Desktop Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        <button
-          onClick={() => {
-            soundFx?.playClick?.();
-            if (activeTab === 'settings') {
+        {activeTab === 'settings' ? (
+          <button
+            onClick={() => {
+              soundFx?.playClick?.();
               window.dispatchEvent(new CustomEvent('resiboss:open-settings-menu'));
-            } else if (onOpenMobile) {
-              onOpenMobile();
-            }
-          }}
-          className="mobile-hamburger-btn"
-          style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '10px',
-            width: '36px',
-            height: '36px',
-            display: 'none',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
-          }}
-          title={activeTab === 'settings' ? 'Settings Menu' : 'Open Menu'}
-        >
-          <Menu size={18} />
-        </button>
+            }}
+            className="mobile-settings-hamburger-btn"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              width: '36px',
+              height: '36px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isLight ? '#0f2942' : 'var(--text-primary)',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+            title="Settings Menu"
+            aria-label="Open Settings Menu"
+          >
+            <Menu size={24} strokeWidth={2.4} />
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              soundFx?.playClick?.();
+              if (onOpenMobile) {
+                onOpenMobile();
+              }
+            }}
+            className="mobile-hamburger-btn"
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: '10px',
+              width: '36px',
+              height: '36px',
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+            }}
+            title="Open Menu"
+          >
+            <Menu size={18} />
+          </button>
+        )}
 
         <span
           className="topbar-workspace-title"

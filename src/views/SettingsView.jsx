@@ -129,10 +129,14 @@ export const SettingsView = () => {
   });
 
   // Dynamic Approx Storage calculation
-  const [storageMb, setStorageMb] = useState('1.2');
+  const [storageMb, setStorageMb] = useState('0');
 
   useEffect(() => {
     try {
+      if (!documents || documents.length === 0) {
+        setStorageMb('0');
+        return;
+      }
       let totalBytes = 0;
       for (let x in localStorage) {
         if (localStorage.hasOwnProperty(x)) {
@@ -140,9 +144,9 @@ export const SettingsView = () => {
         }
       }
       const mb = (totalBytes / (1024 * 1024)).toFixed(1);
-      setStorageMb(parseFloat(mb) > 0.1 ? mb : '1.2');
+      setStorageMb(parseFloat(mb) > 0 ? mb : (documents.length * 0.2).toFixed(1));
     } catch (e) {
-      setStorageMb('1.2');
+      setStorageMb(documents?.length ? (documents.length * 0.2).toFixed(1) : '0');
     }
   }, [documents, notifications]);
 
@@ -428,7 +432,7 @@ export const SettingsView = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            {documents?.length ?? 6}
+            {documents?.length || 0}
           </div>
         </div>
 
@@ -465,7 +469,9 @@ export const SettingsView = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            {`${((documents?.length ? documents.length * 0.2 : 1.2)).toFixed(1)} MB`}
+            {documents && documents.length > 0
+              ? `${storageMb && storageMb !== '0' ? storageMb : (documents.length * 0.2).toFixed(1)} MB`
+              : '0 MB'}
           </div>
         </div>
 
@@ -502,7 +508,7 @@ export const SettingsView = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            1
+            {documents && documents.length > 0 ? 1 : 0}
           </div>
         </div>
       </div>

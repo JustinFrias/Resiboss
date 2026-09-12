@@ -1355,6 +1355,10 @@ input::-ms-clear {
   }
 }
 
+.mobile-settings-hamburger-btn {
+  display: none;
+}
+
 @media (max-width: 768px) {
   /* Prevent iOS Safari & Android Webview auto-zooming into inputs when tapped */
   input, select, textarea, .liquid-input {
@@ -1741,6 +1745,11 @@ input::-ms-clear {
   }
   .mobile-hamburger-btn {
     display: none !important;
+  }
+  .mobile-settings-hamburger-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
   }
   .topbar-search-container {
     display: none !important;
