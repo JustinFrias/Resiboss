@@ -52,7 +52,7 @@ export const translations = {
     scanner: {
       title: "Smart OCR Receipt Scanner",
       subtitle: "High-accuracy optical character recognition & ledger tracking",
-      resibossScanTitle: "Scan Buddy",
+      resibossScanTitle: "Scan Boss",
       resibossScanDesc: "Upload or photograph receipts — AI extracts vendor, amounts, VAT & line items instantly.",
       takePhoto: "Take Photo",
       takePhotoDesc: "Use your camera to photograph a receipt",
@@ -260,7 +260,7 @@ export const translations = {
     scanner: {
       title: "Matalinong Scanner ng Resibo",
       subtitle: "Awtomatikong pagbasa ng impormasyon mula sa resibo at tracking",
-      resibossScanTitle: "Resiboss Scanner",
+      resibossScanTitle: "Scan Boss",
       resibossScanDesc: "Mag-upload o kumuha ng litrato ng resibo — agad kukunin ng AI ang tindahan, halaga, VAT at mga binili.",
       takePhoto: "Kumuha ng Litrato",
       takePhotoDesc: "Gamitin ang camera para kuhanan ang papel na resibo o invoice",
@@ -468,7 +468,7 @@ export const translations = {
     scanner: {
       title: "Escáner Inteligente OCR",
       subtitle: "Extracción automática de datos fiscales y líneas de gasto",
-      resibossScanTitle: "Escáner Resiboss",
+      resibossScanTitle: "Scan Boss",
       resibossScanDesc: "Sube o fotografía recibos — la IA extrae proveedor, montos, IVA y líneas al instante.",
       takePhoto: "Tomar Foto",
       takePhotoDesc: "Apunta la cámara al recibo en papel o factura digital",
@@ -676,7 +676,7 @@ export const translations = {
     scanner: {
       title: "スマートOCRレシートスキャナー",
       subtitle: "高精度光学文字認識および自動記帳",
-      resibossScanTitle: "Resiboss スキャン",
+      resibossScanTitle: "Scan Boss",
       resibossScanDesc: "レシートをアップロードまたは撮影 — AIが店舗名、金額、消費税、品目を即座に抽出します。",
       takePhoto: "写真を撮影",
       takePhotoDesc: "紙のレシートや電子領収書にカメラをまっすぐ向けてください",
