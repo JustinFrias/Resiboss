@@ -1,14 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { TiltCard } from '../components';
+import { soundFx } from '../utils/soundEffects';
 import {
   TrendingUp,
   PieChart,
-  ShieldCheck,
   Building,
-  Sparkles,
   AlertCircle,
-  Lightbulb,
   Receipt,
 } from 'lucide-react';
 
@@ -37,15 +35,22 @@ export const AnalyticView = () => {
   // Highest single receipt
   const highestDoc = [...documents].sort((a, b) => (b.total || 0) - (a.total || 0))[0];
 
+  const [selectedMonth, setSelectedMonth] = useState('Aug');
+  const [hoveredMonth, setHoveredMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState('FY 2026');
+
+  const yearMultiplier = selectedYear === 'FY 2026' ? 1 : 0.82;
+
   // Monthly Simulation Bars
   const monthlyData = [
-    { month: 'Apr', amount: totalSpend * 0.55 },
-    { month: 'May', amount: totalSpend * 0.72 },
-    { month: 'Jun', amount: totalSpend * 0.64 },
-    { month: 'Jul', amount: totalSpend * 0.88 },
-    { month: 'Aug', amount: totalSpend },
+    { month: 'Apr', amount: totalSpend * 0.55 * yearMultiplier },
+    { month: 'May', amount: totalSpend * 0.72 * yearMultiplier },
+    { month: 'Jun', amount: totalSpend * 0.64 * yearMultiplier },
+    { month: 'Jul', amount: totalSpend * 0.88 * yearMultiplier },
+    { month: 'Aug', amount: totalSpend * 1.0 * yearMultiplier },
   ];
   const maxMonthAmount = Math.max(...monthlyData.map((m) => m.amount), 1);
+  const activeMonthItem = monthlyData.find((m) => m.month === selectedMonth) || monthlyData[monthlyData.length - 1];
 
   return (
     <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
@@ -130,7 +135,28 @@ export const AnalyticView = () => {
                 {t.analytic.aggregatedExpDesc}
               </span>
             </div>
-            <span className="liquid-badge liquid-badge-cyan">FY 2026</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedYear((prev) => (prev === 'FY 2026' ? 'FY 2025' : 'FY 2026'));
+                soundFx.playClick();
+              }}
+              className="liquid-badge liquid-badge-cyan"
+              style={{
+                cursor: 'pointer',
+                border: 'none',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s ease',
+              }}
+              title="Click to toggle Fiscal Year"
+            >
+              {selectedYear} ▾
+            </button>
           </div>
 
           <div
@@ -144,13 +170,22 @@ export const AnalyticView = () => {
               borderBottom: '1px solid var(--glass-border)',
             }}
           >
-            {monthlyData.map((m, idx) => {
+            {monthlyData.map((m) => {
               const heightPct = Math.round((m.amount / maxMonthAmount) * 100);
-              const isLatest = idx === monthlyData.length - 1;
+              const isSelected = selectedMonth === m.month;
+              const isHovered = hoveredMonth === m.month;
 
               return (
                 <div
                   key={m.month}
+                  onClick={() => {
+                    setSelectedMonth(m.month);
+                    soundFx.playClick();
+                  }}
+                  onMouseEnter={() => setHoveredMonth(m.month)}
+                  onMouseLeave={() => setHoveredMonth(null)}
+                  role="button"
+                  tabIndex={0}
                   style={{
                     flex: 1,
                     display: 'flex',
@@ -158,15 +193,22 @@ export const AnalyticView = () => {
                     alignItems: 'center',
                     height: '100%',
                     justifyContent: 'flex-end',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    transform: isSelected ? 'translateY(-4px)' : isHovered ? 'translateY(-2px)' : 'none',
+                    transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   }}
+                  title={`Click to view ${m.month} details`}
                 >
                   <div
                     style={{
                       fontSize: '0.75rem',
                       fontFamily: 'var(--font-mono)',
-                      color: isLatest ? '#00f2fe' : 'var(--text-secondary)',
+                      color: isSelected ? '#00f2fe' : isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
                       marginBottom: '8px',
-                      fontWeight: 600,
+                      fontWeight: isSelected ? 800 : 600,
+                      transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     {formatCurrency(m.amount)}
@@ -176,21 +218,102 @@ export const AnalyticView = () => {
                       width: '100%',
                       maxWidth: '56px',
                       height: `${heightPct}%`,
-                      background: isLatest
+                      background: isSelected
                         ? 'linear-gradient(180deg, #00f2fe 0%, #a855f7 100%)'
+                        : isHovered
+                        ? 'linear-gradient(180deg, rgba(0, 242, 254, 0.45) 0%, rgba(255, 255, 255, 0.2) 100%)'
                         : 'linear-gradient(180deg, var(--glass-border-bright) 0%, var(--glass-border) 100%)',
                       borderRadius: '8px 8px 3px 3px',
-                      boxShadow: isLatest ? '0 0 20px rgba(0, 242, 254, 0.45)' : 'none',
-                      transition: 'height 0.6s ease',
+                      boxShadow: isSelected
+                        ? '0 0 24px rgba(0, 242, 254, 0.55), 0 4px 12px rgba(168, 85, 247, 0.35)'
+                        : isHovered
+                        ? '0 0 14px rgba(0, 242, 254, 0.3)'
+                        : 'none',
+                      border: isSelected
+                        ? '1px solid rgba(255, 255, 255, 0.5)'
+                        : isHovered
+                        ? '1px solid rgba(0, 242, 254, 0.4)'
+                        : '1px solid transparent',
+                      transition: 'height 0.6s ease, background 0.2s ease, box-shadow 0.2s ease, border 0.2s ease',
                     }}
                   />
-                  <div style={{ marginTop: '10px', fontSize: '0.8rem', fontWeight: 600, color: isLatest ? 'var(--cyan-glow)' : 'var(--text-muted)' }}>
-                    {m.month}
+                  <div
+                    style={{
+                      marginTop: '10px',
+                      fontSize: '0.82rem',
+                      fontWeight: isSelected ? 800 : 600,
+                      color: isSelected ? 'var(--cyan-glow)' : isHovered ? 'var(--text-primary)' : 'var(--text-muted)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'color 0.2s ease',
+                    }}
+                  >
+                    <span>{m.month}</span>
+                    {isSelected && (
+                      <span
+                        style={{
+                          width: '4px',
+                          height: '4px',
+                          borderRadius: '50%',
+                          background: '#00f2fe',
+                          boxShadow: '0 0 6px #00f2fe',
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Interactive Selected Month Summary Pill */}
+          {activeMonthItem && (
+            <div
+              style={{
+                marginTop: '18px',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                background: 'rgba(0, 242, 254, 0.07)',
+                border: '1px solid rgba(0, 242, 254, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#00f2fe',
+                    boxShadow: '0 0 8px #00f2fe',
+                  }}
+                />
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {activeMonthItem.month} ({selectedYear})
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Expenses: </span>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#00f2fe' }}>
+                    {formatCurrency(activeMonthItem.amount)}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Est. Tax: </span>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#10b981' }}>
+                    {formatCurrency(activeMonthItem.amount * 0.12)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Category Share SVG Ring Donut */}
