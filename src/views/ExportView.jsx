@@ -80,7 +80,9 @@ export const ExportView = () => {
   // Handle download of selected receipts directly as Microsoft Excel (.xlsx)
   const handleDownload = async () => {
     const docsToExport = filteredDocs.filter((doc) => selectedDocIds.includes(doc.id));
-    if (docsToExport.length === 0) {
+    const targetDocs = docsToExport.length > 0 ? docsToExport : filteredDocs;
+
+    if (targetDocs.length === 0) {
       alert('Please select at least one document to download.');
       return;
     }
@@ -91,7 +93,7 @@ export const ExportView = () => {
     const filename = `Resiboss_Expense_Report_${timestamp}.xlsx`;
 
     try {
-      const res = await downloadReceiptsExcel(docsToExport, filename);
+      const res = await downloadReceiptsExcel(targetDocs, filename);
 
       soundFx.playSuccessChime();
       try {
@@ -103,9 +105,9 @@ export const ExportView = () => {
         });
       } catch (e) {}
 
-      let statusMsg = `Successfully generated Excel report (${docsToExport.length} receipts)!`;
+      let statusMsg = `Successfully generated Excel report (${targetDocs.length} receipts)!`;
       if (res?.savedToDownloads) {
-        statusMsg = `Saved to Downloads folder (${docsToExport.length} receipts)!`;
+        statusMsg = `Saved to Downloads folder (${targetDocs.length} receipts)!`;
       }
 
       setExportNotification({
@@ -119,6 +121,45 @@ export const ExportView = () => {
     } catch (exportErr) {
       console.error('Export download error:', exportErr);
       alert('Export failed. Please check device permissions and try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Handle direct single receipt download
+  const handleDownloadSingle = async (doc, e) => {
+    e?.stopPropagation?.();
+    if (!doc) return;
+    setIsExporting(true);
+    soundFx.playLaserHum();
+    const safeMerchant = (doc.merchant || 'Receipt').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `Receipt_${safeMerchant}_${doc.id || 'DOC'}.xlsx`;
+
+    try {
+      const res = await downloadReceiptsExcel([doc], filename);
+      soundFx.playSuccessChime();
+      try {
+        confetti({
+          particleCount: 45,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#00f2fe', '#38bdf8', '#ffffff'],
+        });
+      } catch (e) {}
+
+      const statusMsg = res?.savedToDownloads
+        ? `Saved receipt for ${doc.merchant} to Downloads!`
+        : `Downloaded receipt for ${doc.merchant}!`;
+
+      setExportNotification({
+        message: statusMsg,
+        downloadUrl: res?.downloadUrl || null,
+        filename,
+      });
+      setTimeout(() => setExportNotification(null), 8000);
+    } catch (err) {
+      console.error('Single download error:', err);
+      alert('Download failed. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -251,7 +292,13 @@ export const ExportView = () => {
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
           >
             <Download size={16} />
-            <span>{isExporting ? 'Generating...' : 'Download'}</span>
+            <span>
+              {isExporting
+                ? 'Generating...'
+                : selectedDocIds.length > 0
+                ? `Download (${selectedDocIds.length})`
+                : 'Download All'}
+            </span>
           </button>
         </div>
       </div>
@@ -360,8 +407,8 @@ export const ExportView = () => {
           </div>
         </div>
 
-        {/* Documents Table */}
-        <div style={{ overflowX: 'auto' }}>
+        {/* Desktop Documents Table */}
+        <div className="export-table-desktop" style={{ overflowX: 'auto' }}>
           <table
             style={{
               width: '100%',
@@ -405,6 +452,7 @@ export const ExportView = () => {
                 <th style={{ padding: '10px 12px' }}>Category</th>
                 <th style={{ padding: '10px 12px', textAlign: 'right' }}>VAT</th>
                 <th style={{ padding: '10px 12px', textAlign: 'right' }}>Total Amount</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -485,12 +533,23 @@ export const ExportView = () => {
                       >
                         {formatCurrency(doc.total || 0)}
                       </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDownloadSingle(doc, e)}
+                          className="liquid-btn liquid-btn-secondary"
+                          style={{ padding: '5px 10px', fontSize: '0.75rem', color: 'var(--cyan-glow)' }}
+                          title="Download this receipt"
+                        >
+                          <Download size={13} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                     No receipts found for the selected range.
                   </td>
                 </tr>
@@ -498,7 +557,141 @@ export const ExportView = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Cards Checklist (Visible on mobile viewports) */}
+        <div className="export-cards-mobile" style={{ display: 'none', flexDirection: 'column', gap: '12px' }}>
+          {filteredDocs.length > 0 ? (
+            filteredDocs.map((doc) => {
+              const isChecked = selectedDocIds.includes(doc.id);
+              return (
+                <div
+                  key={doc.id}
+                  onClick={() => handleToggleDoc(doc.id)}
+                  style={{
+                    background: isChecked ? 'rgba(0, 242, 254, 0.1)' : 'rgba(255, 255, 255, 0.04)',
+                    border: isChecked ? '1.5px solid rgba(0, 242, 254, 0.6)' : '1px solid var(--glass-border)',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        border: isChecked ? 'none' : '2px solid var(--glass-border-bright)',
+                        background: isChecked ? 'var(--cyan-glow)' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isChecked && <Check size={15} color="#090e21" strokeWidth={3} />}
+                    </div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                        {doc.merchant}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        {doc.id} • {doc.date}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                        {formatCurrency(doc.total || 0)}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#34d399' }}>
+                        VAT: {formatCurrency(doc.vat || 0)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDownloadSingle(doc, e)}
+                      className="liquid-btn liquid-btn-secondary"
+                      style={{ padding: '8px', color: 'var(--cyan-glow)', borderRadius: '8px' }}
+                      title="Download this single receipt"
+                    >
+                      <Download size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No receipts found for the selected range.
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Floating Bottom Download Bar on Mobile when items are selected */}
+      {selectedDocIds.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 'calc(72px + env(safe-area-inset-bottom, 16px))',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 130,
+            background: 'rgba(10, 16, 34, 0.96)',
+            border: '1px solid rgba(0, 242, 254, 0.45)',
+            borderRadius: '999px',
+            padding: '8px 16px 8px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 254, 0.3)',
+            backdropFilter: 'blur(20px)',
+            animation: 'fadeIn 0.2s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            {selectedDocIds.length} selected
+          </span>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={isExporting}
+            className="liquid-btn liquid-btn-primary"
+            style={{
+              padding: '6px 16px',
+              fontSize: '0.82rem',
+              borderRadius: '999px',
+              gap: '6px',
+            }}
+          >
+            <Download size={14} />
+            <span>{isExporting ? 'Saving...' : 'Download'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedDocIds([])}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              padding: '4px',
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 };

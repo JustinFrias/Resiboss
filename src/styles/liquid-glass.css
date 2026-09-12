@@ -1358,6 +1358,12 @@ input::-ms-clear {
 .mobile-settings-hamburger-btn {
   display: none;
 }
+.export-cards-mobile {
+  display: none;
+}
+.export-table-desktop {
+  display: block;
+}
 
 @media (max-width: 768px) {
   /* Prevent iOS Safari & Android Webview auto-zooming into inputs when tapped */
@@ -1752,6 +1758,12 @@ input::-ms-clear {
     justify-content: center;
   }
   .topbar-search-container {
+    display: none !important;
+  }
+  .export-cards-mobile {
+    display: flex !important;
+  }
+  .export-table-desktop {
     display: none !important;
   }
 
