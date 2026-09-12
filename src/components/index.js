@@ -19,3 +19,6 @@ export { ResibossAuthCard } from './auth/ResibossAuthCard';
 
 // Canvas / Visual Background
 export { LiquidBackground3D } from './canvas/LiquidBackground3D';
+
+// Global Error Boundary
+export { ErrorBoundary } from './ErrorBoundary';

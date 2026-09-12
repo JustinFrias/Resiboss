@@ -10,6 +10,7 @@ import {
   TermsModal,
   PrivacyPolicyModal,
   CookieConsentBanner,
+  ErrorBoundary,
 } from './components';
 
 import { DashboardView } from './views/DashboardView';
@@ -38,7 +39,11 @@ const MainLayout = () => {
 
   // If not logged in, show Login / Sign Up screen first
   if (!userProfile) {
-    return <AuthView />;
+    return (
+      <ErrorBoundary>
+        <AuthView />
+      </ErrorBoundary>
+    );
   }
 
   const renderActiveView = () => {
@@ -85,9 +90,11 @@ const MainLayout = () => {
 
           <main ref={viewportRef} className="view-viewport">
             {/* key=activeTab forces a fresh mount + CSS animation on every tab switch */}
-            <div key={activeTab} className="view-page">
-              {renderActiveView()}
-            </div>
+            <ErrorBoundary key={activeTab}>
+              <div className="view-page">
+                {renderActiveView()}
+              </div>
+            </ErrorBoundary>
           </main>
         </div>
 
