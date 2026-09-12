@@ -8,6 +8,7 @@ import {
   Building,
   AlertCircle,
   Receipt,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const AnalyticView = () => {
