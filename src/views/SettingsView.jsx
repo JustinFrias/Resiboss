@@ -1667,23 +1667,6 @@ export const SettingsView = () => {
                           <Send size={13} />
                           <span>{isSendingTestEmail ? 'Sending digest...' : 'Send Test Email Digest'}</span>
                         </button>
-
-                        <span
-                          style={{
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            color: '#10b981',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            padding: '4px 10px',
-                            borderRadius: '9999px',
-                          }}
-                        >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                          Active • Delivering to {notifPrefs?.alertEmail || userProfile?.email || 'your email'}
-                        </span>
                       </div>
 
                       {testEmailFeedback && (
@@ -1825,23 +1808,6 @@ export const SettingsView = () => {
                           <Bell size={13} />
                           <span>Test In-App Notification</span>
                         </button>
-
-                        <span
-                          style={{
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            color: '#10b981',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            padding: '4px 10px',
-                            borderRadius: '9999px',
-                          }}
-                        >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                          Active • Audio chimes & floating banners enabled
-                        </span>
                       </div>
 
                       {inAppTestFeedback && (
@@ -2111,23 +2077,6 @@ export const SettingsView = () => {
                               <TrendingUp size={13} />
                               <span>Evaluate Threshold Now</span>
                             </button>
-
-                            <span
-                              style={{
-                                fontSize: '0.78rem',
-                                fontWeight: 600,
-                                color: '#10b981',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                              }}
-                            >
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                              Active • Monitoring expenses vs {formatCurrency(activeLimit)} limit
-                            </span>
                           </div>
 
                           {thresholdNotice && (
