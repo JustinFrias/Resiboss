@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 🌐 **Live Web Application:** [https://resiboss.vercel.app](https://resiboss.vercel.app)  
-📱 **Mobile Platform:** Android APK (Capacitor 8) & Responsive Web / PWA
+📱 **Mobile Platform:** Android Native APK (`.apk` direct download) & Apple iOS PWA ("Add to Home Screen")
 
 ---
 
@@ -51,6 +51,17 @@
 - **Android Native Save / Share Sheet:** Integrated with `@capacitor/filesystem` (Scoped Storage safe) and `@capacitor/share` for saving directly to device storage or opening in Google Sheets / Excel.
 - **One-Tap Direct Download Fallback:** Interactive in-app notification button for guaranteed one-tap downloads on any restrictive browser or in-app webview.
 
+### 🔔 Interactive Notification & Budget Threshold Engine
+- **In-App Real-Time Alerts (`InAppToast`):** Floating glassmorphism banner popups with procedural Web Audio synthesizer chimes, countdown progress bars, and one-tap navigation to affected tabs.
+- **Spending Threshold Alerts:** Automated expense budget monitor that tracks all receipts against a customizable monthly budget limit (with quick presets for ₱10k, ₱25k, ₱50k, ₱100k), live visual spending meter with color-coded progress bars (Green < 75%, Amber 75-99%, Red ≥ 100%), and automatic alerts upon budget exceedance.
+- **Email Alerts & Digest Dispatcher:** Configurable notification recipient routing with instant "Send Test Email Digest" simulation for receipt summaries and threshold breach warnings.
+- **Centralized & Persistent:** All alert preferences auto-persist in local storage and synchronize across the global `AppContext`.
+
+### 📱 Universal Mobile Support (Android APK & Apple iOS PWA)
+- **Direct Android APK Distribution:** Integrated 1-tap download for native Android APK (`resiboss.apk`) with Capacitor 8 runtime.
+- **Apple iOS PWA Ready:** Standalone web app manifest, Apple mobile web app capability, and tailored "Add to Home Screen" guidance for iPhone and iPad Safari users.
+- **Intelligent Mobile Gatekeeper (`MobileAppGatekeeper`):** Automatically detects user operating system (Android vs. iOS vs. Desktop) and presents the optimal native installation or mobile experience.
+
 ### ☁️ Cloud Sync & Security
 - **Supabase Backend:** PostgreSQL storage with Row Level Security (RLS) policies.
 - **Authentication:** Google OAuth and email/password login with secure session persistence.
@@ -81,7 +92,7 @@ Resiboss/
 │   ├── app/src/main/
 │   │   ├── AndroidManifest.xml      # App permissions & FileProvider
 │   │   └── res/xml/file_paths.xml   # File sharing storage paths
-├── public/                          # Static assets, emblems, icons
+├── public/                          # Static assets, manifest.json & resiboss.apk
 ├── src/
 │   ├── assets/                      # Bundled images and media
 │   ├── components/                  # Reusable UI components
@@ -89,11 +100,11 @@ Resiboss/
 │   │   ├── canvas/                  # Three.js 3D background canvas
 │   │   ├── layout/                  # Navbar, Sidebar, TopBar
 │   │   ├── legal/                   # Terms, Privacy, Cookie modals
-│   │   ├── mobile/                  # Bottom navigation bar
+│   │   ├── mobile/                  # Bottom nav & MobileAppGatekeeper
 │   │   ├── modals/                  # ReceiptViewer3D inspector, AI config modal
-│   │   └── ui/                      # TiltCard, Liquid buttons, badges
+│   │   └── ui/                      # TiltCard, InAppToast, liquid buttons, badges
 │   ├── context/
-│   │   └── AppContext.jsx           # Global state (documents, auth, theme, settings)
+│   │   └── AppContext.jsx           # Global state (documents, auth, notifications, settings)
 │   ├── lib/
 │   │   └── supabaseClient.js        # Supabase client initialization
 │   ├── styles/                      # CSS variables, glassmorphism utilities

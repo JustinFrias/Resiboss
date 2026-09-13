@@ -10,7 +10,11 @@ import {
   Camera,
   ShieldCheck,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Apple,
+  Share,
+  PlusSquare,
+  Sparkles,
 } from 'lucide-react';
 
 export const MobileAppGatekeeper = ({ children }) => {
@@ -44,6 +48,9 @@ export const MobileAppGatekeeper = ({ children }) => {
     const timeout = setTimeout(() => setChecking(false), 500);
     return () => clearTimeout(timeout);
   }, []);
+
+  const [isApple, setIsApple] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
     // 0. On localhost or development, always bypass gatekeeper so local development and responsive testing work cleanly
@@ -83,8 +90,13 @@ export const MobileAppGatekeeper = ({ children }) => {
       return;
     }
 
-    // 3. Detect if visiting via mobile browser
+    // 3. Detect device type (Apple iOS vs Android)
     const userAgent = (navigator.userAgent || navigator.vendor || window.opera || '').toLowerCase();
+    const appleMatch = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const androidMatch = /android/i.test(userAgent);
+    setIsApple(appleMatch);
+    setIsAndroid(androidMatch);
+
     const isMobileUA = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|silk/i.test(userAgent);
     const isSmallScreen = window.innerWidth <= 820 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
@@ -216,9 +228,9 @@ export const MobileAppGatekeeper = ({ children }) => {
             gap: '6px',
             padding: '4px 12px',
             borderRadius: '999px',
-            background: 'rgba(56, 189, 248, 0.12)',
-            border: '1px solid rgba(56, 189, 248, 0.35)',
-            color: '#38bdf8',
+            background: isApple ? 'rgba(255, 255, 255, 0.12)' : 'rgba(56, 189, 248, 0.12)',
+            border: isApple ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(56, 189, 248, 0.35)',
+            color: isApple ? '#ffffff' : '#38bdf8',
             fontSize: '0.72rem',
             fontWeight: 700,
             letterSpacing: '0.05em',
@@ -226,8 +238,17 @@ export const MobileAppGatekeeper = ({ children }) => {
             marginBottom: '18px',
           }}
         >
-          <Smartphone size={13} />
-          <span>Official Android APK Available</span>
+          {isApple ? (
+            <>
+              <Apple size={13} />
+              <span>Apple iOS (iPhone & iPad) PWA Ready</span>
+            </>
+          ) : (
+            <>
+              <Smartphone size={13} />
+              <span>Official Android APK Available</span>
+            </>
+          )}
         </div>
 
         {/* Brand Icon Glow */}
@@ -236,7 +257,9 @@ export const MobileAppGatekeeper = ({ children }) => {
             width: '84px',
             height: '84px',
             borderRadius: '22px',
-            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.2))',
+            background: isApple
+              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(56, 189, 248, 0.2))'
+              : 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.2))',
             border: '1px solid rgba(255, 255, 255, 0.18)',
             display: 'flex',
             alignItems: 'center',
@@ -259,114 +282,240 @@ export const MobileAppGatekeeper = ({ children }) => {
         {/* Title & Description */}
         <h1
           style={{
-            fontSize: '1.45rem',
+            fontSize: '1.42rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
             color: '#ffffff',
             margin: '0 0 8px 0',
           }}
         >
-          Gamitin ang Resiboss Mobile App
+          {isApple ? 'Gamitin ang Resiboss sa iPhone & iPad' : 'Gamitin ang Resiboss Mobile App'}
         </h1>
         <p
           style={{
-            fontSize: '0.85rem',
+            fontSize: '0.84rem',
             color: '#94a3b8',
             lineHeight: 1.5,
-            margin: '0 0 20px 0',
+            margin: '0 0 18px 0',
           }}
         >
-          Ang mobile experience ng Resiboss ay eksklusibong binuo bilang official Android APK para sa mabilis na camera OCR scanning, offline security, at seamless ledger management.
+          {isApple
+            ? 'Ang .APK format ay para lamang sa Android. Sa Apple iOS, maaari mong i-install at gamitin ang Resiboss nang libre bilang official Home Screen Web App na may buong camera scanning at offline security!'
+            : 'Ang mobile experience ng Resiboss para sa Android ay binuo bilang official APK para sa mabilis na camera OCR scanning, offline security vault, at seamless ledger management.'}
         </p>
 
-        {/* Why Native APK Benefits Box */}
-        <div
-          style={{
-            width: '100%',
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '14px',
-            padding: '14px 16px',
-            marginBottom: '22px',
-            textAlign: 'left',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Mga Kalamangan ng Resiboss APK:
+        {/* Apple iOS Installation Guide OR Android Benefits Box */}
+        {isApple ? (
+          <div
+            style={{
+              width: '100%',
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              borderRadius: '16px',
+              padding: '14px 16px',
+              marginBottom: '20px',
+              textAlign: 'left',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#38bdf8',
+                marginBottom: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <Apple size={14} />
+              <span>Paano I-install sa iPhone / iPad (PWA):</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.78rem', color: '#cbd5e1' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', fontWeight: 800, borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', flexShrink: 0 }}>1</span>
+                <span>Pindutin ang <strong>Share</strong> icon sa ilalim ng Safari (parisukat na may arrow pataas <Share size={12} style={{ display: 'inline', verticalAlign: 'middle' }} />).</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', fontWeight: 800, borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', flexShrink: 0 }}>2</span>
+                <span>Piliin ang <strong>"Add to Home Screen"</strong> (<PlusSquare size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> Idagdag sa Home Screen).</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', fontWeight: 800, borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', flexShrink: 0 }}>3</span>
+                <span>I-tap ang <strong>"Add"</strong> sa kanang itaas para maging opisyal na app sa iyong iPhone screen!</span>
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.78rem', color: '#cbd5e1' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Camera size={14} color="#20F8A1" style={{ flexShrink: 0 }} />
-              <span>Direct Hardware Camera Control at Auto-focus OCR</span>
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '14px',
+              padding: '14px 16px',
+              marginBottom: '20px',
+              textAlign: 'left',
+            }}
+          >
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Mga Kalamangan ng Resiboss APK:
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={14} color="#20F8A1" style={{ flexShrink: 0 }} />
-              <span>Offline Document Vault at Naka-encrypt na Storage</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={14} color="#20F8A1" style={{ flexShrink: 0 }} />
-              <span>Mas mabilis, walang lag, at walang browser limits</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.78rem', color: '#cbd5e1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Camera size={14} color="#20F8A1" style={{ flexShrink: 0 }} />
+                <span>Direct Hardware Camera Control at Auto-focus OCR</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={14} color="#20F8A1" style={{ flexShrink: 0 }} />
+                <span>Offline Document Vault at Naka-encrypt na Storage</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Zap size={14} color="#20F8A1" style={{ flexShrink: 0 }} />
+                <span>Mas mabilis, walang lag, at walang browser limits</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Action Buttons */}
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* 1. Download APK Button */}
-          <button
-            onClick={handleDownloadApk}
-            className="liquid-btn liquid-btn-primary"
-            style={{
-              width: '100%',
-              padding: '14px 18px',
-              borderRadius: '14px',
-              fontSize: '0.94rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              background: 'linear-gradient(135deg, #10b981, #06b6d4)',
-              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)',
-              cursor: 'pointer',
-              border: 'none',
-              color: '#ffffff',
-            }}
-          >
-            <Download size={18} />
-            <span>I-download ang Resiboss APK</span>
-          </button>
+          {isApple ? (
+            <>
+              {/* Apple Primary Action: Open Web App Directly */}
+              <button
+                onClick={handleBypass}
+                className="liquid-btn liquid-btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  borderRadius: '14px',
+                  fontSize: '0.94rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  background: 'linear-gradient(135deg, #0284c7, #06b6d4)',
+                  boxShadow: '0 4px 20px rgba(2, 132, 199, 0.4)',
+                  cursor: 'pointer',
+                  border: 'none',
+                  color: '#ffffff',
+                }}
+              >
+                <Sparkles size={18} />
+                <span>Buksan ang Resiboss sa Safari</span>
+              </button>
 
-          {/* 2. Open App Button (If already installed) */}
-          <button
-            onClick={handleOpenNativeApp}
-            className="liquid-btn liquid-btn-secondary"
-            style={{
-              width: '100%',
-              padding: '12px 18px',
-              borderRadius: '14px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#f8fafc',
-              cursor: 'pointer',
-            }}
-          >
-            <ExternalLink size={15} />
-            <span>Buksan ang Resiboss App</span>
-          </button>
+              {/* Apple Secondary: Download Android APK if needed */}
+              <button
+                onClick={handleDownloadApk}
+                className="liquid-btn liquid-btn-secondary"
+                style={{
+                  width: '100%',
+                  padding: '11px 18px',
+                  borderRadius: '14px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#cbd5e1',
+                  cursor: 'pointer',
+                }}
+                title="I-download ang Android .APK installer file"
+              >
+                <Download size={14} />
+                <span>I-download ang Android APK (Para sa Android)</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 1. Android Download APK Button */}
+              <button
+                onClick={handleDownloadApk}
+                className="liquid-btn liquid-btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  borderRadius: '14px',
+                  fontSize: '0.94rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  background: 'linear-gradient(135deg, #10b981, #06b6d4)',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)',
+                  cursor: 'pointer',
+                  border: 'none',
+                  color: '#ffffff',
+                }}
+              >
+                <Download size={18} />
+                <span>I-download ang Resiboss APK</span>
+              </button>
+
+              {/* 2. Open App Button (If already installed) */}
+              <button
+                onClick={handleOpenNativeApp}
+                className="liquid-btn liquid-btn-secondary"
+                style={{
+                  width: '100%',
+                  padding: '12px 18px',
+                  borderRadius: '14px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#f8fafc',
+                  cursor: 'pointer',
+                }}
+              >
+                <ExternalLink size={15} />
+                <span>Buksan ang Resiboss App</span>
+              </button>
+
+              {/* 3. Open in Browser Web Version */}
+              <button
+                onClick={handleBypass}
+                className="liquid-btn liquid-btn-secondary"
+                style={{
+                  width: '100%',
+                  padding: '10px 18px',
+                  borderRadius: '14px',
+                  fontSize: '0.82rem',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                }}
+              >
+                <span>Magpatuloy sa Mobile Web Version</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Desktop Web Notice */}
         <div
           style={{
-            marginTop: '20px',
-            paddingTop: '16px',
+            marginTop: '18px',
+            paddingTop: '14px',
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
@@ -378,26 +527,9 @@ export const MobileAppGatekeeper = ({ children }) => {
         >
           <Laptop size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
           <span>
-            Nais mo bang gamitin ang web version? Buksan ang <strong style={{ color: '#94a3b8' }}>resiboss.vercel.app</strong> sa iyong laptop o desktop computer.
+            Nais mo bang gamitin ang desktop web? Buksan ang <strong style={{ color: '#94a3b8' }}>resiboss.vercel.app</strong> sa iyong laptop o computer.
           </span>
         </div>
-
-        {/* Subtle developer / preview bypass */}
-        <button
-          onClick={handleBypass}
-          style={{
-            marginTop: '14px',
-            background: 'transparent',
-            border: 'none',
-            color: 'rgba(148, 163, 184, 0.5)',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            padding: '4px 8px',
-            textDecoration: 'underline',
-          }}
-        >
-          Magpatuloy sa Mobile Web Preview (Para sa testing)
-        </button>
       </div>
     </div>
   );

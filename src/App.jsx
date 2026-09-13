@@ -10,6 +10,7 @@ import {
   TermsModal,
   PrivacyPolicyModal,
   CookieConsentBanner,
+  InAppToast,
   ErrorBoundary,
 } from './components';
 
@@ -114,6 +115,7 @@ export default function App() {
       <MobileAppGatekeeper>
         <MainLayout />
       </MobileAppGatekeeper>
+      <InAppToast />
       <PrivacyPolicyModal />
       <CookieConsentBanner />
     </AppProvider>

@@ -113,37 +113,6 @@ export const DocumentsView = () => {
     }
   };
 
-  const handleDownloadSingle = async (doc, e) => {
-    e?.stopPropagation?.();
-    if (!doc) return;
-    setIsDownloading(true);
-    soundFx?.playLaserHum?.();
-    try {
-      const safeMerchant = (doc.merchant || 'Receipt').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `Receipt_${safeMerchant}_${doc.id || 'DOC'}.xlsx`;
-      const res = await downloadReceiptsExcel([doc], filename);
-      soundFx?.playSuccessChime?.();
-      try {
-        confetti({
-          particleCount: 45,
-          spread: 60,
-          origin: { y: 0.7 },
-          colors: ['#00f2fe', '#38bdf8', '#ffffff'],
-        });
-      } catch (e) {}
-
-      const msg = res?.savedToDownloads
-        ? `Saved receipt for ${doc.merchant} to Downloads!`
-        : `Downloaded receipt for ${doc.merchant}!`;
-      setDownloadNotice(msg);
-      setTimeout(() => setDownloadNotice(null), 6000);
-    } catch (err) {
-      console.error('Single download error:', err);
-      alert('Download failed. Please try again.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
 
   return (
@@ -559,17 +528,6 @@ export const DocumentsView = () => {
                         <span>{t.documents.inspect3D}</span>
                       </button>
                       <button
-                        type="button"
-                        onClick={(e) => handleDownloadSingle(doc, e)}
-                        disabled={isDownloading}
-                        className="liquid-btn liquid-btn-secondary"
-                        style={{ padding: '8px 12px', color: isLight ? '#0284c7' : 'var(--cyan-glow)', borderColor: isLight ? '#bae6fd' : 'rgba(0, 242, 254, 0.3)' }}
-                        title="Download this single receipt (Excel)"
-                        aria-label="Download receipt"
-                      >
-                        <Download size={14} />
-                      </button>
-                      <button
                         onClick={() => deleteDocument(doc.id)}
                         className="liquid-btn liquid-btn-secondary"
                         style={{ padding: '8px 12px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.25)' }}
@@ -682,15 +640,6 @@ export const DocumentsView = () => {
                           title="View 3D Receipt"
                         >
                           <Eye size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDownloadSingle(doc, e)}
-                          className="liquid-btn liquid-btn-secondary"
-                          style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--cyan-glow)' }}
-                          title="Download this single receipt"
-                        >
-                          <Download size={13} />
                         </button>
                         <button
                           onClick={() => deleteDocument(doc.id)}

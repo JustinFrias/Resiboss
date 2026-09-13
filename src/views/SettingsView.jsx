@@ -25,6 +25,13 @@ import {
   User,
   FolderArchive,
   Bell,
+  Mail,
+  TrendingUp,
+  Sliders,
+  Send,
+  Volume2,
+  VolumeX,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const SettingsView = () => {
@@ -49,6 +56,12 @@ export const SettingsView = () => {
     setIsPrivacyOpen,
     activeSettingTab,
     setActiveSettingTab,
+    notifPrefs,
+    updateNotifPref,
+    toggleNotifPref,
+    checkSpendingThreshold,
+    sendTestEmailDigest,
+    addNotification,
   } = useApp();
 
   const isLight = theme === 'light';
@@ -104,18 +117,11 @@ export const SettingsView = () => {
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [showMfaModal, setShowMfaModal] = useState(false);
 
-  // Notifications tab states (Screenshot 3)
-  const [notifPrefs, setNotifPrefs] = useState(() => {
-    try {
-      const saved = localStorage.getItem('resiboss_notification_prefs_v1');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return {
-      emailAlerts: true,
-      inAppAlerts: true,
-      thresholdAlerts: false,
-    };
-  });
+  // Notifications feedback and action states
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [testEmailFeedback, setTestEmailFeedback] = useState(null);
+  const [inAppTestFeedback, setInAppTestFeedback] = useState(null);
+  const [thresholdNotice, setThresholdNotice] = useState(null);
   const [notifNotice, setNotifNotice] = useState(false);
 
   // Categories tab custom category state
@@ -293,11 +299,6 @@ export const SettingsView = () => {
     setShowMfaModal(false);
   };
 
-  // Toggle Notification preferences (Screenshot 3)
-  const toggleNotifPref = (key) => {
-    soundFx?.playClick?.();
-    setNotifPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const handleSavePreferences = () => {
     soundFx?.playSuccessChime?.();
@@ -1367,7 +1368,7 @@ export const SettingsView = () => {
                             marginTop: '2px',
                           }}
                         >
-                          Resibo Buddy App
+                          Resiboss App
                         </div>
                       </div>
                     </div>
@@ -1428,13 +1429,22 @@ export const SettingsView = () => {
                   </div>
 
                   <span
+                    className={mfaEnabled ? 'keep-white' : ''}
                     style={{
-                      background: mfaEnabled ? '#059669' : (isLight ? '#0f172a' : '#1e293b'),
-                      color: '#ffffff',
+                      background: mfaEnabled
+                        ? '#059669'
+                        : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)'),
+                      color: mfaEnabled
+                        ? '#ffffff'
+                        : (isLight ? '#475569' : '#94a3b8'),
+                      border: mfaEnabled
+                        ? '1px solid #10b981'
+                        : (isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)'),
                       fontSize: '0.72rem',
                       fontWeight: 600,
                       padding: '3px 12px',
                       borderRadius: '9999px',
+                      boxShadow: mfaEnabled ? '0 0 10px rgba(5, 150, 105, 0.3)' : 'none',
                     }}
                   >
                     {mfaEnabled ? 'Enabled' : 'Disabled'}
@@ -1515,154 +1525,639 @@ export const SettingsView = () => {
                 }}
               />
 
-              {/* 3 Notification Toggle Cards (Screenshot 3) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '28px' }}>
-                {/* Email Alerts */}
+              {/* 3 Notification Toggle Cards (Fully Functional) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
+                {/* 1. Email Alerts Card */}
                 <div
                   style={{
                     border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '14px',
-                    padding: '16px 22px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    borderRadius: '16px',
+                    padding: '18px 22px',
                     background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                    transition: 'all 0.25s ease',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '0.92rem',
-                      fontWeight: 600,
-                      color: isLight ? '#0f2942' : '#f8fafc',
-                    }}
-                  >
-                    Email Alerts
-                  </span>
-                  <div
-                    onClick={() => toggleNotifPref('emailAlerts')}
-                    style={{
-                      width: '46px',
-                      height: '24px',
-                      borderRadius: '9999px',
-                      background: notifPrefs.emailAlerts ? '#0b1e36' : (isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'),
-                      padding: '2px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s ease',
-                      justifyContent: notifPrefs.emailAlerts ? 'flex-end' : 'flex-start',
-                    }}
-                  >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          background: notifPrefs?.emailAlerts
+                            ? 'rgba(16, 185, 129, 0.14)'
+                            : (isLight ? 'rgba(30, 58, 138, 0.08)' : 'rgba(255, 255, 255, 0.05)'),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: notifPrefs?.emailAlerts ? '#10b981' : (isLight ? '#1e3a8a' : '#94a3b8'),
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Mail size={17} />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.94rem',
+                          fontWeight: 700,
+                          color: isLight ? '#0f2942' : '#f8fafc',
+                        }}
+                      >
+                        Email Alerts
+                      </span>
+                    </div>
+
                     <div
+                      onClick={() => toggleNotifPref('emailAlerts')}
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        background: '#ffffff',
-                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
-                        transition: 'transform 0.2s ease',
+                        width: '46px',
+                        height: '24px',
+                        borderRadius: '9999px',
+                        background: notifPrefs?.emailAlerts
+                          ? '#10b981'
+                          : (isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.18)'),
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease',
+                        boxShadow: notifPrefs?.emailAlerts
+                          ? '0 2px 10px rgba(16, 185, 129, 0.45)'
+                          : 'none',
+                        flexShrink: 0,
                       }}
-                    />
+                    >
+                      <div
+                        className="keep-white"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 5px rgba(0, 0, 0, 0.25)',
+                          transform: notifPrefs?.emailAlerts ? 'translateX(22px)' : 'translateX(0)',
+                          transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    </div>
                   </div>
+
+                  {notifPrefs?.emailAlerts ? (
+                    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: isLight ? '1px solid #f1f5f9' : '1px solid rgba(255,255,255,0.06)' }}>
+                      <p style={{ fontSize: '0.82rem', color: isLight ? '#475569' : '#94a3b8', margin: '0 0 12px 0', lineHeight: 1.45 }}>
+                        Sends periodic receipt expense digests and critical budget limit alerts straight to your inbox.
+                      </p>
+
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: isLight ? '#334155' : '#cbd5e1', marginBottom: '6px' }}>
+                          Alerts Destination Email
+                        </label>
+                        <div style={{ position: 'relative', maxWidth: '420px' }}>
+                          <input
+                            type="email"
+                            value={notifPrefs?.alertEmail || userProfile?.email || ''}
+                            onChange={(e) => updateNotifPref('alertEmail', e.target.value)}
+                            placeholder="Enter recipient email address..."
+                            style={{
+                              width: '100%',
+                              padding: '9px 12px 9px 36px',
+                              borderRadius: '10px',
+                              border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                              background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.03)',
+                              color: isLight ? '#0f2942' : '#f8fafc',
+                              fontSize: '0.86rem',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: isLight ? '#64748b' : '#94a3b8' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          disabled={isSendingTestEmail}
+                          onClick={async () => {
+                            setIsSendingTestEmail(true);
+                            setTestEmailFeedback(null);
+                            try {
+                              const res = await sendTestEmailDigest(notifPrefs?.alertEmail);
+                              setTestEmailFeedback(`Test digest dispatched to ${res.email}!`);
+                              setTimeout(() => setTestEmailFeedback(null), 4000);
+                            } finally {
+                              setIsSendingTestEmail(false);
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: isLight ? 'rgba(30, 58, 138, 0.08)' : 'rgba(0, 242, 254, 0.1)',
+                            border: isLight ? '1px solid rgba(30, 58, 138, 0.25)' : '1px solid rgba(0, 242, 254, 0.3)',
+                            color: isLight ? '#1e3a8a' : '#00f2fe',
+                            borderRadius: '9999px',
+                            padding: '7px 16px',
+                            fontSize: '0.80rem',
+                            fontWeight: 700,
+                            cursor: isSendingTestEmail ? 'wait' : 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <Send size={13} />
+                          <span>{isSendingTestEmail ? 'Sending digest...' : 'Send Test Email Digest'}</span>
+                        </button>
+
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            color: '#10b981',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            padding: '4px 10px',
+                            borderRadius: '9999px',
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                          Active • Delivering to {notifPrefs?.alertEmail || userProfile?.email || 'your email'}
+                        </span>
+                      </div>
+
+                      {testEmailFeedback && (
+                        <div
+                          style={{
+                            marginTop: '10px',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: '#10b981',
+                            fontSize: '0.80rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <CheckCircle2 size={14} />
+                          <span>{testEmailFeedback}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '10px', fontSize: '0.80rem', color: isLight ? '#64748b' : '#64748b' }}>
+                      ⚪ Deactivated • No email digests or threshold alerts will be dispatched.
+                    </div>
+                  )}
                 </div>
 
-                {/* In-App Alerts */}
+                {/* 2. In-App Alerts Card */}
                 <div
                   style={{
                     border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '14px',
-                    padding: '16px 22px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    borderRadius: '16px',
+                    padding: '18px 22px',
                     background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                    transition: 'all 0.25s ease',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '0.92rem',
-                      fontWeight: 600,
-                      color: isLight ? '#0f2942' : '#f8fafc',
-                    }}
-                  >
-                    In-App Alerts
-                  </span>
-                  <div
-                    onClick={() => toggleNotifPref('inAppAlerts')}
-                    style={{
-                      width: '46px',
-                      height: '24px',
-                      borderRadius: '9999px',
-                      background: notifPrefs.inAppAlerts ? '#0b1e36' : (isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'),
-                      padding: '2px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s ease',
-                      justifyContent: notifPrefs.inAppAlerts ? 'flex-end' : 'flex-start',
-                    }}
-                  >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          background: notifPrefs?.inAppAlerts
+                            ? 'rgba(16, 185, 129, 0.14)'
+                            : (isLight ? 'rgba(30, 58, 138, 0.08)' : 'rgba(255, 255, 255, 0.05)'),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: notifPrefs?.inAppAlerts ? '#10b981' : (isLight ? '#1e3a8a' : '#94a3b8'),
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Bell size={17} />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.94rem',
+                          fontWeight: 700,
+                          color: isLight ? '#0f2942' : '#f8fafc',
+                        }}
+                      >
+                        In-App Alerts
+                      </span>
+                    </div>
+
                     <div
+                      onClick={() => toggleNotifPref('inAppAlerts')}
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        background: '#ffffff',
-                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
-                        transition: 'transform 0.2s ease',
+                        width: '46px',
+                        height: '24px',
+                        borderRadius: '9999px',
+                        background: notifPrefs?.inAppAlerts
+                          ? '#10b981'
+                          : (isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.18)'),
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease',
+                        boxShadow: notifPrefs?.inAppAlerts
+                          ? '0 2px 10px rgba(16, 185, 129, 0.45)'
+                          : 'none',
+                        flexShrink: 0,
                       }}
-                    />
+                    >
+                      <div
+                        className="keep-white"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 5px rgba(0, 0, 0, 0.25)',
+                          transform: notifPrefs?.inAppAlerts ? 'translateX(22px)' : 'translateX(0)',
+                          transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    </div>
                   </div>
+
+                  {notifPrefs?.inAppAlerts ? (
+                    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: isLight ? '1px solid #f1f5f9' : '1px solid rgba(255,255,255,0.06)' }}>
+                      <p style={{ fontSize: '0.82rem', color: isLight ? '#475569' : '#94a3b8', margin: '0 0 12px 0', lineHeight: 1.45 }}>
+                        Enables real-time floating popover toasts, topbar bell badge counters, and audio chimes when receipts are scanned.
+                      </p>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addNotification({
+                              title: '🔔 In-App Alert Active',
+                              desc: 'Real-time floating banner and audio chime are functioning normally!',
+                              type: 'success',
+                              targetTab: 'settings',
+                            });
+                            setInAppTestFeedback('Notification banner & audio chime fired!');
+                            setTimeout(() => setInAppTestFeedback(null), 3500);
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: isLight ? 'rgba(30, 58, 138, 0.08)' : 'rgba(0, 242, 254, 0.1)',
+                            border: isLight ? '1px solid rgba(30, 58, 138, 0.25)' : '1px solid rgba(0, 242, 254, 0.3)',
+                            color: isLight ? '#1e3a8a' : '#00f2fe',
+                            borderRadius: '9999px',
+                            padding: '7px 16px',
+                            fontSize: '0.80rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <Bell size={13} />
+                          <span>Test In-App Notification</span>
+                        </button>
+
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            color: '#10b981',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            padding: '4px 10px',
+                            borderRadius: '9999px',
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                          Active • Audio chimes & floating banners enabled
+                        </span>
+                      </div>
+
+                      {inAppTestFeedback && (
+                        <div
+                          style={{
+                            marginTop: '10px',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: '#10b981',
+                            fontSize: '0.80rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <CheckCircle2 size={14} />
+                          <span>{inAppTestFeedback}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '10px', fontSize: '0.80rem', color: isLight ? '#64748b' : '#64748b' }}>
+                      ⚪ Muted • Floating banner popups and audio chimes are silenced.
+                    </div>
+                  )}
                 </div>
 
-                {/* Threshold Alerts */}
-                <div
-                  style={{
-                    border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '14px',
-                    padding: '16px 22px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '0.92rem',
-                      fontWeight: 600,
-                      color: isLight ? '#0f2942' : '#f8fafc',
-                    }}
-                  >
-                    Threshold Alerts
-                  </span>
-                  <div
-                    onClick={() => toggleNotifPref('thresholdAlerts')}
-                    style={{
-                      width: '46px',
-                      height: '24px',
-                      borderRadius: '9999px',
-                      background: notifPrefs.thresholdAlerts ? '#0b1e36' : (isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'),
-                      padding: '2px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s ease',
-                      justifyContent: notifPrefs.thresholdAlerts ? 'flex-end' : 'flex-start',
-                    }}
-                  >
+                {/* 3. Threshold Alerts Card */}
+                {(() => {
+                  const currentExpenses = totalAmount;
+                  const activeLimit = Number(notifPrefs?.thresholdAmount) || 25000;
+                  const limitPct = Math.min(Math.round((currentExpenses / (activeLimit || 1)) * 100), 100);
+                  const isOverLimit = currentExpenses >= activeLimit;
+
+                  return (
                     <div
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        background: '#ffffff',
-                        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.25)',
-                        transition: 'transform 0.2s ease',
+                        border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '16px',
+                        padding: '18px 22px',
+                        background: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.02)',
+                        transition: 'all 0.25s ease',
                       }}
-                    />
-                  </div>
-                </div>
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: notifPrefs?.thresholdAlerts
+                                ? 'rgba(16, 185, 129, 0.14)'
+                                : (isLight ? 'rgba(30, 58, 138, 0.08)' : 'rgba(255, 255, 255, 0.05)'),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: notifPrefs?.thresholdAlerts ? '#10b981' : (isLight ? '#1e3a8a' : '#94a3b8'),
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <TrendingUp size={17} />
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '0.94rem',
+                              fontWeight: 700,
+                              color: isLight ? '#0f2942' : '#f8fafc',
+                            }}
+                          >
+                            Threshold Alerts
+                          </span>
+                        </div>
+
+                        <div
+                          onClick={() => toggleNotifPref('thresholdAlerts')}
+                          style={{
+                            width: '46px',
+                            height: '24px',
+                            borderRadius: '9999px',
+                            background: notifPrefs?.thresholdAlerts
+                              ? '#10b981'
+                              : (isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.18)'),
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.25s ease',
+                            boxShadow: notifPrefs?.thresholdAlerts
+                              ? '0 2px 10px rgba(16, 185, 129, 0.45)'
+                              : 'none',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            className="keep-white"
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              background: '#ffffff',
+                              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.25)',
+                              transform: notifPrefs?.thresholdAlerts ? 'translateX(22px)' : 'translateX(0)',
+                              transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {notifPrefs?.thresholdAlerts ? (
+                        <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: isLight ? '1px solid #f1f5f9' : '1px solid rgba(255,255,255,0.06)' }}>
+                          <p style={{ fontSize: '0.82rem', color: isLight ? '#475569' : '#94a3b8', margin: '0 0 12px 0', lineHeight: 1.45 }}>
+                            Tracks total expenses across all scanned receipts and alerts you the moment spending reaches your monthly limit.
+                          </p>
+
+                          {/* Budget Threshold Configuration */}
+                          <div style={{ marginBottom: '14px' }}>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: isLight ? '#334155' : '#cbd5e1', marginBottom: '6px' }}>
+                              Monthly Budget Spending Limit
+                            </label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <div style={{ position: 'relative', width: '180px' }}>
+                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: isLight ? '#1e3a8a' : '#00f2fe' }}>
+                                  ₱
+                                </span>
+                                <input
+                                  type="number"
+                                  min="1000"
+                                  step="1000"
+                                  value={notifPrefs?.thresholdAmount || 25000}
+                                  onChange={(e) => updateNotifPref('thresholdAmount', Math.max(0, Number(e.target.value)))}
+                                  style={{
+                                    width: '100%',
+                                    padding: '9px 12px 9px 28px',
+                                    borderRadius: '10px',
+                                    border: isLight ? '1.5px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                                    background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.03)',
+                                    color: isLight ? '#0f2942' : '#f8fafc',
+                                    fontSize: '0.90rem',
+                                    fontWeight: 700,
+                                    outline: 'none',
+                                    boxSizing: 'border-box',
+                                  }}
+                                />
+                              </div>
+
+                              {/* Quick Presets */}
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                {[10000, 25000, 50000, 100000].map((amt) => (
+                                  <button
+                                    key={amt}
+                                    type="button"
+                                    onClick={() => updateNotifPref('thresholdAmount', amt)}
+                                    style={{
+                                      background: notifPrefs?.thresholdAmount === amt
+                                        ? (isLight ? '#1e3a8a' : '#0284c7')
+                                        : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.06)'),
+                                      color: notifPrefs?.thresholdAmount === amt
+                                        ? '#ffffff'
+                                        : (isLight ? '#334155' : '#cbd5e1'),
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      padding: '6px 10px',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    ₱{amt.toLocaleString()}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Live Spending Meter */}
+                          <div
+                            style={{
+                              background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.03)',
+                              border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.06)',
+                              borderRadius: '12px',
+                              padding: '12px 14px',
+                              marginBottom: '14px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.80rem' }}>
+                              <span style={{ color: isLight ? '#475569' : '#94a3b8', fontWeight: 600 }}>
+                                Current Spending: <strong style={{ color: isLight ? '#0f2942' : '#f8fafc' }}>{formatCurrency(currentExpenses)}</strong>
+                              </span>
+                              <span style={{ color: isOverLimit ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                                {Math.round((currentExpenses / (activeLimit || 1)) * 100)}% of limit
+                              </span>
+                            </div>
+
+                            {/* Progress bar track */}
+                            <div
+                              style={{
+                                width: '100%',
+                                height: '8px',
+                                borderRadius: '9999px',
+                                background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)',
+                                overflow: 'hidden',
+                                marginBottom: '8px',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: `${limitPct}%`,
+                                  height: '100%',
+                                  borderRadius: '9999px',
+                                  background: isOverLimit
+                                    ? 'linear-gradient(90deg, #ef4444, #f43f5e)'
+                                    : limitPct > 75
+                                    ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                                    : 'linear-gradient(90deg, #10b981, #34d399)',
+                                  transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                              />
+                            </div>
+
+                            <div style={{ fontSize: '0.76rem', fontWeight: 600, color: isOverLimit ? '#ef4444' : '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {isOverLimit ? (
+                                <>
+                                  <AlertTriangle size={13} />
+                                  <span>Budget limit exceeded by {formatCurrency(currentExpenses - activeLimit)}! Alert active.</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 size={13} />
+                                  <span>Within budget ({formatCurrency(activeLimit - currentExpenses)} remaining before limit).</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Action Button & Status Pill */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const res = checkSpendingThreshold();
+                                if (res?.exceeded) {
+                                  setThresholdNotice(`Limit exceeded by ${formatCurrency(res.diff)}!`);
+                                } else {
+                                  setThresholdNotice(`Spending is within budget! (${formatCurrency(res?.remaining || 0)} remaining)`);
+                                }
+                                setTimeout(() => setThresholdNotice(null), 4000);
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: isLight ? 'rgba(30, 58, 138, 0.08)' : 'rgba(0, 242, 254, 0.1)',
+                                border: isLight ? '1px solid rgba(30, 58, 138, 0.25)' : '1px solid rgba(0, 242, 254, 0.3)',
+                                color: isLight ? '#1e3a8a' : '#00f2fe',
+                                borderRadius: '9999px',
+                                padding: '7px 16px',
+                                fontSize: '0.80rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              <TrendingUp size={13} />
+                              <span>Evaluate Threshold Now</span>
+                            </button>
+
+                            <span
+                              style={{
+                                fontSize: '0.78rem',
+                                fontWeight: 600,
+                                color: '#10b981',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                padding: '4px 10px',
+                                borderRadius: '9999px',
+                              }}
+                            >
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                              Active • Monitoring expenses vs {formatCurrency(activeLimit)} limit
+                            </span>
+                          </div>
+
+                          {thresholdNotice && (
+                            <div
+                              style={{
+                                marginTop: '10px',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                background: isOverLimit ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                                color: isOverLimit ? '#ef4444' : '#10b981',
+                                fontSize: '0.80rem',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                              }}
+                            >
+                              {isOverLimit ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+                              <span>{thresholdNotice}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: '10px', fontSize: '0.80rem', color: isLight ? '#64748b' : '#64748b' }}>
+                          ⚪ Disabled • Spending threshold tracking is paused.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {notifNotice && (

@@ -147,10 +147,10 @@
 }
 
 /* Override hardcoded white text on non-buttons in light mode */
-[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not([style*="background: linear-gradient(135deg, #ef4444"]):not(.liquid-btn-primary)[style*="color: #ffffff"],
-[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: #fff"],
-[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: white"],
-[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #2563eb"]):not([style*="background: #059669"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: rgb(255, 255, 255)"] {
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #0f172a"]):not([style*="background: #1e293b"]):not([style*="background: #334155"]):not([style*="background: #2563eb"]):not([style*="background: #0284c7"]):not([style*="background: #059669"]):not([style*="background: #10b981"]):not([style*="background: #1d4ed8"]):not([style*="background: linear-gradient(135deg, #ef4444"]):not(.liquid-btn-primary)[style*="color: #ffffff"],
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #0f172a"]):not([style*="background: #1e293b"]):not([style*="background: #334155"]):not([style*="background: #2563eb"]):not([style*="background: #0284c7"]):not([style*="background: #059669"]):not([style*="background: #10b981"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: #fff"],
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #0f172a"]):not([style*="background: #1e293b"]):not([style*="background: #334155"]):not([style*="background: #2563eb"]):not([style*="background: #0284c7"]):not([style*="background: #059669"]):not([style*="background: #10b981"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: white"],
+[data-theme="light"] :not(button):not(button *):not(.keep-white):not([style*="background: #0b1e36"]):not([style*="background: #1e3a8a"]):not([style*="background: #0f2942"]):not([style*="background: #0f172a"]):not([style*="background: #1e293b"]):not([style*="background: #334155"]):not([style*="background: #2563eb"]):not([style*="background: #0284c7"]):not([style*="background: #059669"]):not([style*="background: #10b981"]):not([style*="background: #1d4ed8"]):not(.liquid-btn-primary)[style*="color: rgb(255, 255, 255)"] {
   color: #0f172a !important;
 }
 
@@ -2516,4 +2516,36 @@ input::-ms-clear {
   border-radius: 9999px !important;
   padding: 9px 18px !important;
 }
+
+/* In-App Toast Realtime Notification Animations */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toastCountdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@media (max-width: 640px) {
+  .in-app-toast-container {
+    top: 12px !important;
+    left: 12px !important;
+    right: 12px !important;
+    max-width: none !important;
+    width: calc(100vw - 24px) !important;
+  }
+}
+
 

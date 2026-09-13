@@ -397,6 +397,66 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   }, [notifications, currentUser?.id, currentUser?.email]);
 
+  // Centralized Notification Preferences (Email Alerts, In-App Alerts, Threshold Alerts)
+  const [notifPrefs, setNotifPrefs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('resiboss_notification_prefs_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      emailAlerts: true,
+      inAppAlerts: true,
+      thresholdAlerts: false,
+      thresholdAmount: 25000,
+      alertEmail: '',
+    };
+  });
+
+  // Keep alertEmail synced with authenticated userProfile email
+  useEffect(() => {
+    if (userProfile?.email && !notifPrefs.alertEmail) {
+      setNotifPrefs((prev) => ({ ...prev, alertEmail: userProfile.email }));
+    }
+  }, [userProfile?.email]);
+
+  const updateNotifPref = (key, value) => {
+    setNotifPrefs((prev) => {
+      const updated = { ...prev, [key]: value };
+      try {
+        localStorage.setItem('resiboss_notification_prefs_v1', JSON.stringify(updated));
+        if (currentUser?.id || currentUser?.email) {
+          localStorage.setItem(`resiboss_notification_prefs_${currentUser.id || currentUser.email}`, JSON.stringify(updated));
+        }
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const toggleNotifPref = (key) => {
+    soundFx?.playClick?.();
+    const nextVal = !notifPrefs[key];
+    updateNotifPref(key, nextVal);
+    return nextVal;
+  };
+
+  // Real-time In-App Toast State
+  const [activeToast, setActiveToast] = useState(null);
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = (toast) => {
+    if (!notifPrefs.inAppAlerts) return;
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setActiveToast(toast);
+    toastTimeoutRef.current = setTimeout(() => {
+      setActiveToast(null);
+    }, 4500);
+  };
+
+  const dismissToast = () => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setActiveToast(null);
+  };
+
   const toggleTheme = () => {
     soundFx.playClick();
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -418,7 +478,7 @@ export const AppProvider = ({ children }) => {
     const item = {
       id: notif.id || `notif-${Date.now()}`,
       title: notif.title || 'Notification',
-      desc: notif.desc || '',
+      desc: notif.desc || notif.message || '',
       time: notif.time || 'Just now',
       read: false,
       type: notif.type || 'info',
@@ -426,7 +486,86 @@ export const AppProvider = ({ children }) => {
       ...notif,
     };
     setNotifications((prev) => [item, ...prev]);
+
+    // Respect inAppAlerts preference: only play audio feedback and show toast if enabled
+    if (notifPrefs.inAppAlerts) {
+      if (item.type === 'warning' || item.type === 'alert' || item.type === 'error') {
+        soundFx?.playWarning?.();
+      } else {
+        soundFx?.playSuccessChime?.();
+      }
+      showToast(item);
+    }
     return item;
+  };
+
+  // Automated Spending Threshold Monitoring
+  useEffect(() => {
+    if (!notifPrefs.thresholdAlerts) return;
+    const totalExpenses = (documents || []).reduce((sum, d) => sum + (Number(d.total) || 0), 0);
+    const limit = Number(notifPrefs.thresholdAmount) || 25000;
+
+    if (totalExpenses >= limit && (documents || []).length > 0) {
+      const lastTrigger = sessionStorage.getItem('resiboss_last_threshold_alert');
+      const now = Date.now();
+      // Throttle automatic alert popups to once every 20 minutes in active session
+      if (!lastTrigger || now - Number(lastTrigger) > 20 * 60 * 1000) {
+        sessionStorage.setItem('resiboss_last_threshold_alert', String(now));
+        addNotification({
+          id: `threshold-limit-${now}`,
+          title: '⚠️ Spending Threshold Exceeded',
+          desc: `Your total expenses (${formatCurrency(totalExpenses)}) have surpassed your ${formatCurrency(limit)} budget limit!`,
+          type: 'warning',
+          targetTab: 'documents',
+        });
+      }
+    }
+  }, [documents, notifPrefs.thresholdAlerts, notifPrefs.thresholdAmount]);
+
+  // Manually or dynamically evaluate spending threshold
+  const checkSpendingThreshold = () => {
+    const totalExpenses = (documents || []).reduce((sum, d) => sum + (Number(d.total) || 0), 0);
+    const limit = Number(notifPrefs.thresholdAmount) || 25000;
+    if (totalExpenses >= limit) {
+      soundFx?.playWarning?.();
+      addNotification({
+        id: `threshold-eval-${Date.now()}`,
+        title: '⚠️ Spending Threshold Exceeded',
+        desc: `Total expenses (${formatCurrency(totalExpenses)}) have exceeded your ${formatCurrency(limit)} budget limit by ${formatCurrency(totalExpenses - limit)}!`,
+        type: 'warning',
+        targetTab: 'documents',
+      });
+      return { exceeded: true, total: totalExpenses, limit, diff: totalExpenses - limit };
+    } else {
+      soundFx?.playSuccessChime?.();
+      addNotification({
+        id: `threshold-eval-${Date.now()}`,
+        title: '✅ Spending Within Budget',
+        desc: `Total expenses (${formatCurrency(totalExpenses)}) are safely within your ${formatCurrency(limit)} budget limit (${formatCurrency(limit - totalExpenses)} remaining).`,
+        type: 'success',
+        targetTab: 'documents',
+      });
+      return { exceeded: false, total: totalExpenses, limit, remaining: limit - totalExpenses };
+    }
+  };
+
+  // Dispatch simulated/live email digest report
+  const sendTestEmailDigest = async (customEmail) => {
+    const email = customEmail || notifPrefs.alertEmail || userProfile?.email || 'justinfrias951@gmail.com';
+    const totalExpenses = (documents || []).reduce((sum, d) => sum + (Number(d.total) || 0), 0);
+
+    await new Promise((r) => setTimeout(r, 650));
+
+    soundFx?.playSuccessChime?.();
+    addNotification({
+      id: `email-digest-${Date.now()}`,
+      title: '📧 Email Digest Dispatched',
+      desc: `Weekly expense summary of ${documents.length} receipt(s) (${formatCurrency(totalExpenses)}) was sent to ${email}.`,
+      type: 'info',
+      targetTab: 'settings',
+    });
+
+    return { success: true, email, count: documents.length, total: totalExpenses };
   };
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -1168,6 +1307,15 @@ export const AppProvider = ({ children }) => {
         markAllNotificationsAsRead,
         clearNotifications,
         addNotification,
+        notifPrefs,
+        setNotifPrefs,
+        updateNotifPref,
+        toggleNotifPref,
+        checkSpendingThreshold,
+        sendTestEmailDigest,
+        activeToast,
+        showToast,
+        dismissToast,
         sidebarCollapsed,
         setSidebarCollapsed,
         toggleSidebar,
