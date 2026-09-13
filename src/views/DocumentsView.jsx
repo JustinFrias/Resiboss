@@ -366,12 +366,6 @@ export const DocumentsView = () => {
                 </>
               )}
             </button>
-
-            {selectedDocIds.length > 0 && (
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--cyan-glow)' }}>
-                {selectedDocIds.length} selected
-              </span>
-            )}
           </div>
         )}
       </div>
