@@ -16,8 +16,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
+  Download,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
+import { downloadReceiptsExcel } from '../utils/fileDownloader';
+import confetti from 'canvas-confetti';
 
 export const DocumentsView = () => {
   const { documents, setInspectingDoc, deleteDocument, formatCurrency, t, theme } = useApp();
@@ -27,6 +30,8 @@ export const DocumentsView = () => {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadNotice, setDownloadNotice] = useState(null);
 
   // Filtering
   const filteredDocs = documents.filter((doc) => {
@@ -45,7 +50,40 @@ export const DocumentsView = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  const handleDownload = async () => {
+    if (filteredDocs.length === 0) {
+      alert('No receipts available to download.');
+      return;
+    }
 
+    setIsDownloading(true);
+    soundFx?.playLaserHum?.();
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `Resiboss_Receipts_${timestamp}.xlsx`;
+      const res = await downloadReceiptsExcel(filteredDocs, filename);
+      soundFx?.playSuccessChime?.();
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 75,
+          origin: { y: 0.65 },
+          colors: ['#00f2fe', '#3b82f6', '#10b981', '#ffffff'],
+        });
+      } catch (e) {}
+
+      const msg = res?.savedToDownloads
+        ? `Saved ${filteredDocs.length} receipt${filteredDocs.length > 1 ? 's' : ''} to Downloads!`
+        : `Downloaded ${filteredDocs.length} receipt${filteredDocs.length > 1 ? 's' : ''}!`;
+      setDownloadNotice(msg);
+      setTimeout(() => setDownloadNotice(null), 6000);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Download failed. Please check device permissions and try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
@@ -70,7 +108,7 @@ export const DocumentsView = () => {
           </p>
         </div>
 
-        {/* Combined Controls: Categories + Status + View Toggle (Top Right of Searchbar) */}
+        {/* Combined Controls: Download + Categories + Status + View Toggle */}
         <div
           className="documents-top-controls"
           style={{
@@ -80,6 +118,33 @@ export const DocumentsView = () => {
             flexWrap: 'wrap',
           }}
         >
+          {/* Download Action Button */}
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={isDownloading || filteredDocs.length === 0}
+            className="liquid-btn"
+            style={{
+              background: isLight ? '#0284c7' : 'linear-gradient(135deg, #00f2fe, #38bdf8)',
+              color: isLight ? '#ffffff' : '#090e21',
+              padding: '7px 16px',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              borderRadius: '10px',
+              border: 'none',
+              cursor: isDownloading ? 'wait' : 'pointer',
+              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              opacity: filteredDocs.length === 0 ? 0.5 : 1,
+              transition: 'all 0.2s ease',
+            }}
+            title="Download receipts as Excel report"
+          >
+            <Download size={15} />
+            <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+          </button>
 
           {/* Category Filter */}
           <select
@@ -158,6 +223,28 @@ export const DocumentsView = () => {
         </div>
       </div>
 
+
+      {/* Download Status Notification */}
+      {downloadNotice && (
+        <div
+          style={{
+            marginBottom: '16px',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: '#10b981',
+            fontSize: '0.88rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <CheckCircle2 size={16} />
+          <span>{downloadNotice}</span>
+        </div>
+      )}
 
       {/* Standalone Search Bar */}
       <div
