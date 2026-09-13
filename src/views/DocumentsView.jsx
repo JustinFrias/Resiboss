@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Check,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 import { downloadReceiptsExcel } from '../utils/fileDownloader';
@@ -32,6 +35,7 @@ export const DocumentsView = () => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadNotice, setDownloadNotice] = useState(null);
+  const [selectedDocIds, setSelectedDocIds] = useState([]);
 
   // Filtering
   const filteredDocs = documents.filter((doc) => {
@@ -50,9 +54,32 @@ export const DocumentsView = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  // Receipt Selection Handlers
+  const handleToggleDoc = (docId, e) => {
+    e?.stopPropagation?.();
+    soundFx?.playClick?.();
+    setSelectedDocIds((prev) =>
+      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    soundFx?.playClick?.();
+    if (selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0) {
+      setSelectedDocIds([]);
+    } else {
+      setSelectedDocIds(filteredDocs.map((d) => d.id));
+    }
+  };
+
   const handleDownload = async () => {
-    if (filteredDocs.length === 0) {
-      alert('No receipts available to download.');
+    const docsToDownload =
+      selectedDocIds.length > 0
+        ? filteredDocs.filter((d) => selectedDocIds.includes(d.id))
+        : filteredDocs;
+
+    if (docsToDownload.length === 0) {
+      alert('No receipts selected or available to download.');
       return;
     }
 
@@ -61,7 +88,7 @@ export const DocumentsView = () => {
     try {
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `Resiboss_Receipts_${timestamp}.xlsx`;
-      const res = await downloadReceiptsExcel(filteredDocs, filename);
+      const res = await downloadReceiptsExcel(docsToDownload, filename);
       soundFx?.playSuccessChime?.();
       try {
         confetti({
@@ -73,8 +100,8 @@ export const DocumentsView = () => {
       } catch (e) {}
 
       const msg = res?.savedToDownloads
-        ? `Saved ${filteredDocs.length} receipt${filteredDocs.length > 1 ? 's' : ''} to Downloads!`
-        : `Downloaded ${filteredDocs.length} receipt${filteredDocs.length > 1 ? 's' : ''}!`;
+        ? `Saved ${docsToDownload.length} receipt${docsToDownload.length > 1 ? 's' : ''} to Downloads!`
+        : `Downloaded ${docsToDownload.length} receipt${docsToDownload.length > 1 ? 's' : ''}!`;
       setDownloadNotice(msg);
       setTimeout(() => setDownloadNotice(null), 6000);
     } catch (err) {
@@ -140,11 +167,35 @@ export const DocumentsView = () => {
               opacity: filteredDocs.length === 0 ? 0.5 : 1,
               transition: 'all 0.2s ease',
             }}
-            title="Download receipts as Excel report"
+            title={selectedDocIds.length > 0 ? `Download ${selectedDocIds.length} selected receipts` : "Download all receipts as Excel report"}
           >
             <Download size={15} />
-            <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+            <span>
+              {isDownloading
+                ? 'Downloading...'
+                : selectedDocIds.length > 0
+                ? `Download (${selectedDocIds.length})`
+                : 'Download'}
+            </span>
           </button>
+
+          {/* Quick Clear Selection if items selected */}
+          {selectedDocIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedDocIds([])}
+              className="liquid-btn liquid-btn-secondary"
+              style={{
+                padding: '6px 10px',
+                fontSize: '0.78rem',
+                borderRadius: '8px',
+                color: 'var(--text-muted)',
+              }}
+              title="Clear selection"
+            >
+              Clear ({selectedDocIds.length})
+            </button>
+          )}
 
           {/* Category Filter */}
           <select
@@ -246,7 +297,7 @@ export const DocumentsView = () => {
         </div>
       )}
 
-      {/* Standalone Search Bar */}
+      {/* Standalone Search Bar + Selection Controls */}
       <div
         className="glass-panel resiboss-search-panel"
         style={{
@@ -254,7 +305,10 @@ export const DocumentsView = () => {
           marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           borderRadius: '20px',
+          gap: '12px',
+          flexWrap: 'wrap',
         }}
       >
         {/* Search Input */}
@@ -301,6 +355,43 @@ export const DocumentsView = () => {
             </button>
           )}
         </div>
+
+        {/* Selection / Select All Controls */}
+        {filteredDocs.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleToggleSelectAll}
+              className="liquid-btn liquid-btn-secondary"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                borderRadius: '8px',
+              }}
+            >
+              {selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? (
+                <>
+                  <CheckSquare size={15} color="var(--cyan-glow)" />
+                  <span>Deselect All</span>
+                </>
+              ) : (
+                <>
+                  <Square size={15} color="var(--text-muted)" />
+                  <span>Select All ({filteredDocs.length})</span>
+                </>
+              )}
+            </button>
+
+            {selectedDocIds.length > 0 && (
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--cyan-glow)' }}>
+                {selectedDocIds.length} selected
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content Rendering: Grid vs Table */}
@@ -328,32 +419,65 @@ export const DocumentsView = () => {
             gap: '20px',
           }}
         >
-          {filteredDocs.map((doc) => (
-            <TiltCard key={doc.id}>
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '22px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  height: '100%',
-                  border: '1px solid var(--glass-border)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <div>
-                  {/* Top Header: Category & Status Badges */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.7rem' }}>
-                      <Tag size={11} /> {t.categories[doc.category] || doc.category}
-                    </span>
+          {filteredDocs.map((doc) => {
+            const isChecked = selectedDocIds.includes(doc.id);
+            return (
+              <TiltCard key={doc.id}>
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: '22px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                    border: isChecked
+                      ? (isLight ? '2px solid #0284c7' : '2px solid var(--cyan-glow)')
+                      : '1px solid var(--glass-border)',
+                    background: isChecked
+                      ? (isLight ? 'rgba(2, 132, 199, 0.05)' : 'rgba(0, 242, 254, 0.06)')
+                      : undefined,
+                    transition: 'all 0.2s ease',
+                    boxShadow: isChecked
+                      ? (isLight ? '0 4px 20px rgba(2, 132, 199, 0.18)' : '0 4px 20px rgba(0, 242, 254, 0.22)')
+                      : undefined,
+                  }}
+                >
+                  <div>
+                    {/* Top Header: Selection Checkbox + Category + Status Badges */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleDoc(doc.id, e)}
+                          style={{
+                            background: isChecked ? 'var(--cyan-glow)' : 'rgba(255, 255, 255, 0.08)',
+                            border: isChecked ? 'none' : '1.5px solid var(--glass-border-bright)',
+                            borderRadius: '6px',
+                            width: '22px',
+                            height: '22px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            padding: 0,
+                            transition: 'all 0.15s ease',
+                          }}
+                          title={isChecked ? 'Deselect receipt' : 'Select receipt for download'}
+                        >
+                          {isChecked && <Check size={13} color="#090e21" strokeWidth={3} />}
+                        </button>
+                        <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.7rem' }}>
+                          <Tag size={11} /> {t.categories[doc.category] || doc.category}
+                        </span>
+                      </div>
 
-                    <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ fontSize: '0.7rem' }}>
-                      {doc.status === 'Verified' ? <CheckCircle2 size={11} /> : <Clock size={11} />}
-                      {doc.status}
-                    </span>
-                  </div>
+                      <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ fontSize: '0.7rem' }}>
+                        {doc.status === 'Verified' ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                        {doc.status}
+                      </span>
+                    </div>
 
                     {/* Merchant & Info */}
                     <h3
@@ -440,7 +564,8 @@ export const DocumentsView = () => {
                   </div>
                 </div>
               </TiltCard>
-            ))}
+            );
+          })}
         </div>
       ) : (
         /* Table View */
@@ -448,6 +573,20 @@ export const DocumentsView = () => {
           <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>
+                <th style={{ padding: '14px 16px', width: '44px' }}>
+                  <button
+                    type="button"
+                    onClick={handleToggleSelectAll}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                    title={selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? 'Deselect all' : 'Select all'}
+                  >
+                    {selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? (
+                      <CheckSquare size={16} color="var(--cyan-glow)" />
+                    ) : (
+                      <Square size={16} color="var(--text-muted)" />
+                    )}
+                  </button>
+                </th>
                 <th style={{ padding: '14px 16px' }}>{t.documents.tableId}</th>
                 <th style={{ padding: '14px 16px' }}>{t.documents.tableMerchant}</th>
                 <th style={{ padding: '14px 16px' }}>{t.documents.tableDate}</th>
@@ -459,64 +598,88 @@ export const DocumentsView = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredDocs.map((doc) => (
-                <tr
-                  key={doc.id}
-                  style={{
-                    borderBottom: '1px solid var(--glass-border)',
-                    background: 'transparent',
-                    transition: 'background 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cyan-subtle)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--cyan-glow)' }}>
-                    {doc.id}
-                  </td>
-                  <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {doc.merchant}
-                  </td>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
-                    {doc.date}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span className="liquid-badge liquid-badge-cyan" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
-                      {t.categories[doc.category] || doc.category}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
-                      {doc.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-                    {formatCurrency(doc.vat)}
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
-                    {formatCurrency(doc.total)}
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
-                      <button
-                        onClick={() => setInspectingDoc(doc)}
-                        className="liquid-btn liquid-btn-secondary"
-                        style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                        title="View 3D Receipt"
+              {filteredDocs.map((doc) => {
+                const isChecked = selectedDocIds.includes(doc.id);
+                return (
+                  <tr
+                    key={doc.id}
+                    style={{
+                      borderBottom: '1px solid var(--glass-border)',
+                      background: isChecked
+                        ? (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(0, 242, 254, 0.08)')
+                        : 'transparent',
+                      transition: 'background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isChecked ? (isLight ? 'rgba(2, 132, 199, 0.12)' : 'rgba(0, 242, 254, 0.12)') : 'var(--cyan-subtle)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isChecked ? (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(0, 242, 254, 0.08)') : 'transparent')}
+                  >
+                    <td style={{ padding: '14px 16px', width: '44px' }}>
+                      <div
+                        onClick={(e) => handleToggleDoc(doc.id, e)}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '5px',
+                          border: isChecked ? 'none' : '1.5px solid var(--glass-border-bright)',
+                          background: isChecked ? 'var(--cyan-glow)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                        title={isChecked ? 'Deselect receipt' : 'Select receipt for download'}
                       >
-                        <Eye size={13} />
-                      </button>
-                      <button
-                        onClick={() => deleteDocument(doc.id)}
-                        className="liquid-btn liquid-btn-secondary"
-                        style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f87171' }}
-                        title="Delete Receipt"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {isChecked && <Check size={13} color="#090e21" strokeWidth={3} />}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--cyan-glow)' }}>
+                      {doc.id}
+                    </td>
+                    <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {doc.merchant}
+                    </td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
+                      {doc.date}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span className="liquid-badge liquid-badge-cyan" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
+                        {t.categories[doc.category] || doc.category}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
+                        {doc.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', color: '#34d399', fontFamily: 'var(--font-mono)' }}>
+                      {formatCurrency(doc.vat)}
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                      {formatCurrency(doc.total)}
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => setInspectingDoc(doc)}
+                          className="liquid-btn liquid-btn-secondary"
+                          style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                          title="View 3D Receipt"
+                        >
+                          <Eye size={13} />
+                        </button>
+                        <button
+                          onClick={() => deleteDocument(doc.id)}
+                          className="liquid-btn liquid-btn-secondary"
+                          style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f87171' }}
+                          title="Delete Receipt"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
