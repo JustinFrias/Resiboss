@@ -80,68 +80,6 @@ export const DocumentsView = () => {
             flexWrap: 'wrap',
           }}
         >
-          {/* Select All Toggle Button */}
-          {filteredDocs.length > 0 && (
-            <button
-              type="button"
-              onClick={handleToggleSelectAll}
-              className="liquid-btn liquid-btn-secondary"
-              style={{
-                padding: '7px 12px',
-                fontSize: '0.8rem',
-                gap: '6px',
-                borderRadius: '10px',
-              }}
-              title={selectedDocIds.length === filteredDocs.length ? 'Deselect all receipts' : 'Select all receipts'}
-            >
-              {selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? (
-                <>
-                  <CheckSquare size={15} color="var(--cyan-glow)" />
-                  <span>Deselect All</span>
-                </>
-              ) : (
-                <>
-                  <Square size={15} />
-                  <span>Select All ({filteredDocs.length})</span>
-                </>
-              )}
-            </button>
-          )}
-
-          {/* Download Action Button */}
-          <button
-            type="button"
-            onClick={handleDownloadSelected}
-            disabled={isDownloading || filteredDocs.length === 0}
-            className="liquid-btn"
-            style={{
-              background: selectedDocIds.length > 0
-                ? 'linear-gradient(135deg, #0284c7, #2563eb)'
-                : (isLight ? '#0284c7' : 'linear-gradient(135deg, #00f2fe, #38bdf8)'),
-              color: '#ffffff',
-              padding: '7px 14px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '10px',
-              border: 'none',
-              cursor: isDownloading ? 'wait' : 'pointer',
-              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              opacity: filteredDocs.length === 0 ? 0.5 : 1,
-            }}
-            title="Download selected receipts as Excel report"
-          >
-            <Download size={15} />
-            <span>
-              {isDownloading
-                ? 'Downloading...'
-                : selectedDocIds.length > 0
-                ? `Download (${selectedDocIds.length})`
-                : 'Download All'}
-            </span>
-          </button>
 
           {/* Category Filter */}
           <select
