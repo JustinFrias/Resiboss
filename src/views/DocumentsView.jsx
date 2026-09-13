@@ -179,24 +179,6 @@ export const DocumentsView = () => {
             </span>
           </button>
 
-          {/* Quick Clear Selection if items selected */}
-          {selectedDocIds.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setSelectedDocIds([])}
-              className="liquid-btn liquid-btn-secondary"
-              style={{
-                padding: '6px 10px',
-                fontSize: '0.78rem',
-                borderRadius: '8px',
-                color: 'var(--text-muted)',
-              }}
-              title="Clear selection"
-            >
-              Clear ({selectedDocIds.length})
-            </button>
-          )}
-
           {/* Category Filter */}
           <select
             className="liquid-input"
