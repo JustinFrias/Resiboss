@@ -29,6 +29,7 @@ import {
   Check,
   CloudOff,
   Cloud,
+  Lock,
 } from 'lucide-react';
 
 export const ScannerView = () => {
@@ -2017,129 +2018,82 @@ export const ScannerView = () => {
                 </div>
               </div>
               <span className={activeGeminiKey ? 'liquid-badge liquid-badge-emerald' : 'liquid-badge liquid-badge-cyan'} style={{ fontSize: '0.72rem' }}>
-                {activeGeminiKey ? '99% Precision' : 'Local Mode'}
+                {activeGeminiKey ? '99% Precision' : 'Active Engine'}
               </span>
             </div>
 
-            {/* Explanation & Free Tier Info */}
+            {/* Explanation & Engine Mode Info */}
             <div style={{ marginBottom: '18px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               <p style={{ margin: '0 0 8px 0' }}>
-                For the highest accuracy on curved, crumpled, or faint thermal paper receipts, connect a free <strong>Google Gemini API Key</strong>.
+                {activeGeminiKey
+                  ? 'Cloud AI Vision is active for curved, crumpled, or faint thermal paper receipts with automated offline fallback.'
+                  : 'Fast on-device optical character recognition configured for zero-latency receipt scanning.'}
               </p>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '8px',
                   color: 'var(--cyan-glow)',
                   background: 'rgba(0, 242, 254, 0.06)',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                }}
-              >
-                <Sparkles size={14} style={{ flexShrink: 0 }} />
-                <span>Google AI Studio offers <strong>1,500 scans/day 100% FREE</strong> on the free tier.</span>
-              </div>
-            </div>
-
-            {/* API Key Input */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Gemini API Key
-                </label>
-                <a
-                  href="https://aistudio.google.com/app/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--cyan-glow)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <span>Get Free Key at Google AI Studio</span>
-                  <ExternalLink size={11} />
-                </a>
-              </div>
-              <input
-                type="text"
-                className="liquid-input"
-                placeholder="AIzaSy..."
-                value={keyInput}
-                onChange={(e) => {
-                  setKeyInput(e.target.value);
-                  setTestResult(null);
-                }}
-                style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: '0.84rem' }}
-              />
-            </div>
-
-            {/* Test Key Result Banner */}
-            {testResult && (
-              <div
-                style={{
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  marginBottom: '16px',
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: testResult.success ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  border: testResult.success ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
-                  color: testResult.success ? '#6ee7b7' : '#fca5a5',
+                  border: '1px solid rgba(0, 242, 254, 0.15)',
                 }}
               >
-                {testResult.success ? <Check size={16} /> : <AlertTriangle size={16} />}
-                <span>{testResult.success ? 'Gemini API Key is valid and active!' : (testResult.message || 'Key validation failed.')}</span>
+                <Sparkles size={16} style={{ flexShrink: 0 }} />
+                <span>
+                  {activeGeminiKey
+                    ? 'Google Gemini Vision AI is connected and active at the system level.'
+                    : 'Google ML Kit Neural OCR is running in 100% private offline mode.'}
+                </span>
               </div>
-            )}
-
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <button
-                type="button"
-                onClick={handleTestApiKey}
-                disabled={isTestingKey || !keyInput.trim()}
-                className="liquid-btn liquid-btn-secondary"
-                style={{ flex: 1, padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-              >
-                {isTestingKey ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
-                <span>{isTestingKey ? 'Verifying...' : 'Test Key'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveApiKey}
-                className="liquid-btn liquid-btn-primary"
-                style={{ flex: 1.3, padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-              >
-                <Check size={15} />
-                <span>Save & Activate</span>
-              </button>
             </div>
 
-            {activeGeminiKey && (
-              <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={handleClearApiKey}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
-                >
-                  Clear Key & Revert to Local Offline OCR
-                </button>
+            {/* System Locked & Pre-configured Security Notice */}
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                marginBottom: '18px',
+              }}
+            >
+              <Lock size={18} color="#10b981" style={{ marginTop: '2px', flexShrink: 0 }} />
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '3px' }}>
+                  System Managed & Locked
+                </strong>
+                The OCR engine and AI credentials are pre-configured and securely managed by the system. Manual user entry or editing is disabled.
               </div>
-            )}
+            </div>
+
+            {/* Close Button */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setShowAiModal(false)}
+                className="liquid-btn liquid-btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  borderRadius: '12px',
+                }}
+              >
+                <Check size={16} />
+                <span>Understood</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -102,11 +102,14 @@ export async function getAvailableGeminiModels(apiKey) {
  * Allows mobile and web users to configure their own free Gemini key in settings.
  */
 export function getActiveGeminiKey() {
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (envKey && envKey.trim().length > 10) return envKey.trim();
+
   if (typeof window !== 'undefined') {
     const userKey = localStorage.getItem('resiboss_gemini_api_key') || localStorage.getItem('gemini_api_key');
     if (userKey && userKey.trim().length > 10) return userKey.trim();
   }
-  return import.meta.env.VITE_GEMINI_API_KEY || '';
+  return '';
 }
 
 /**
