@@ -15,6 +15,9 @@ import {
   ArrowRight,
   User,
   LogOut,
+  CloudOff,
+  CloudUpload,
+  RefreshCw,
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 import { ResibossLogo } from '../ui/ResibossLogo';
@@ -36,6 +39,10 @@ export const TopBar = ({ onOpenMobile }) => {
     clearNotifications,
     userProfile,
     signOut,
+    isOnline,
+    pendingSyncCount,
+    isSyncing,
+    triggerManualSync,
   } = useApp();
 
   // Search Bar State
@@ -508,6 +515,73 @@ export const TopBar = ({ onOpenMobile }) => {
             </div>
           )}
         </div>
+
+        {/* Offline / Cloud Background Sync Status Indicator */}
+        {!isOnline ? (
+          <span
+            title="Working offline. All scanned receipts are stored locally and will automatically sync when connection returns."
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              background: 'rgba(245, 158, 11, 0.14)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              color: '#fbbf24',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              userSelect: 'none',
+              flexShrink: 0,
+            }}
+          >
+            <CloudOff size={13} />
+            <span>{pendingSyncCount > 0 ? `Offline (${pendingSyncCount})` : 'Offline'}</span>
+          </span>
+        ) : isSyncing ? (
+          <span
+            title="Synchronizing local offline receipts with cloud vault..."
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              background: 'rgba(0, 242, 254, 0.12)',
+              border: '1px solid rgba(0, 242, 254, 0.35)',
+              color: 'var(--cyan-glow)',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              userSelect: 'none',
+              flexShrink: 0,
+            }}
+          >
+            <RefreshCw size={12} className="spin" />
+            <span>Syncing...</span>
+          </span>
+        ) : pendingSyncCount > 0 ? (
+          <button
+            onClick={triggerManualSync}
+            title="Click to sync queued receipts to Supabase now"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#34d399',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <CloudUpload size={13} />
+            <span>Sync ({pendingSyncCount})</span>
+          </button>
+        ) : null}
 
         {/* Dark Mode & Light Mode Switcher */}
         <button

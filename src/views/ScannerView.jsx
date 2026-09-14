@@ -26,10 +26,12 @@ import {
   ExternalLink,
   Zap,
   Check,
+  CloudOff,
+  Cloud,
 } from 'lucide-react';
 
 export const ScannerView = () => {
-  const { addDocument, addNotification, formatCurrency, t, theme } = useApp();
+  const { addDocument, addNotification, formatCurrency, t, theme, isOnline } = useApp();
   const isLight = theme === 'light';
 
   // Mode: 'idle' (Clean Scan Buddy) | 'camera' (taking live photo) | 'scanned' (extracted results)
@@ -434,12 +436,21 @@ export const ScannerView = () => {
     if (!currentReceipt) return;
     const saved = addDocument(currentReceipt);
     if (addNotification) {
-      addNotification({
-        title: 'Receipt Saved to Vault',
-        desc: `${saved?.merchant || 'Receipt'} (${saved?.id || 'Doc'}) has been saved.`,
-        type: 'scanner',
-        targetTab: 'documents',
-      });
+      if (!isOnline) {
+        addNotification({
+          title: 'Saved Offline',
+          desc: `${saved?.merchant || 'Receipt'} (${saved?.id || 'Doc'}) queued locally — will sync when connected.`,
+          type: 'scanner',
+          targetTab: 'documents',
+        });
+      } else {
+        addNotification({
+          title: 'Receipt Saved to Vault',
+          desc: `${saved?.merchant || 'Receipt'} (${saved?.id || 'Doc'}) has been saved.`,
+          type: 'scanner',
+          targetTab: 'documents',
+        });
+      }
     }
     // Automatically clear current receipt and reset to idle mode for scanning new receipts
     handleResetToIdle();
@@ -631,20 +642,24 @@ export const ScannerView = () => {
                 marginBottom: '18px',
                 padding: '12px 18px',
                 borderRadius: '14px',
-                background: 'rgba(32, 248, 161, 0.12)',
-                border: '1px solid rgba(32, 248, 161, 0.4)',
-                color: '#20F8A1',
+                background: !isOnline ? 'rgba(245, 158, 11, 0.14)' : 'rgba(32, 248, 161, 0.12)',
+                border: !isOnline ? '1px solid rgba(245, 158, 11, 0.45)' : '1px solid rgba(32, 248, 161, 0.4)',
+                color: !isOnline ? '#fbbf24' : '#20F8A1',
                 fontSize: '0.92rem',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '10px',
-                boxShadow: '0 4px 16px rgba(32, 248, 161, 0.12)',
+                boxShadow: !isOnline ? '0 4px 16px rgba(245, 158, 11, 0.15)' : '0 4px 16px rgba(32, 248, 161, 0.12)',
               }}
             >
-              <CheckCircle2 size={18} />
-              <span>Nai-save na ang resibo sa Document Vault! Handa na para sa bagong resibo.</span>
+              {!isOnline ? <CloudOff size={18} /> : <CheckCircle2 size={18} />}
+              <span>
+                {!isOnline
+                  ? 'Saved offline! Receipt is safely queued locally and will sync to Vault when connected.'
+                  : 'Nai-save na ang resibo sa Document Vault! Handa na para sa bagong resibo.'}
+              </span>
             </div>
           )}
 
@@ -1419,9 +1434,29 @@ export const ScannerView = () => {
                     </span>
                   </div>
                   {currentReceipt && (
-                    <span className="liquid-badge liquid-badge-emerald">
-                      <CheckCircle2 size={12} /> {currentReceipt.confidence}% {t.scanner.precision}
-                    </span>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span className="liquid-badge liquid-badge-emerald">
+                        <CheckCircle2 size={12} /> {currentReceipt.confidence}% {t.scanner.precision}
+                      </span>
+                      {currentReceipt.ocrEngine && (
+                        <span
+                          className={`liquid-badge ${
+                            currentReceipt.ocrEngine === 'mlkit'
+                              ? 'liquid-badge-amber'
+                              : currentReceipt.ocrEngine === 'gemini'
+                              ? 'liquid-badge-cyan'
+                              : 'liquid-badge-purple'
+                          }`}
+                          style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                        >
+                          {currentReceipt.ocrEngine === 'mlkit'
+                            ? '⚡ Google ML Kit (Offline)'
+                            : currentReceipt.ocrEngine === 'gemini'
+                            ? '✨ Gemini AI'
+                            : '🔬 Tesseract OCR'}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
 

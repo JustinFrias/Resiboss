@@ -20,13 +20,15 @@ import {
   Check,
   CheckSquare,
   Square,
+  CloudOff,
+  AlertCircle,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 import { downloadReceiptsExcel } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 
 export const DocumentsView = () => {
-  const { documents, setInspectingDoc, deleteDocument, formatCurrency, t, theme } = useApp();
+  const { documents, setInspectingDoc, deleteDocument, formatCurrency, t, theme, triggerManualSync } = useApp();
   const isLight = theme === 'light';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -449,10 +451,34 @@ export const DocumentsView = () => {
                         </span>
                       </div>
 
-                      <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ fontSize: '0.7rem' }}>
-                        {doc.status === 'Verified' ? <CheckCircle2 size={11} /> : <Clock size={11} />}
-                        {doc.status}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {doc.syncStatus === 'pending' && (
+                          <span
+                            className="liquid-badge liquid-badge-amber"
+                            style={{ fontSize: '0.68rem', gap: '4px' }}
+                            title="Stored offline — will automatically sync to cloud when connected"
+                          >
+                            <CloudOff size={10} /> Queued
+                          </span>
+                        )}
+                        {doc.syncStatus === 'failed' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              triggerManualSync?.();
+                            }}
+                            className="liquid-badge liquid-badge-rose"
+                            style={{ fontSize: '0.68rem', gap: '4px', cursor: 'pointer', border: 'none' }}
+                            title="Sync failed. Click to retry syncing."
+                          >
+                            <AlertCircle size={10} /> Retry Sync
+                          </button>
+                        )}
+                        <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ fontSize: '0.7rem' }}>
+                          {doc.status === 'Verified' ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                          {doc.status}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Merchant & Info */}

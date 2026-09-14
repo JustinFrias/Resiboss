@@ -1,5 +1,6 @@
 import Tesseract from 'tesseract.js';
 import { extractWithGemini, normalizeGeminiResult, getActiveGeminiKey } from './geminiOcr.js';
+import { extractWithMlKit, isMlKitAvailable } from './mlkitOcr.js';
 
 /**
  * Preprocesses an image for Tesseract OCR.
@@ -231,7 +232,8 @@ export const parseAmount = (val) => {
  */
 export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => {
   const GEMINI_API_KEY = getActiveGeminiKey();
-  const useGemini = !!GEMINI_API_KEY;
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  const useGemini = Boolean(GEMINI_API_KEY && isOnline);
 
   try {
     // =========================================================================
@@ -319,17 +321,43 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     }
 
     // =========================================================================
-    // PATH B: TESSERACT LSTM FALLBACK (or primary when no Gemini key)
+    // PATH B: GOOGLE ML KIT (Primary Offline On-Device Engine for Android/iOS)
     // =========================================================================
-    onProgress(useGemini ? 15 : 10, useGemini
-      ? 'AI unavailable — switching to Tesseract OCR...'
-      : 'Enhancing image for OCR recognition...');
-
-    const processedImageUri = await preprocessForTesseract(imageUri);
-
-    onProgress(25, 'Running Tesseract Neural OCR recognition...');
     let fullText = '';
     let confidenceVal = 85;
+    let activeEngine = 'tesseract';
+
+    if (isMlKitAvailable()) {
+      try {
+        onProgress(30, 'Scanning receipt with Google ML Kit on-device...');
+        const mlkitResult = await extractWithMlKit(imageUri);
+        const recognizedText = (mlkitResult?.text || '').trim();
+
+        if (recognizedText.length >= 3) {
+          fullText = recognizedText;
+          confidenceVal = 94; // High on-device neural accuracy
+          activeEngine = 'mlkit';
+          onProgress(75, 'Analyzing extracted receipt characters...');
+        } else {
+          console.warn('[OCR] ML Kit returned minimal text, falling back to Tesseract.');
+        }
+      } catch (mlkitErr) {
+        console.warn('[OCR] ML Kit error, falling back to Tesseract:', mlkitErr?.message || mlkitErr);
+      }
+    }
+
+    // =========================================================================
+    // PATH C: TESSERACT LSTM FALLBACK (Web fallback or if ML Kit unavailable)
+    // =========================================================================
+    if (!fullText) {
+      activeEngine = 'tesseract';
+      onProgress(useGemini ? 15 : 10, useGemini
+        ? 'AI unavailable — switching to Tesseract OCR...'
+        : 'Enhancing image for OCR recognition...');
+
+      const processedImageUri = await preprocessForTesseract(imageUri);
+
+      onProgress(25, 'Running Tesseract Neural OCR recognition...');
 
     // Try Tesseract worker with PSM 6 (uniform block of text, best for itemized receipts)
     try {
@@ -416,6 +444,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       } catch (rawErr) {
         console.warn('Raw image OCR note:', rawErr);
       }
+    }
     }
 
     onProgress(92, 'Analyzing itemized breakdown, taxes, and vendor...');
@@ -1076,8 +1105,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       total: detectedTotal,
       items: items,
       currency: currency,
-      confidence: computedConfidence,
-      ocrEngine: 'tesseract',
+      confidence: activeEngine === 'mlkit' ? Math.max(92, computedConfidence) : computedConfidence,
+      ocrEngine: activeEngine,
       rawOcrText: fullText,
       detectedBoxes: detectedBoxes,
     };

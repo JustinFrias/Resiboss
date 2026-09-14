@@ -14,7 +14,17 @@ import {
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
+import { Network } from '@capacitor/network';
 import { validateEmailAddress } from '../utils/emailValidator';
+import {
+  generateReceiptId,
+  enqueueReceipt,
+  processSyncQueue,
+  getPendingSyncCount,
+  checkIsOnline,
+  getOfflineQueue,
+  updateQueueItemStatus,
+} from '../utils/syncManager';
 
 const AppContext = createContext();
 
@@ -217,14 +227,103 @@ export const AppProvider = ({ children }) => {
       fetchReceiptsFromSupabase(userProfile).then(({ data }) => {
         if (Array.isArray(data)) {
           const liveDocs = data.map(mapSupabaseToDoc);
-          setDocuments(liveDocs);
+          // Preserve local pending offline queue items that haven't synced to Supabase yet
+          const offlineQueue = getOfflineQueue();
+          const pendingOffline = offlineQueue.filter(
+            (it) => it.syncStatus === 'pending' || it.syncStatus === 'failed'
+          );
+          const liveIds = new Set(liveDocs.map((d) => d.id));
+          const mergedDocs = [
+            ...pendingOffline.filter((p) => !liveIds.has(p.id)),
+            ...liveDocs,
+          ];
+          setDocuments(mergedDocs);
           try {
-            localStorage.setItem(storageKey, JSON.stringify(liveDocs));
+            localStorage.setItem(storageKey, JSON.stringify(mergedDocs));
           } catch (e) {}
         }
       });
     }
   }, [userProfile?.id, userProfile?.email]);
+
+  // Network Connectivity and Background Sync State
+  const [isOnline, setIsOnline] = useState(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+  const [pendingSyncCount, setPendingSyncCount] = useState(() => getPendingSyncCount());
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleTriggerSync = async () => {
+    if (isSyncing) return;
+    const online = await checkIsOnline();
+    if (!online) return;
+    setIsSyncing(true);
+    try {
+      const res = await processSyncQueue(userProfileRef.current);
+      setPendingSyncCount(res.remainingPending);
+      if (res.syncedCount > 0) {
+        setDocuments((prev) => {
+          const queue = getOfflineQueue();
+          return prev.map((d) => {
+            const queueItem = queue.find((q) => q.id === d.id);
+            if (queueItem && queueItem.syncStatus) {
+              return { ...d, syncStatus: queueItem.syncStatus };
+            }
+            return d;
+          });
+        });
+      }
+    } catch (err) {
+      console.warn('[SyncManager] Auto sync execution notice:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check network status initially
+    checkIsOnline().then((online) => {
+      setIsOnline(online);
+      setPendingSyncCount(getPendingSyncCount());
+      if (online) {
+        handleTriggerSync();
+      }
+    });
+
+    // Register Capacitor Native Network listener
+    let networkHandle = null;
+    try {
+      Network.addListener('networkStatusChange', (status) => {
+        const connected = Boolean(status.connected);
+        setIsOnline(connected);
+        if (connected) {
+          handleTriggerSync();
+        }
+      }).then((handle) => {
+        networkHandle = handle;
+      });
+    } catch (_) {}
+
+    // Register Web standard online/offline event listeners
+    const handleOnlineEvent = () => {
+      setIsOnline(true);
+      handleTriggerSync();
+    };
+    const handleOfflineEvent = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnlineEvent);
+    window.addEventListener('offline', handleOfflineEvent);
+
+    return () => {
+      if (networkHandle && networkHandle.remove) {
+        networkHandle.remove();
+      }
+      window.removeEventListener('online', handleOnlineEvent);
+      window.removeEventListener('offline', handleOfflineEvent);
+    };
+  }, [userProfile?.id]);
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {
@@ -1181,23 +1280,61 @@ export const AppProvider = ({ children }) => {
   };
 
   const addDocument = (newDoc) => {
+    const docId = newDoc.id || generateReceiptId();
+    const isActuallyOnline = isOnline;
+    const initialSyncStatus = isActuallyOnline ? 'synced' : 'pending';
+
     const completeDoc = {
       ...newDoc,
-      id: newDoc.id || `REC-${new Date().getFullYear()}-${String(documents.length + 1).padStart(3, '0')}`,
+      id: docId,
       userId: userProfile?.id || null,
       userEmail: userProfile?.email || null,
       date: newDoc.date || new Date().toISOString().split('T')[0],
       time: newDoc.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: newDoc.status || 'Verified',
+      syncStatus: initialSyncStatus,
       currency: 'PHP',
       color: newDoc.color || '#00f2fe'
     };
 
+    // 1. Immediately save to local React state (instant, offline-capable)
     setDocuments((prev) => [completeDoc, ...prev]);
     soundFx.playSuccessChime();
 
-    // Sync to Supabase in real-time with user account isolation
-    syncReceiptToSupabase(completeDoc, userProfile);
+    // 2. Persist to partitioned localStorage immediately
+    const storageKey = getUserReceiptsStorageKey(userProfile);
+    try {
+      const current = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      localStorage.setItem(storageKey, JSON.stringify([completeDoc, ...current.filter((d) => d.id !== docId)]));
+    } catch (_) {}
+
+    // 3. Add to offline queue
+    enqueueReceipt(completeDoc, initialSyncStatus);
+    setPendingSyncCount(getPendingSyncCount());
+
+    // 4. If online, attempt background sync immediately
+    if (isActuallyOnline) {
+      syncReceiptToSupabase(completeDoc, userProfile)
+        .then((res) => {
+          if (res?.error) {
+            updateQueueItemStatus(docId, 'failed', res.error.message);
+            setDocuments((prev) =>
+              prev.map((d) => (d.id === docId ? { ...d, syncStatus: 'failed' } : d))
+            );
+            setPendingSyncCount(getPendingSyncCount());
+          } else {
+            updateQueueItemStatus(docId, 'synced');
+            setPendingSyncCount(getPendingSyncCount());
+          }
+        })
+        .catch((err) => {
+          updateQueueItemStatus(docId, 'failed', err?.message || 'Sync error');
+          setDocuments((prev) =>
+            prev.map((d) => (d.id === docId ? { ...d, syncStatus: 'failed' } : d))
+          );
+          setPendingSyncCount(getPendingSyncCount());
+        });
+    }
 
     // Trigger celebratory particle blast
     try {
@@ -1334,6 +1471,10 @@ export const AppProvider = ({ children }) => {
         setIsCookieModalOpen,
         cookieConsent,
         saveCookieConsent,
+        isOnline,
+        pendingSyncCount,
+        isSyncing,
+        triggerManualSync: handleTriggerSync,
       }}
     >
       {children}
