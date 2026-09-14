@@ -17,14 +17,14 @@
 
 ## 🌟 Overview
 
-**Resiboss** transforms messy paper receipts and invoices into structured, auditable financial records. Built with modern web and mobile technologies, it features an immersive **3D Liquid Glassmorphism** interface, dual OCR recognition engines (Offline Local OCR & Google Gemini Vision AI), and an automated tax engine tailored for standard VAT and expense reporting.
+**Resiboss** transforms messy paper receipts and invoices into structured, auditable financial records. Built with modern web and mobile technologies, it features an immersive **3D Liquid Glassmorphism** interface, dual OCR recognition engines (Google ML Kit (Offline) & Google Gemini Vision AI), and an automated tax engine tailored for standard VAT and expense reporting.
 
 ---
 
 ## 🚀 Key Features
 
 ### 📸 Dual-Engine Receipt Scanning & OCR
-- **Offline Local OCR (`Tesseract.js`):** Client-side image recognition that works completely offline with zero server dependencies.
+- **ML Kit (Offline):** On-device neural text recognition that works completely offline with zero server dependencies.
 - **Google Gemini Vision AI (`gemini-1.5-flash` / `gemini-2.0-flash`):** High-precision AI vision extraction with multi-model fallback for complex thermal receipts, crumpled paper, and noisy backgrounds.
 - **Smart Financial Parser:** Automatically extracts and structures:
   - Merchant / Vendor Name
@@ -78,7 +78,7 @@
 | **3D Rendering** | Three.js, Canvas Confetti |
 | **Mobile Runtime** | Capacitor 8 (`@capacitor/core`, `@capacitor/android`, `@capacitor/filesystem`, `@capacitor/share`, `@capacitor/browser`, `@capacitor/app`) |
 | **Database & Auth** | Supabase (`@supabase/supabase-js`) |
-| **OCR & AI** | Tesseract.js (Local), Google Gemini Vision API (Cloud AI) |
+| **OCR & AI** | Google ML Kit (Offline), Google Gemini Vision API (Cloud AI) |
 | **Spreadsheet Generation**| SheetJS (`xlsx`) |
 | **Icons** | Lucide React |
 

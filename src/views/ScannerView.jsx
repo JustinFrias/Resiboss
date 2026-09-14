@@ -976,23 +976,14 @@ export const ScannerView = () => {
                   >
                     <Zap size={12} /> GEMINI AI VISION (99% ACCURACY)
                   </span>
-                ) : (currentReceipt?.ocrEngine === 'mlkit' || Capacitor.isNativePlatform()) ? (
-                  <span
-                    className="liquid-badge liquid-badge-cyan"
-                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
-                    onClick={() => setShowAiModal(true)}
-                    title="Powered by Google ML Kit Neural OCR (Offline / On-Device)"
-                  >
-                    <Zap size={12} /> ML KIT (OFFLINE)
-                  </span>
                 ) : (
                   <span
                     className="liquid-badge liquid-badge-cyan"
                     style={{ fontSize: '0.72rem', cursor: 'pointer' }}
                     onClick={() => setShowAiModal(true)}
-                    title="Powered by Tesseract Neural OCR (Offline / Local)"
+                    title="Powered by Google ML Kit Neural OCR (Offline)"
                   >
-                    <Sparkles size={12} /> OPTICAL OCR (LOCAL)
+                    <Zap size={12} /> ML KIT (OFFLINE)
                   </span>
                 )}
                 <button
@@ -1451,19 +1442,15 @@ export const ScannerView = () => {
                       {currentReceipt.ocrEngine && (
                         <span
                           className={`liquid-badge ${
-                            currentReceipt.ocrEngine === 'mlkit'
-                              ? 'liquid-badge-amber'
-                              : currentReceipt.ocrEngine === 'gemini'
+                            currentReceipt.ocrEngine === 'gemini'
                               ? 'liquid-badge-cyan'
-                              : 'liquid-badge-purple'
+                              : 'liquid-badge-amber'
                           }`}
                           style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}
                         >
-                          {currentReceipt.ocrEngine === 'mlkit'
-                            ? '⚡ Google ML Kit (Offline)'
-                            : currentReceipt.ocrEngine === 'gemini'
+                          {currentReceipt.ocrEngine === 'gemini'
                             ? '✨ Gemini AI'
-                            : '🔬 Tesseract OCR'}
+                            : '⚡ ML Kit (Offline)'}
                         </span>
                       )}
                     </div>
@@ -2023,8 +2010,8 @@ export const ScannerView = () => {
                     </>
                   ) : (
                     <>
-                      <Sparkles size={15} color="var(--cyan-glow)" />
-                      <span>Tesseract Neural OCR (Offline Local)</span>
+                      <Zap size={15} color="var(--cyan-glow)" />
+                      <span>Google ML Kit (Offline)</span>
                     </>
                   )}
                 </div>

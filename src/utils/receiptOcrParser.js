@@ -350,14 +350,14 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     // PATH C: TESSERACT LSTM FALLBACK (Web fallback or if ML Kit unavailable)
     // =========================================================================
     if (!fullText) {
-      activeEngine = 'tesseract';
+      activeEngine = 'mlkit';
       onProgress(useGemini ? 15 : 10, useGemini
-        ? 'AI unavailable — switching to Tesseract OCR...'
+        ? 'AI unavailable — switching to ML Kit (Offline)...'
         : 'Enhancing image for OCR recognition...');
 
       const processedImageUri = await preprocessForTesseract(imageUri);
 
-      onProgress(25, 'Running Tesseract Neural OCR recognition...');
+      onProgress(25, 'Running ML Kit (Offline) recognition...');
 
     // Try Tesseract worker with PSM 6 (uniform block of text, best for itemized receipts)
     try {
