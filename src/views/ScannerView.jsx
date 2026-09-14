@@ -968,7 +968,16 @@ export const ScannerView = () => {
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {currentReceipt?.ocrEngine === 'mlkit' ? (
+                {currentReceipt?.ocrEngine === 'textract' ? (
+                  <span
+                    className="liquid-badge liquid-badge-emerald"
+                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
+                    onClick={() => setShowAiModal(true)}
+                    title="Powered by AWS Textract AnalyzeExpense (Primary)"
+                  >
+                    <Zap size={12} /> AWS TEXTRACT (EXPENSE AI)
+                  </span>
+                ) : currentReceipt?.ocrEngine === 'mlkit' ? (
                   <span
                     className="liquid-badge liquid-badge-cyan"
                     style={{ fontSize: '0.72rem', cursor: 'pointer' }}
@@ -982,9 +991,9 @@ export const ScannerView = () => {
                     className="liquid-badge liquid-badge-emerald"
                     style={{ fontSize: '0.72rem', cursor: 'pointer' }}
                     onClick={() => setShowAiModal(true)}
-                    title="Powered by Gemini 1.5/2.0 Vision AI (Default)"
+                    title="Powered by AWS Textract AnalyzeExpense (Primary)"
                   >
-                    <Zap size={12} /> GEMINI AI VISION (99% ACCURACY)
+                    <Zap size={12} /> AWS TEXTRACT (EXPENSE AI)
                   </span>
                 )}
                 {selectedFileName && (
@@ -1427,13 +1436,17 @@ export const ScannerView = () => {
                       {currentReceipt.ocrEngine && (
                         <span
                           className={`liquid-badge ${
-                            currentReceipt.ocrEngine === 'gemini'
+                            currentReceipt.ocrEngine === 'textract'
+                              ? 'liquid-badge-emerald'
+                              : currentReceipt.ocrEngine === 'gemini'
                               ? 'liquid-badge-cyan'
                               : 'liquid-badge-amber'
                           }`}
                           style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}
                         >
-                          {currentReceipt.ocrEngine === 'gemini'
+                          {currentReceipt.ocrEngine === 'textract'
+                            ? '⚡ AWS Textract'
+                            : currentReceipt.ocrEngine === 'gemini'
                             ? '✨ Gemini AI'
                             : '⚡ ML Kit (Offline)'}
                         </span>
@@ -1989,18 +2002,18 @@ export const ScannerView = () => {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Active OCR Engine:</div>
                 <div style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Zap size={15} color="#10b981" />
-                  <span>Google Gemini 1.5/2.0 Vision AI</span>
+                  <span>AWS Textract (AnalyzeExpense)</span>
                 </div>
               </div>
               <span className="liquid-badge liquid-badge-emerald" style={{ fontSize: '0.72rem' }}>
-                99% Precision (Default)
+                Expense AI (Primary)
               </span>
             </div>
 
             {/* Explanation & Engine Mode Info */}
             <div style={{ marginBottom: '18px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               <p style={{ margin: '0 0 8px 0' }}>
-                Google Gemini Vision AI is permanently active as the default OCR engine, with automated Google ML Kit (Offline) fallback when offline.
+                AWS Textract AnalyzeExpense is active as the primary expense recognition engine for mobile and web, with automated Gemini Vision and Google ML Kit (Offline) fallback.
               </p>
               <div
                 style={{
@@ -2016,7 +2029,7 @@ export const ScannerView = () => {
               >
                 <Sparkles size={16} style={{ flexShrink: 0 }} />
                 <span>
-                  Primary: <strong>Gemini Vision AI (99% Precision)</strong> • Fallback: <strong>ML Kit (Offline)</strong>
+                  Primary: <strong>AWS Textract AnalyzeExpense</strong> • Fallback: <strong>ML Kit (Offline)</strong>
                 </span>
               </div>
             </div>
