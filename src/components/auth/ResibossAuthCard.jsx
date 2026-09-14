@@ -14,12 +14,14 @@ import {
   Eye,
   EyeOff,
   Sparkles,
+  WifiOff,
 } from 'lucide-react';
 import { validateEmailAddress } from '../../utils/emailValidator';
 
 export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
   const {
     theme,
+    isOnline = true,
     setActiveTab,
     signInWithGoogle,
     signInWithEmail,
@@ -49,7 +51,7 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
   const [successMsg, setSuccessMsg] = useState(null);
   const [suggestedEmail, setSuggestedEmail] = useState(null);
 
-  const isGoogleDisabled = isLoading;
+  const isGoogleDisabled = isLoading || !isOnline;
 
   const isFil = language === 'fil';
 
@@ -123,6 +125,16 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
 
   // Google OAuth flow
   const handleGoogleAuth = async () => {
+    if (!isOnline) {
+      setErrorMsg(
+        isFil
+          ? 'Walang koneksyon sa internet — kumonekta sa Wi-Fi o mobile data upang mag-sign in.'
+          : 'No internet connection — connect to WiFi or mobile data to sign in.'
+      );
+      soundFx?.playClick?.();
+      return;
+    }
+
     if (isLoading) {
       soundFx?.playClick?.();
       setIsLoading(false);
@@ -194,6 +206,16 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
       try {
         localStorage.setItem('resiboss_terms_accepted_v1', 'true');
       } catch (err) {}
+    }
+
+    if (!isOnline) {
+      setErrorMsg(
+        isFil
+          ? 'Walang koneksyon sa internet — kumonekta sa Wi-Fi o mobile data upang mag-sign in.'
+          : 'No internet connection — connect to WiFi or mobile data to sign in.'
+      );
+      soundFx?.playClick?.();
+      return;
     }
 
     setIsLoading(true);
@@ -402,13 +424,44 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
         style={{
           fontSize: '0.85rem',
           color: isLight ? '#475569' : '#94a3b8',
-          margin: '0 0 22px 0',
+          margin: '0 0 20px 0',
           lineHeight: 1.45,
           fontWeight: 450,
         }}
       >
         Sync contracts, signatures, and forms across your devices.
       </p>
+
+      {/* Offline Alert Banner */}
+      {!isOnline && (
+        <div
+          role="alert"
+          style={{
+            width: '100%',
+            padding: '12px 14px',
+            borderRadius: '16px',
+            background: isLight ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.15)',
+            border: isLight ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(245, 158, 11, 0.45)',
+            color: isLight ? '#b45309' : '#fbbf24',
+            fontSize: '0.84rem',
+            fontWeight: 600,
+            marginBottom: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            textAlign: 'left',
+            lineHeight: 1.4,
+            boxSizing: 'border-box',
+          }}
+        >
+          <WifiOff size={18} style={{ flexShrink: 0, color: '#f59e0b' }} />
+          <span>
+            {isFil
+              ? 'Walang koneksyon sa internet — kumonekta sa Wi-Fi o mobile data upang mag-sign in.'
+              : 'No internet connection — connect to WiFi or mobile data to sign in.'}
+          </span>
+        </div>
+      )}
 
       {/* 4. Google OAuth Button */}
       <div style={{ width: '100%', marginBottom: '4px' }}>

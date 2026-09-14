@@ -1,5 +1,6 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { SplashScreen } from '@capacitor/splash-screen';
 import {
   LiquidBackground3D,
   Sidebar,
@@ -12,6 +13,7 @@ import {
   CookieConsentBanner,
   InAppToast,
   ErrorBoundary,
+  AppLoadingScreen,
 } from './components';
 
 import { DashboardView } from './views/DashboardView';
@@ -25,9 +27,16 @@ import { AuthView } from './views/AuthView';
 import './styles/liquid-glass.css';
 
 const MainLayout = () => {
-  const { activeTab, sidebarCollapsed, userProfile } = useApp();
+  const { activeTab, sidebarCollapsed, userProfile, isAuthResolving } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const viewportRef = useRef(null);
+
+  // Instantly dismiss native Android splash screen on boot
+  useEffect(() => {
+    try {
+      SplashScreen.hide().catch(() => {});
+    } catch (e) {}
+  }, []);
 
   // Instantly scroll to top of the content area on every tab switch
   useLayoutEffect(() => {
@@ -37,6 +46,11 @@ const MainLayout = () => {
     // Also reset window scroll (for mobile)
     window.scrollTo(0, 0);
   }, [activeTab]);
+
+  // While resolving auth state on cold start (only online with no cached session, max 5s timeout)
+  if (isAuthResolving && !userProfile) {
+    return <AppLoadingScreen />;
+  }
 
   // If not logged in, show Login / Sign Up screen first
   if (!userProfile) {
@@ -110,6 +124,13 @@ const MainLayout = () => {
 };
 
 export default function App() {
+  // Instantly dismiss native Android splash screen on boot
+  useEffect(() => {
+    try {
+      SplashScreen.hide().catch(() => {});
+    } catch (e) {}
+  }, []);
+
   return (
     <AppProvider>
       <MobileAppGatekeeper>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useApp } from '../../context/AppContext';
+import { hasCachedSession } from '../../utils/sessionCache';
 import {
   Smartphone,
   Download,
@@ -23,8 +24,21 @@ export const MobileAppGatekeeper = ({ children }) => {
   const [isBypassed, setIsBypassed] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
+        if (Capacitor.isNativePlatform() || hasCachedSession()) {
+          return true;
+        }
         const h = window.location.hostname;
         if (h === 'localhost' || h === '127.0.0.1' || h.includes('192.168.') || h.includes('.local')) {
+          return true;
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('web') === '1' || urlParams.get('preview') === '1' || urlParams.get('bypass') === 'mobile') {
+          return true;
+        }
+        if (
+          sessionStorage.getItem('resiboss_mobile_web_bypass') === 'true' ||
+          localStorage.getItem('resiboss_mobile_web_bypass') === 'true'
+        ) {
           return true;
         }
       }
@@ -35,6 +49,9 @@ export const MobileAppGatekeeper = ({ children }) => {
   });
   const [checking, setChecking] = useState(() => {
     if (typeof window !== 'undefined') {
+      if (Capacitor.isNativePlatform() || hasCachedSession()) {
+        return false;
+      }
       const h = window.location.hostname;
       if (h === 'localhost' || h === '127.0.0.1' || h.includes('192.168.') || h.includes('.local')) {
         return false;
@@ -151,6 +168,11 @@ export const MobileAppGatekeeper = ({ children }) => {
     setIsBypassed(true);
   };
 
+  // If user is already logged in, has cached session, inside native APK, or manually bypassed, render normal application directly
+  if (userProfile || hasCachedSession() || Capacitor.isNativePlatform() || isBypassed) {
+    return children;
+  }
+
   if (checking) {
     // Render the background color instead of a blank white page while we detect the environment
     return (
@@ -165,8 +187,7 @@ export const MobileAppGatekeeper = ({ children }) => {
     );
   }
 
-  // If user is already logged in, inside native APK, on desktop, or manually bypassed, render normal application directly
-  if (userProfile || !isMobileBrowser || isBypassed) {
+  if (!isMobileBrowser) {
     return children;
   }
 

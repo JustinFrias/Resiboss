@@ -15,6 +15,7 @@ import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 import { Network } from '@capacitor/network';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { validateEmailAddress } from '../utils/emailValidator';
 import {
   generateReceiptId,
@@ -25,6 +26,13 @@ import {
   getOfflineQueue,
   updateQueueItemStatus,
 } from '../utils/syncManager';
+import {
+  getCachedSupabaseSession,
+  getInitialSupabaseUser,
+  getInitialUserProfile as getCachedUserProfile,
+  hasCachedSession,
+  buildUserProfileFromUser,
+} from '../utils/sessionCache';
 
 const AppContext = createContext();
 
@@ -154,33 +162,26 @@ export const getUserReceiptsStorageKey = (profile) => {
  * Recovers the active authenticated user profile from localStorage (or sessionStorage) if available.
  */
 export const getInitialUserProfile = () => {
-  try {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(SESSION_PROFILE_KEY) || sessionStorage.getItem(SESSION_PROFILE_KEY) || localStorage.getItem('resiboss_user_profile_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.isAuthSession) {
-          const email = parsed.email;
-          const custom = (email ? getSavedCustomProfile(email) : null) || (parsed.id ? getSavedCustomProfile(parsed.id) : null);
-          if (custom) {
-            return { ...parsed, ...custom };
-          }
-          return parsed;
-        }
-      }
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
+  return getCachedUserProfile();
 };
 
 export const AppProvider = ({ children }) => {
-  // Real Supabase User State (null when user is NOT signed in)
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(getInitialUserProfile);
+  // Real Supabase User State (recovers synchronously from local storage cache if available)
+  const [currentUser, setCurrentUser] = useState(getInitialSupabaseUser);
+  const [userProfile, setUserProfile] = useState(getCachedUserProfile);
   const userProfileRef = useRef(userProfile);
   const isSigningUpRef = useRef(false);
+  const silentRefreshRef = useRef(null);
+
+  // Router resolution state:
+  // - Returning user with cached session: false (immediate navigation into main app)
+  // - No cached session and offline: false (immediate navigation to Login with offline banner)
+  // - No cached session and online: true (max 5-8s timeout window to check Supabase session)
+  const [isAuthResolving, setIsAuthResolving] = useState(() => {
+    if (hasCachedSession()) return false;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+    return true;
+  });
 
   useEffect(() => {
     userProfileRef.current = userProfile;
@@ -298,6 +299,7 @@ export const AppProvider = ({ children }) => {
         setIsOnline(connected);
         if (connected) {
           handleTriggerSync();
+          silentRefreshRef.current?.();
         }
       }).then((handle) => {
         networkHandle = handle;
@@ -308,6 +310,7 @@ export const AppProvider = ({ children }) => {
     const handleOnlineEvent = () => {
       setIsOnline(true);
       handleTriggerSync();
+      silentRefreshRef.current?.();
     };
     const handleOfflineEvent = () => {
       setIsOnline(false);
@@ -720,37 +723,131 @@ export const AppProvider = ({ children }) => {
       }
     };
 
-    // Check existing active session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        if (checkIsSignupConfirmation()) {
-          const confirmedEmail = session.user.email || '';
-          try {
-            window.history.replaceState(null, '', window.location.pathname);
-            localStorage.setItem('resiboss_email_just_confirmed', confirmedEmail);
-            localStorage.setItem('resiboss_account_created_v1', 'true');
-          } catch (e) {}
-          supabase.auth.signOut().catch(() => {});
-          setCurrentUser(null);
-          setUserProfile(null);
-          return;
-        }
+    // Safety timeout: strictly guarantee routing resolution within 5 seconds (well within 5-8s constraint)
+    const authTimeoutTimer = setTimeout(() => {
+      setIsAuthResolving(false);
+      try {
+        SplashScreen.hide().catch(() => {});
+      } catch (e) {}
+    }, 5000);
 
-        setCurrentUser(session.user);
-        const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
-        const profile = buildUserProfile(session.user, provider);
-        setUserProfile(profile);
-        setIsTermsAccepted(true);
-        try {
-          localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
-          sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
-          localStorage.setItem('resiboss_terms_accepted_v1', 'true');
-          localStorage.setItem('resiboss_mobile_web_bypass', 'true');
-          sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
-        } catch (e) {}
+    const isCurrentlyOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+    // Silent background session refresh (never blocks navigation or shows infinite spinner)
+    const performSilentSessionRefresh = async () => {
+      if (!supabase || !isSupabaseConfigured) return;
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session?.user && !error) {
+          setCurrentUser(session.user);
+          const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
+          const profile = buildUserProfile(session.user, provider);
+          setUserProfile(profile);
+          setIsTermsAccepted(true);
+          try {
+            localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+            sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.warn('Silent background session refresh note:', err);
       }
-      // Note: If session is null, do NOT wipe userProfile because user may be logged in via Pipedream or Guest mode.
-    });
+    };
+
+    silentRefreshRef.current = performSilentSessionRefresh;
+
+    // CASE 1: Returning user with a cached/persisted Supabase session, but no internet connection:
+    // - Must skip the Login page entirely and go straight into the main app (Dashboard/Scanner), using the locally cached session.
+    // - Do NOT attempt to validate/refresh the session against the server before allowing access — trust the local cached session first,
+    //   and only attempt a silent background refresh once connectivity returns (do not block navigation on this refresh).
+    if (userProfileRef.current) {
+      setIsAuthResolving(false);
+      clearTimeout(authTimeoutTimer);
+      try {
+        SplashScreen.hide().catch(() => {});
+      } catch (e) {}
+
+      if (isCurrentlyOnline) {
+        // Online: perform non-blocking silent refresh in background
+        performSilentSessionRefresh();
+      }
+    } else if (!isCurrentlyOnline) {
+      // CASE 2: No cached session at all (first launch, or user previously logged out), and no internet connection:
+      // - Show the Login page (not an infinite spinner), with the inline offline notice.
+      setIsAuthResolving(false);
+      clearTimeout(authTimeoutTimer);
+      try {
+        SplashScreen.hide().catch(() => {});
+      } catch (e) {}
+    } else {
+      // CASE 3: No cached session, but online:
+      // Check Supabase session with a strict 5s timeout safety net
+      const checkOnlineSession = async () => {
+        try {
+          // Rapid native connectivity pre-check (avoids 5s wait if already disconnected)
+          const online = await checkIsOnline();
+          if (!online) {
+            setIsOnline(false);
+            setIsAuthResolving(false);
+            clearTimeout(authTimeoutTimer);
+            try {
+              SplashScreen.hide().catch(() => {});
+            } catch (e) {}
+            return;
+          }
+
+          const sessionPromise = supabase.auth.getSession();
+          const timeoutPromise = new Promise((res) =>
+            setTimeout(() => res({ timedOut: true }), 5000)
+          );
+
+          const result = await Promise.race([sessionPromise, timeoutPromise]);
+
+          if (result?.timedOut) {
+            console.warn('Supabase session check timed out (offline/unreachable). Routing to Login.');
+            setIsOnline(false);
+          } else if (result && result.data?.session?.user) {
+            const session = result.data.session;
+            if (checkIsSignupConfirmation()) {
+              const confirmedEmail = session.user.email || '';
+              try {
+                window.history.replaceState(null, '', window.location.pathname);
+                localStorage.setItem('resiboss_email_just_confirmed', confirmedEmail);
+                localStorage.setItem('resiboss_account_created_v1', 'true');
+              } catch (e) {}
+              supabase.auth.signOut().catch(() => {});
+              setCurrentUser(null);
+              setUserProfile(null);
+              return;
+            }
+
+            setCurrentUser(session.user);
+            const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'google';
+            const profile = buildUserProfile(session.user, provider);
+            setUserProfile(profile);
+            setIsTermsAccepted(true);
+            try {
+              localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+              sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+              localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+              localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+              sessionStorage.setItem('resiboss_mobile_web_bypass', 'true');
+            } catch (e) {}
+          }
+        } catch (e) {
+          console.warn('Initial session check network notice:', e);
+          setIsOnline(false);
+        } finally {
+          setIsAuthResolving(false);
+          clearTimeout(authTimeoutTimer);
+          try {
+            SplashScreen.hide().catch(() => {});
+          } catch (e) {}
+        }
+      };
+
+      checkOnlineSession();
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (isSigningUpRef.current) {
@@ -790,6 +887,12 @@ export const AppProvider = ({ children }) => {
             localStorage.removeItem(SESSION_PROFILE_KEY);
             localStorage.removeItem('resiboss_user_profile_v1');
             localStorage.removeItem('resiboss_notifications_v1');
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+              const k = localStorage.key(i);
+              if (k && ((k.startsWith('sb-') && k.endsWith('-auth-token')) || k === 'supabase.auth.token')) {
+                localStorage.removeItem(k);
+              }
+            }
           } catch (e) {}
           return null;
         });
@@ -1131,6 +1234,13 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem(SESSION_PROFILE_KEY);
       localStorage.removeItem('resiboss_user_profile_v1');
       localStorage.removeItem('resiboss_notifications_v1');
+      // Clean up any remaining cached Supabase auth tokens in localStorage
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && ((k.startsWith('sb-') && k.endsWith('-auth-token')) || k === 'supabase.auth.token')) {
+          localStorage.removeItem(k);
+        }
+      }
     } catch (e) {}
   };
 
@@ -1417,6 +1527,7 @@ export const AppProvider = ({ children }) => {
         setSettings,
         currentUser,
         userProfile,
+        isAuthResolving,
         setUserProfile,
         updateUserProfile,
         saveCustomProfileToStorage,

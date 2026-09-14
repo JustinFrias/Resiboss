@@ -20,6 +20,7 @@
     "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.2",
     "@supabase/supabase-js": "^2.115.0",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.41.0",

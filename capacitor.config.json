@@ -3,7 +3,6 @@
   "appName": "Resiboss",
   "webDir": "dist",
   "server": {
-    "url": "https://resiboss.vercel.app",
     "cleartext": true,
     "androidScheme": "https",
     "allowNavigation": [
@@ -11,5 +10,14 @@
       "*.pipedream.net",
       "*.supabase.co"
     ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 300,
+      "backgroundColor": "#000000",
+      "showSpinner": false
+    }
   }
 }
