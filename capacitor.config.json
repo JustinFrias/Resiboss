@@ -3,13 +3,7 @@
   "appName": "Resiboss",
   "webDir": "dist",
   "server": {
-    "cleartext": true,
-    "androidScheme": "https",
-    "allowNavigation": [
-      "resiboss.vercel.app",
-      "*.pipedream.net",
-      "*.supabase.co"
-    ]
+    "androidScheme": "https"
   },
   "plugins": {
     "SplashScreen": {
