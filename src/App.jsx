@@ -47,8 +47,17 @@ const MainLayout = () => {
     window.scrollTo(0, 0);
   }, [activeTab]);
 
-  // While resolving auth state on cold start (only online with no cached session, max 5s timeout)
-  if (isAuthResolving && !userProfile) {
+  // Watchdog safety net: guarantee that AppLoadingScreen never blocks cold start for more than 1.5s
+  const [authTimeoutReached, setAuthTimeoutReached] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAuthTimeoutReached(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // While resolving auth state on cold start (only online with no cached session, max 1.5s timeout)
+  if (isAuthResolving && !userProfile && !authTimeoutReached) {
     return <AppLoadingScreen />;
   }
 

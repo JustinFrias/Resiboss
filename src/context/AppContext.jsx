@@ -176,8 +176,10 @@ export const AppProvider = ({ children }) => {
   // Router resolution state:
   // - Returning user with cached session: false (immediate navigation into main app)
   // - No cached session and offline: false (immediate navigation to Login with offline banner)
-  // - No cached session and online: true (max 5-8s timeout window to check Supabase session)
+  // - Unconfigured Supabase: false (immediate navigation to Login/App)
+  // - No cached session and online: true (max 1.5s timeout window to check Supabase session)
   const [isAuthResolving, setIsAuthResolving] = useState(() => {
+    if (!isSupabaseConfigured || !supabase) return false;
     if (hasCachedSession()) return false;
     if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
     return true;
@@ -288,6 +290,12 @@ export const AppProvider = ({ children }) => {
       setPendingSyncCount(getPendingSyncCount());
       if (online) {
         handleTriggerSync();
+      } else {
+        // Offline: immediately resolve auth state so user isn't stuck on loading
+        setIsAuthResolving(false);
+        try {
+          SplashScreen.hide().catch(() => {});
+        } catch (e) {}
       }
     });
 
@@ -705,7 +713,22 @@ export const AppProvider = ({ children }) => {
 
   // Listen for Supabase Authentication State (Google OAuth)
   useEffect(() => {
-    if (!supabase) return;
+    // Safety timeout: strictly guarantee routing resolution within 1.5 seconds (never block offline or cold start)
+    const authTimeoutTimer = setTimeout(() => {
+      setIsAuthResolving(false);
+      try {
+        SplashScreen.hide().catch(() => {});
+      } catch (e) {}
+    }, 1500);
+
+    if (!supabase || !isSupabaseConfigured) {
+      setIsAuthResolving(false);
+      clearTimeout(authTimeoutTimer);
+      try {
+        SplashScreen.hide().catch(() => {});
+      } catch (e) {}
+      return;
+    }
 
     const checkIsSignupConfirmation = () => {
       try {
@@ -722,14 +745,6 @@ export const AppProvider = ({ children }) => {
         return false;
       }
     };
-
-    // Safety timeout: strictly guarantee routing resolution within 5 seconds (well within 5-8s constraint)
-    const authTimeoutTimer = setTimeout(() => {
-      setIsAuthResolving(false);
-      try {
-        SplashScreen.hide().catch(() => {});
-      } catch (e) {}
-    }, 5000);
 
     const isCurrentlyOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
@@ -781,10 +796,10 @@ export const AppProvider = ({ children }) => {
       } catch (e) {}
     } else {
       // CASE 3: No cached session, but online:
-      // Check Supabase session with a strict 5s timeout safety net
+      // Check Supabase session with a strict 1.5s timeout safety net
       const checkOnlineSession = async () => {
         try {
-          // Rapid native connectivity pre-check (avoids 5s wait if already disconnected)
+          // Rapid native connectivity pre-check (avoids waiting if already disconnected)
           const online = await checkIsOnline();
           if (!online) {
             setIsOnline(false);
@@ -798,7 +813,7 @@ export const AppProvider = ({ children }) => {
 
           const sessionPromise = supabase.auth.getSession();
           const timeoutPromise = new Promise((res) =>
-            setTimeout(() => res({ timedOut: true }), 5000)
+            setTimeout(() => res({ timedOut: true }), 1500)
           );
 
           const result = await Promise.race([sessionPromise, timeoutPromise]);
