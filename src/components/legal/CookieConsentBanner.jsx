@@ -179,7 +179,7 @@ export const CookieConsentBanner = () => {
               maxWidth: '680px',
               borderRadius: '24px',
               overflow: 'hidden',
-              background: 'var(--bg-card, rgba(13, 18, 32, 0.96))',
+              background: 'var(--bg-card, rgba(12, 12, 12, 0.96))',
               border: '1px solid var(--glass-border-bright, rgba(255, 255, 255, 0.15))',
               boxShadow: '0 25px 60px rgba(0, 0, 0, 0.75)',
             }}

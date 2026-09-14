@@ -38,7 +38,7 @@ export class ErrorBoundary extends React.Component {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'linear-gradient(135deg, #080c15 0%, #0d1527 100%)',
+            background: 'linear-gradient(135deg, #000000 0%, #0a0a0a 100%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',

@@ -16,7 +16,7 @@ export const AuthView = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: isLight ? '#f8fafc' : '#080c15',
+        background: isLight ? '#f8fafc' : '#000000',
         overflowX: 'hidden',
         padding: '32px 16px',
         boxSizing: 'border-box',

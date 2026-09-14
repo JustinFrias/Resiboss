@@ -344,6 +344,10 @@ export const AppProvider = ({ children }) => {
 
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', theme === 'light' ? '#f8fafc' : '#000000');
+      }
       if (theme === 'light') {
         document.body.classList.add('light-mode');
         document.body.classList.remove('dark-mode');

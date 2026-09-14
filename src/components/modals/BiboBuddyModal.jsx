@@ -34,7 +34,7 @@ export const BiboBuddyModal = ({ isOpen, onClose }) => {
         style={{
           width: '100%',
           maxWidth: '460px',
-          background: isLight ? '#ffffff' : '#0f172a',
+          background: isLight ? '#ffffff' : '#0a0a0a',
           border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(0, 242, 254, 0.3)',
           borderRadius: '24px 24px 18px 18px',
           padding: '22px 20px',
@@ -108,7 +108,7 @@ export const BiboBuddyModal = ({ isOpen, onClose }) => {
               onClose();
             }}
             style={{
-              background: '#0b1e36',
+              background: isLight ? '#0b1e36' : '#181818',
               border: 'none',
               borderRadius: '12px',
               padding: '11px',

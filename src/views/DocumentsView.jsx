@@ -153,7 +153,7 @@ export const DocumentsView = () => {
             className="liquid-btn"
             style={{
               background: isLight ? '#0284c7' : 'linear-gradient(135deg, #00f2fe, #38bdf8)',
-              color: isLight ? '#ffffff' : '#090e21',
+              color: isLight ? '#ffffff' : '#000000',
               padding: '7px 16px',
               fontSize: '0.82rem',
               fontWeight: 700,
@@ -186,11 +186,11 @@ export const DocumentsView = () => {
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
+            <option value="ALL" style={{ background: '#0a0a0a', color: '#fff' }}>
               {t.documents.allCategories}
             </option>
             {Object.keys(t.categories).map((cat) => (
-              <option key={cat} value={cat} style={{ background: '#090d1a', color: '#fff' }}>
+              <option key={cat} value={cat} style={{ background: '#0a0a0a', color: '#fff' }}>
                 {t.categories[cat]}
               </option>
             ))}
@@ -203,13 +203,13 @@ export const DocumentsView = () => {
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
-            <option value="ALL" style={{ background: '#090d1a', color: '#fff' }}>
+            <option value="ALL" style={{ background: '#0a0a0a', color: '#fff' }}>
               {t.documents.allStatus}
             </option>
-            <option value="Verified" style={{ background: '#090d1a', color: '#fff' }}>
+            <option value="Verified" style={{ background: '#0a0a0a', color: '#fff' }}>
               {t.dashboard.verified}
             </option>
-            <option value="Pending" style={{ background: '#090d1a', color: '#fff' }}>
+            <option value="Pending" style={{ background: '#0a0a0a', color: '#fff' }}>
               {t.dashboard.pending}
             </option>
           </select>
@@ -218,7 +218,7 @@ export const DocumentsView = () => {
           <div
             style={{
               display: 'flex',
-              background: 'rgba(10, 15, 30, 0.6)',
+              background: isLight ? 'rgba(241, 245, 249, 0.8)' : 'rgba(14, 14, 14, 0.8)',
               padding: '3px',
               borderRadius: '10px',
               border: '1px solid var(--glass-border)',
@@ -442,7 +442,7 @@ export const DocumentsView = () => {
                           }}
                           title={isChecked ? 'Deselect receipt' : 'Select receipt for download'}
                         >
-                          {isChecked && <Check size={13} color="#090e21" strokeWidth={3} />}
+                          {isChecked && <Check size={13} color="#000000" strokeWidth={3} />}
                         </button>
                         <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.7rem' }}>
                           <Tag size={11} /> {t.categories[doc.category] || doc.category}
@@ -605,7 +605,7 @@ export const DocumentsView = () => {
                         }}
                         title={isChecked ? 'Deselect receipt' : 'Select receipt for download'}
                       >
-                        {isChecked && <Check size={13} color="#090e21" strokeWidth={3} />}
+                        {isChecked && <Check size={13} color="#000000" strokeWidth={3} />}
                       </div>
                     </td>
                     <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--cyan-glow)' }}>

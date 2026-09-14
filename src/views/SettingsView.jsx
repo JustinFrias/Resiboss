@@ -403,7 +403,7 @@ export const SettingsView = () => {
         {/* Card 1: Documents */}
         <div
           style={{
-            background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+            background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.8)',
             border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
             borderRadius: '18px',
             padding: '16px 22px',
@@ -440,7 +440,7 @@ export const SettingsView = () => {
         {/* Card 2: Approx Storage */}
         <div
           style={{
-            background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+            background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.8)',
             border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
             borderRadius: '18px',
             padding: '16px 22px',
@@ -479,7 +479,7 @@ export const SettingsView = () => {
         {/* Card 3: Active Sessions */}
         <div
           style={{
-            background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+            background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.8)',
             border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
             borderRadius: '18px',
             padding: '16px 22px',
@@ -517,7 +517,7 @@ export const SettingsView = () => {
       {/* 3. Main Panel Container */}
       <div
         style={{
-          background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.85)',
+          background: isLight ? '#ffffff' : 'rgba(10, 10, 10, 0.92)',
           border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.25)',
           borderRadius: '22px',
           overflow: 'hidden',
@@ -535,7 +535,7 @@ export const SettingsView = () => {
             alignItems: 'center',
             borderBottom: isLight ? '1.5px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.1)',
             padding: '0 16px',
-            background: isLight ? '#ffffff' : 'rgba(10, 15, 30, 0.5)',
+            background: isLight ? '#ffffff' : 'rgba(14, 14, 14, 0.6)',
             overflowX: 'auto',
           }}
         >
@@ -639,7 +639,7 @@ export const SettingsView = () => {
                     height: '64px',
                     borderRadius: '50%',
                     overflow: 'hidden',
-                    background: '#0b1e36',
+                    background: isLight ? '#0b1e36' : '#141414',
                     border: '2px solid #cbd5e1',
                     display: 'flex',
                     alignItems: 'center',
@@ -667,7 +667,7 @@ export const SettingsView = () => {
                     onClick={() => fileInputRef.current?.click()}
                     className="keep-white"
                     style={{
-                      background: '#0b1e36',
+                      background: isLight ? '#0b1e36' : '#181818',
                       border: 'none',
                       borderRadius: '12px',
                       padding: '9px 18px',
@@ -681,8 +681,8 @@ export const SettingsView = () => {
                       transition: 'background 0.2s ease',
                       boxShadow: isLight ? '0 2px 8px rgba(11, 30, 54, 0.25)' : 'none',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#152e4d' : '#262626')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#0b1e36' : '#181818')}
                   >
                     <Upload size={15} />
                     <span className="keep-white" style={{ color: '#ffffff' }}>Upload Photo</span>
@@ -868,7 +868,7 @@ export const SettingsView = () => {
                     disabled={isSaving}
                     className="keep-white"
                     style={{
-                      background: isLight ? '#1e3a8a' : '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#181818',
                       border: 'none',
                       borderRadius: '12px',
                       padding: '11px 28px',
@@ -877,10 +877,10 @@ export const SettingsView = () => {
                       fontWeight: 700,
                       cursor: isSaving ? 'not-allowed' : 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(11, 30, 54, 0.25)',
+                      boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(0, 0, 0, 0.4)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#262626')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#181818')}
                   >
                     <span className="keep-white" style={{ color: '#ffffff' }}>
                       {isSaving ? 'Saving...' : 'Save Profile'}
@@ -947,7 +947,7 @@ export const SettingsView = () => {
                   type="submit"
                   className="keep-white"
                   style={{
-                    background: isLight ? '#1e3a8a' : '#0b1e36',
+                    background: isLight ? '#1e3a8a' : '#181818',
                     border: 'none',
                     borderRadius: '12px',
                     padding: '11px 20px',
@@ -959,10 +959,10 @@ export const SettingsView = () => {
                     gap: '6px',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.2)' : 'none',
+                    boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.4)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#262626')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#181818')}
                 >
                   <Plus size={16} />
                   <span className="keep-white" style={{ color: '#ffffff' }}>Add</span>
@@ -1113,7 +1113,7 @@ export const SettingsView = () => {
                       padding: '6px 12px',
                       borderRadius: '8px',
                       border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.2)',
-                      background: isLight ? '#ffffff' : '#0f172a',
+                      background: isLight ? '#ffffff' : '#0e0e0e',
                       color: isLight ? '#0f2942' : '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: 600,
@@ -1312,7 +1312,7 @@ export const SettingsView = () => {
                     disabled={isUpdatingPass}
                     className="keep-white"
                     style={{
-                      background: isLight ? '#1e3a8a' : '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#181818',
                       border: 'none',
                       borderRadius: '12px',
                       padding: '11px 24px',
@@ -1324,10 +1324,10 @@ export const SettingsView = () => {
                       gap: '8px',
                       cursor: isUpdatingPass ? 'not-allowed' : 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(11, 30, 54, 0.25)',
+                      boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(0, 0, 0, 0.4)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#262626')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#181818')}
                   >
                     <KeyRound size={15} />
                     <span className="keep-white" style={{ color: '#ffffff' }}>
@@ -1477,7 +1477,7 @@ export const SettingsView = () => {
                     onClick={handleToggleMfa}
                     className="keep-white"
                     style={{
-                      background: isLight ? '#1e3a8a' : '#0b1e36',
+                      background: isLight ? '#1e3a8a' : '#181818',
                       border: 'none',
                       borderRadius: '10px',
                       padding: '9px 20px',
@@ -1486,10 +1486,10 @@ export const SettingsView = () => {
                       fontWeight: 600,
                       cursor: 'pointer',
                       transition: 'background 0.2s ease',
-                      boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.25)' : '0 2px 8px rgba(11, 30, 54, 0.25)',
+                      boxShadow: isLight ? '0 2px 8px rgba(30, 58, 138, 0.25)' : '0 2px 8px rgba(0, 0, 0, 0.4)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#262626')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#181818')}
                   >
                     <span className="keep-white" style={{ color: '#ffffff' }}>
                       {mfaEnabled ? 'Disable MFA' : 'Enable MFA'}
@@ -2137,7 +2137,7 @@ export const SettingsView = () => {
                   onClick={handleSavePreferences}
                   className="keep-white"
                   style={{
-                    background: isLight ? '#1e3a8a' : '#0b1e36',
+                    background: isLight ? '#1e3a8a' : '#181818',
                     border: 'none',
                     borderRadius: '12px',
                     padding: '11px 28px',
@@ -2146,10 +2146,10 @@ export const SettingsView = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     transition: 'background 0.2s ease',
-                    boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(11, 30, 54, 0.25)',
+                    boxShadow: isLight ? '0 4px 14px rgba(30, 58, 138, 0.25)' : '0 2px 10px rgba(0, 0, 0, 0.4)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#152e4d')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#0b1e36')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? '#1e40af' : '#262626')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isLight ? '#1e3a8a' : '#181818')}
                 >
                   <span className="keep-white" style={{ color: '#ffffff' }}>Save Preferences</span>
                 </button>
@@ -2255,7 +2255,7 @@ export const SettingsView = () => {
         >
           <div
             style={{
-              background: isLight ? '#ffffff' : '#0f172a',
+              background: isLight ? '#ffffff' : '#0e0e0e',
               border: isLight ? '1.5px solid #bfdbfe' : '1px solid rgba(191, 219, 254, 0.3)',
               borderRadius: '20px',
               padding: '24px 28px',
@@ -2323,7 +2323,7 @@ export const SettingsView = () => {
                 type="button"
                 onClick={confirmEnableMfa}
                 style={{
-                  background: '#0b1e36',
+                  background: isLight ? '#0b1e36' : '#181818',
                   border: 'none',
                   borderRadius: '10px',
                   padding: '9px 20px',
@@ -2350,7 +2350,7 @@ export const SettingsView = () => {
             style={{
               position: 'fixed',
               inset: 0,
-              background: isLight ? 'rgba(15, 23, 42, 0.45)' : 'rgba(3, 7, 18, 0.75)',
+              background: isLight ? 'rgba(15, 23, 42, 0.45)' : 'rgba(0, 0, 0, 0.85)',
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
               zIndex: 1100,
@@ -2536,7 +2536,7 @@ export const SettingsView = () => {
                     width: '36px',
                     height: '36px',
                     borderRadius: '50%',
-                    background: '#0b1e36',
+                    background: isLight ? '#0b1e36' : '#181818',
                     overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',

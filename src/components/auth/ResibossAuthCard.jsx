@@ -329,7 +329,7 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
         width: '100%',
         maxWidth: '430px',
         margin: '0 auto',
-        background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(13, 18, 32, 0.88)',
+        background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(10, 10, 10, 0.92)',
         backdropFilter: 'blur(25px)',
         WebkitBackdropFilter: 'blur(25px)',
         borderRadius: '32px',
@@ -421,8 +421,8 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
             padding: '12px 20px',
             borderRadius: '999px',
             background: isGoogleDisabled
-              ? (isLight ? 'rgba(241, 245, 249, 0.7)' : 'rgba(10, 16, 34, 0.45)')
-              : (isLight ? '#ffffff' : 'rgba(10, 16, 34, 0.85)'),
+              ? (isLight ? 'rgba(241, 245, 249, 0.7)' : 'rgba(14, 14, 14, 0.5)')
+              : (isLight ? '#ffffff' : 'rgba(18, 18, 18, 0.9)'),
             border: isGoogleDisabled
               ? (isLight ? '1.5px dashed rgba(15, 23, 42, 0.15)' : '1.5px dashed rgba(255, 255, 255, 0.12)')
               : (isLight ? '1.5px solid rgba(15, 23, 42, 0.16)' : '1.5px solid rgba(255, 255, 255, 0.18)'),
@@ -446,14 +446,14 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
           }}
           onMouseEnter={(e) => {
             if (!isGoogleDisabled) {
-              e.currentTarget.style.background = isLight ? '#f8fafc' : 'rgba(26, 36, 62, 0.95)';
+              e.currentTarget.style.background = isLight ? '#f8fafc' : 'rgba(28, 28, 28, 0.95)';
               e.currentTarget.style.borderColor = isLight ? '#0284c7' : '#00f2fe';
               e.currentTarget.style.boxShadow = isLight ? '0 4px 16px rgba(2, 132, 199, 0.18)' : '0 0 20px rgba(0, 242, 254, 0.25)';
             }
           }}
           onMouseLeave={(e) => {
             if (!isGoogleDisabled) {
-              e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(10, 16, 34, 0.85)';
+              e.currentTarget.style.background = isLight ? '#ffffff' : 'rgba(18, 18, 18, 0.9)';
               e.currentTarget.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.16)' : 'rgba(255, 255, 255, 0.18)';
               e.currentTarget.style.boxShadow = isLight ? '0 2px 8px rgba(15, 23, 42, 0.08)' : '0 4px 16px rgba(0, 0, 0, 0.4)';
             }
@@ -513,7 +513,7 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
       <div
         style={{
           display: 'flex',
-          background: isLight ? '#f1f5f9' : 'rgba(10, 16, 34, 0.75)',
+          background: isLight ? '#f1f5f9' : 'rgba(14, 14, 14, 0.85)',
           border: isLight ? '1px solid rgba(15, 23, 42, 0.12)' : '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '999px',
           padding: '4px',
@@ -717,7 +717,7 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                background: isLight ? '#f8fafc' : 'rgba(10, 16, 34, 0.7)',
+                background: isLight ? '#f8fafc' : 'rgba(16, 16, 16, 0.85)',
                 border: isLight ? '1.5px solid rgba(15, 23, 42, 0.16)' : '1.5px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '999px',
                 padding: '11px 18px',
@@ -776,7 +776,7 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: isLight ? '#f8fafc' : 'rgba(10, 16, 34, 0.7)',
+              background: isLight ? '#f8fafc' : 'rgba(16, 16, 16, 0.85)',
               border: isLight ? '1.5px solid rgba(15, 23, 42, 0.16)' : '1.5px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '999px',
               padding: '11px 18px',
@@ -861,7 +861,7 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: isLight ? '#f8fafc' : 'rgba(10, 16, 34, 0.7)',
+              background: isLight ? '#f8fafc' : 'rgba(16, 16, 16, 0.85)',
               border: isLight ? '1.5px solid rgba(15, 23, 42, 0.16)' : '1.5px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '999px',
               padding: '11px 18px',

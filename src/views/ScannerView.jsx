@@ -666,7 +666,7 @@ export const ScannerView = () => {
                 padding: '42px 20px',
                 borderRadius: '24px',
                 border: isLight ? '1px solid rgba(203, 213, 225, 0.9)' : '1px solid rgba(255, 255, 255, 0.14)',
-                background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+                background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.75)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -724,7 +724,7 @@ export const ScannerView = () => {
                   : (isLight ? '1.5px dashed rgba(203, 213, 225, 0.95)' : '1.5px dashed rgba(255, 255, 255, 0.22)'),
                 background: isDragOver
                   ? (isLight ? 'rgba(224, 242, 254, 0.45)' : 'rgba(14, 165, 233, 0.12)')
-                  : (isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)'),
+                  : (isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.75)'),
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -1291,7 +1291,7 @@ export const ScannerView = () => {
 
                   <div
                     style={{
-                      background: 'rgba(10, 16, 34, 0.45)',
+                      background: isLight ? 'rgba(241, 245, 249, 0.8)' : 'rgba(14, 14, 14, 0.85)',
                       borderRadius: '12px',
                       border: '1px solid var(--glass-border)',
                       padding: '16px',
@@ -1889,7 +1889,7 @@ export const ScannerView = () => {
               maxWidth: '520px',
               borderRadius: '20px',
               padding: '28px',
-              background: 'var(--bg-surface-elevated, #0f172a)',
+              background: isLight ? '#ffffff' : 'var(--bg-surface-elevated, #101010)',
               border: '1px solid var(--glass-border)',
               boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 242, 254, 0.1)',
             }}

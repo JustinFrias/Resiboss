@@ -120,7 +120,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(3, 7, 18, 0.75)',
+            background: 'rgba(0, 0, 0, 0.85)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             zIndex: 999,
@@ -340,7 +340,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                 justifyContent: 'center',
                 padding: '6px 4px',
                 borderRadius: '10px',
-                background: 'rgba(15, 23, 42, 0.65)',
+                background: isLight ? 'rgba(241, 245, 249, 0.9)' : 'rgba(16, 16, 16, 0.85)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 gap: '3px',
                 width: '42px',
@@ -420,7 +420,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
             {/* Real-time Date & Time Pill (Matching User Screenshot, placed directly below Settings & above Language) */}
             <div
               style={{
-                background: 'var(--bg-surface-elevated, rgba(15, 23, 42, 0.65))',
+                background: isLight ? '#ffffff' : 'var(--bg-surface-elevated, rgba(16, 16, 16, 0.85))',
                 border: '1px solid var(--glass-border)',
                 borderRadius: '12px',
                 padding: '9px 12px',
@@ -509,7 +509,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                       bottom: 'calc(100% + 6px)',
                       left: 0,
                       minWidth: '95px',
-                      background: 'var(--bg-surface-elevated, #0a0f24)',
+                      background: 'var(--bg-surface-elevated, #101010)',
                       border: '1px solid var(--glass-border-bright)',
                       borderRadius: '12px',
                       padding: '4px',
@@ -613,7 +613,7 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
                       bottom: 'calc(100% + 6px)',
                       left: 0,
                       minWidth: '95px',
-                      background: 'var(--bg-surface-elevated, #0a0f24)',
+                      background: 'var(--bg-surface-elevated, #101010)',
                       border: '1px solid var(--glass-border-bright)',
                       borderRadius: '12px',
                       padding: '4px',

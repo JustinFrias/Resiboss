@@ -924,7 +924,7 @@ export const TopBar = ({ onOpenMobile }) => {
                 top: 'calc(100% + 10px)',
                 right: 0,
                 width: '260px',
-                background: 'var(--bg-surface-elevated, rgba(9, 14, 28, 0.96))',
+                background: 'var(--bg-surface-elevated, rgba(16, 16, 16, 0.96))',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 border: '1px solid var(--glass-border)',

@@ -444,13 +444,13 @@ export const ReceiptViewer3D = () => {
                 marginBottom: '20px',
               }}
             >
-              <div style={{ background: 'var(--bg-surface, rgba(10, 15, 30, 0.5))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <div style={{ background: 'var(--bg-surface, rgba(14, 14, 14, 0.7))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.documents.convertedTotal}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--cyan-glow)', marginTop: '2px' }}>
                   {formatCurrency(inspectingDoc.total)}
                 </div>
               </div>
-              <div style={{ background: 'var(--bg-surface, rgba(10, 15, 30, 0.5))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <div style={{ background: 'var(--bg-surface, rgba(14, 14, 14, 0.7))', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.scanner.confidence}</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--emerald-glow)', marginTop: '2px' }}>
                   {inspectingDoc.confidence ? `${inspectingDoc.confidence}%` : 'N/A'}

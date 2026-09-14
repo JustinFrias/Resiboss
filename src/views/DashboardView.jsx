@@ -153,7 +153,7 @@ export const DashboardView = () => {
               gap: '8px',
               padding: '7px 14px',
               borderRadius: '14px',
-              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.85)',
+              background: isLight ? '#ffffff' : 'rgba(14, 14, 14, 0.85)',
               border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.14)',
               color: isLight ? '#1e293b' : '#e2e8f0',
               fontSize: '0.86rem',
@@ -182,7 +182,7 @@ export const DashboardView = () => {
                 top: 'calc(100% + 6px)',
                 left: 0,
                 zIndex: 50,
-                background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.96)',
+                background: isLight ? '#ffffff' : 'rgba(14, 14, 14, 0.96)',
                 border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.16)',
                 borderRadius: '14px',
                 padding: '6px',
@@ -246,7 +246,7 @@ export const DashboardView = () => {
             style={{
               padding: '24px 22px',
               borderRadius: '24px',
-              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+              background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.75)',
               border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
               boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
             }}
@@ -298,7 +298,7 @@ export const DashboardView = () => {
             style={{
               padding: '24px 22px',
               borderRadius: '24px',
-              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+              background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.75)',
               border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
               boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
             }}
@@ -350,7 +350,7 @@ export const DashboardView = () => {
             style={{
               padding: '24px 22px',
               borderRadius: '24px',
-              background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+              background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.75)',
               border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
               boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
             }}
@@ -401,7 +401,7 @@ export const DashboardView = () => {
         style={{
           padding: '24px 22px',
           borderRadius: '24px',
-          background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.65)',
+          background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.75)',
           border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
           boxShadow: isLight ? '0 4px 20px rgba(15, 23, 42, 0.04)' : '0 8px 30px rgba(0, 0, 0, 0.45)',
           marginBottom: '28px',

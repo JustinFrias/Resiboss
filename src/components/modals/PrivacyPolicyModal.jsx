@@ -87,7 +87,7 @@ export const PrivacyPolicyModal = () => {
           overflow: 'hidden',
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.75), 0 0 40px rgba(0, 242, 254, 0.12)',
           border: '1px solid var(--glass-border-bright, rgba(255, 255, 255, 0.15))',
-          background: 'var(--bg-card, rgba(13, 18, 32, 0.95))',
+          background: 'var(--bg-card, rgba(12, 12, 12, 0.95))',
         }}
       >
         {/* Modal Header */}

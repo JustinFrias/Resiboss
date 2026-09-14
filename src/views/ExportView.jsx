@@ -206,7 +206,7 @@ export const ExportView = () => {
             <button
               onClick={() => setIsRangeOpen(!isRangeOpen)}
               style={{
-                background: 'rgba(10, 16, 34, 0.75)',
+                background: 'rgba(12, 12, 12, 0.85)',
                 border: '1px solid rgba(255, 255, 255, 0.16)',
                 borderRadius: '999px',
                 padding: '8px 16px',
@@ -231,7 +231,7 @@ export const ExportView = () => {
                   position: 'absolute',
                   top: '115%',
                   right: 0,
-                  background: '#090e21',
+                  background: '#0a0a0a',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '12px',
                   padding: '6px',
@@ -493,7 +493,7 @@ export const ExportView = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          {isChecked && <Check size={13} color="#090e21" strokeWidth={3} />}
+                          {isChecked && <Check size={13} color="#000000" strokeWidth={3} />}
                         </div>
                       </td>
                       <td style={{ padding: '12px', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
@@ -594,7 +594,7 @@ export const ExportView = () => {
                         flexShrink: 0,
                       }}
                     >
-                      {isChecked && <Check size={15} color="#090e21" strokeWidth={3} />}
+                      {isChecked && <Check size={15} color="#000000" strokeWidth={3} />}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
@@ -645,7 +645,7 @@ export const ExportView = () => {
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 130,
-            background: 'rgba(10, 16, 34, 0.96)',
+            background: 'rgba(10, 10, 10, 0.96)',
             border: '1px solid rgba(0, 242, 254, 0.45)',
             borderRadius: '999px',
             padding: '8px 16px 8px 20px',

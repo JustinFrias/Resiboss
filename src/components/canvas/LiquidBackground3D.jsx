@@ -18,7 +18,7 @@ export const LiquidBackground3D = () => {
         pointerEvents: 'none',
         zIndex: 0,
         overflow: 'hidden',
-        background: isLight ? '#f8fafc' : '#080c15',
+        background: isLight ? '#f8fafc' : '#000000',
         transition: 'background 0.4s ease',
       }}
     >
@@ -34,7 +34,7 @@ export const LiquidBackground3D = () => {
           borderRadius: '50%',
           background: isLight
             ? 'radial-gradient(ellipse at center, rgba(2, 132, 199, 0.08) 0%, rgba(99, 102, 241, 0.04) 50%, transparent 70%)'
-            : 'radial-gradient(ellipse at center, rgba(14, 165, 233, 0.08) 0%, rgba(99, 102, 241, 0.05) 45%, transparent 70%)',
+            : 'radial-gradient(ellipse at center, rgba(0, 242, 254, 0.035) 0%, rgba(32, 248, 161, 0.015) 45%, transparent 70%)',
           filter: 'blur(60px)',
           opacity: 0.85,
         }}
@@ -51,7 +51,7 @@ export const LiquidBackground3D = () => {
           borderRadius: '50%',
           background: isLight
             ? 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.05) 0%, transparent 65%)'
-            : 'radial-gradient(ellipse at center, rgba(14, 165, 233, 0.04) 0%, rgba(168, 85, 247, 0.03) 50%, transparent 70%)',
+            : 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.02) 0%, transparent 65%)',
           filter: 'blur(70px)',
           opacity: 0.7,
         }}
