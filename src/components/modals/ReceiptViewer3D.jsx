@@ -304,29 +304,36 @@ export const ReceiptViewer3D = () => {
                   <span>ITEM</span>
                   <span>AMT</span>
                 </div>
-                {(inspectingDoc.items || []).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.78rem' }}>
-                    <span style={{ maxWidth: '210px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.qty}x {item.name}
-                    </span>
-                    <span style={{ fontWeight: 600 }}>₱{item.total.toFixed(2)}</span>
-                  </div>
-                ))}
+                {(inspectingDoc.items || []).map((item, idx) => {
+                  const itemQty = typeof item?.qty === 'number' ? item.qty : (parseInt(item?.qty ?? item?.quantity, 10) || 1);
+                  const itemName = item?.name || item?.description || 'Item';
+                  const rawTot = item?.total ?? item?.amount ?? ((Number(item?.price ?? item?.unitPrice ?? 0)) * itemQty);
+                  const num = typeof rawTot === 'number' ? rawTot : (parseFloat(rawTot) || 0);
+                  const safeTotal = Number.isFinite(num) ? num.toFixed(2) : '0.00';
+                  return (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.78rem' }}>
+                      <span style={{ maxWidth: '210px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {itemQty}x {itemName}
+                      </span>
+                      <span style={{ fontWeight: 600 }}>₱{safeTotal}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Totals Calculation */}
               <div style={{ borderTop: '1px dashed #d6d3d1', paddingTop: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '3px' }}>
                   <span style={{ color: '#78716c' }}>Subtotal:</span>
-                  <span>₱{(inspectingDoc.subtotal || 0).toFixed(2)}</span>
+                  <span>₱{(parseFloat(inspectingDoc.subtotal) || 0).toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}>
                   <span style={{ color: '#78716c' }}>VAT (12%):</span>
-                  <span>₱{(inspectingDoc.vat || 0).toFixed(2)}</span>
+                  <span>₱{(parseFloat(inspectingDoc.vat) || 0).toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 'bold', borderTop: '1px solid #1c1917', paddingTop: '6px' }}>
                   <span>TOTAL:</span>
-                  <span>₱{(inspectingDoc.total || 0).toFixed(2)}</span>
+                  <span>₱{(parseFloat(inspectingDoc.total) || 0).toFixed(2)}</span>
                 </div>
               </div>
 

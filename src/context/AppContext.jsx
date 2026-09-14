@@ -1394,11 +1394,13 @@ export const AppProvider = ({ children }) => {
   const t = translations[language] || translations.en;
 
   const formatCurrency = (amountInPHP) => {
+    const num = typeof amountInPHP === 'number' ? amountInPHP : (parseFloat(amountInPHP) || 0);
+    const validAmount = Number.isFinite(num) ? num : 0;
     const info = currencyRates[currency] || currencyRates.PHP;
-    const converted = amountInPHP * info.rate;
+    const converted = validAmount * (info.rate || 1);
     
     // Formatting with currency symbol
-    return `${info.symbol}${converted.toLocaleString(info.locale, {
+    return `${info.symbol || '₱'}${converted.toLocaleString(info.locale || 'en-PH', {
       minimumFractionDigits: currency === 'JPY' ? 0 : 2,
       maximumFractionDigits: currency === 'JPY' ? 0 : 2,
     })}`;

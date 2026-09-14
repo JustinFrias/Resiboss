@@ -512,14 +512,21 @@ export const DocumentsView = () => {
                         color: 'var(--text-secondary)',
                       }}
                     >
-                      {(doc.items || []).slice(0, 2).map((it, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                          <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {it.qty}x {it.name}
-                          </span>
-                          <span style={{ fontFamily: 'var(--font-mono)' }}>₱{it.total.toFixed(2)}</span>
-                        </div>
-                      ))}
+                      {(doc.items || []).slice(0, 2).map((it, idx) => {
+                        const qty = typeof it?.qty === 'number' ? it.qty : (parseInt(it?.qty ?? it?.quantity, 10) || 1);
+                        const name = it?.name || it?.description || 'Item';
+                        const rawTot = it?.total ?? it?.amount ?? ((Number(it?.price ?? it?.unitPrice ?? 0)) * qty);
+                        const num = typeof rawTot === 'number' ? rawTot : (parseFloat(rawTot) || 0);
+                        const safeTotal = Number.isFinite(num) ? num.toFixed(2) : '0.00';
+                        return (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                            <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {qty}x {name}
+                            </span>
+                            <span style={{ fontFamily: 'var(--font-mono)' }}>₱{safeTotal}</span>
+                          </div>
+                        );
+                      })}
                       {(doc.items || []).length > 2 && (
                         <div style={{ color: 'var(--cyan-glow)', fontSize: '0.7rem', marginTop: '2px' }}>
                           +{(doc.items || []).length - 2} more items
