@@ -493,6 +493,7 @@ function parseReceiptRegexText(fullText, activeEngine = 'mlkit', confidenceVal =
   else if (/burger\s*king/i.test(fullText)) detectedMerchant = 'BURGER KING® - Store #BK-4921';
   else if (/shell/i.test(fullText)) detectedMerchant = 'SHELL STATION';
   else if (/7-eleven/i.test(fullText)) detectedMerchant = '7-ELEVEN - Store #2104';
+  else if (/mcdonald/i.test(fullText)) detectedMerchant = "MCDONALD'S";
 
   // Date
   let detectedDate = '';
@@ -526,10 +527,12 @@ function parseReceiptRegexText(fullText, activeEngine = 'mlkit', confidenceVal =
   // Items
   const items = [];
   for (const line of rawLines) {
-    const m = line.match(/^(\d+)?\s*([A-Za-z0-9\s&'\-\.]{3,35})\s+([0-9,.]+\.00)$/);
-    if (m && !/total|subtotal|cash|change|vat/i.test(m[2])) {
+    const m = line.match(/^(\d+)?\s*([A-Za-z0-9\s&'\-\.]{3,35})\s+([0-9,.]+\.\d{1,2})$/);
+    if (m && !/total|subtotal|cash|change|vat|tax/i.test(m[2])) {
       const price = parseAmount(m[3]);
-      items.push({ name: m[2].trim(), qty: parseInt(m[1] || 1, 10), price, total: price });
+      const qty = parseInt(m[1] || 1, 10);
+      const unitPrice = +(price / qty).toFixed(2);
+      items.push({ name: m[2].trim(), qty, price: unitPrice, total: price });
     }
   }
 
@@ -560,6 +563,72 @@ function parseReceiptRegexText(fullText, activeEngine = 'mlkit', confidenceVal =
     rawOcrText: fullText,
   };
 }
+
+// =========================================================================
+// TEST 16: TWO-COLUMN RECEIPT ROW RECONSTRUCTION (McDonald's receipt)
+// =========================================================================
+runTest('ML Kit Two-Column Alignment: Reconstructs McDonald receipt items with matching prices', async () => {
+  const { reconstructRowsFromMlKit } = await import('../src/utils/mlkitOcr.js');
+
+  // Simulates ML Kit's actual output on a two-column thermal receipt where
+  // column 1 (item descriptions) and column 2 (prices) are separate blocks
+  const mcdonaldsMlKitBlocks = {
+    text: "MCDONALD'S\n2 HAMBURGER\n1 CHIBQ SNACK WRAP-CPY\nSubtotal\nTax\nTotal\n1.78\n1.39\n3.17\n0.24\n3.41",
+    blocks: [
+      {
+        lines: [
+          { text: "MCDONALD'S", boundingBox: { left: 100, top: 40, right: 320, bottom: 68 } }
+        ]
+      },
+      // Left Column (Items & labels)
+      {
+        lines: [
+          { text: "2 HAMBURGER", boundingBox: { left: 60, top: 120, right: 260, bottom: 144 } },
+          { text: "1 CHIBQ SNACK WRAP-CPY", boundingBox: { left: 60, top: 165, right: 380, bottom: 190 } },
+          { text: "Subtotal", boundingBox: { left: 60, top: 220, right: 170, bottom: 242 } },
+          { text: "Tax", boundingBox: { left: 60, top: 255, right: 120, bottom: 278 } },
+          { text: "Total", boundingBox: { left: 60, top: 295, right: 140, bottom: 320 } }
+        ]
+      },
+      // Right Column (Prices)
+      {
+        lines: [
+          { text: "1.78", boundingBox: { left: 450, top: 122, right: 510, bottom: 145 } },
+          { text: "1.39", boundingBox: { left: 450, top: 167, right: 510, bottom: 189 } },
+          { text: "3.17", boundingBox: { left: 450, top: 222, right: 510, bottom: 243 } },
+          { text: "0.24", boundingBox: { left: 450, top: 257, right: 510, bottom: 279 } },
+          { text: "3.41", boundingBox: { left: 450, top: 297, right: 510, bottom: 321 } }
+        ]
+      }
+    ]
+  };
+
+  // Reconstruct lines using bounding box spatial clustering
+  const reconstructed = reconstructRowsFromMlKit(mcdonaldsMlKitBlocks);
+
+  // Validate that rows are properly reconstructed
+  assert.ok(reconstructed.includes('2 HAMBURGER 1.78'), `Expected "2 HAMBURGER 1.78" in reconstructed text, got:\n${reconstructed}`);
+  assert.ok(reconstructed.includes('1 CHIBQ SNACK WRAP-CPY 1.39'), `Expected "1 CHIBQ SNACK WRAP-CPY 1.39" in reconstructed text, got:\n${reconstructed}`);
+  assert.ok(reconstructed.includes('Total 3.41') || reconstructed.includes('3.41'), 'Expected total 3.41');
+
+  // Now pass reconstructed text into parser
+  const parsed = parseReceiptRegexText(reconstructed, 'mlkit', 94);
+
+  assert.equal(parsed.merchant, "MCDONALD'S");
+  assert.equal(parsed.items.length, 2, 'Must extract both line items');
+
+  const item1 = parsed.items[0];
+  assert.equal(item1.name, 'HAMBURGER');
+  assert.equal(item1.qty, 2);
+  assert.equal(item1.total, 1.78, 'Hamburger total must match 1.78');
+
+  const item2 = parsed.items[1];
+  assert.equal(item2.name, 'CHIBQ SNACK WRAP-CPY');
+  assert.equal(item2.qty, 1);
+  assert.equal(item2.total, 1.39, 'Snack wrap total must match 1.39');
+
+  assert.equal(parsed.total, 3.41, 'Receipt total must equal 3.41');
+});
 
 console.log(`\n🎉 All tests passed successfully!`);
 
