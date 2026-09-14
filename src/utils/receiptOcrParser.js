@@ -56,8 +56,10 @@ const preprocessForTesseract = (imageUri) => {
 };
 
 /**
- * Preprocesses an image for Gemini Vision — keeps color, scales to max 1600px
- * to stay within Gemini's input size limits and reduce API costs.
+ * Preprocesses an image for Gemini Vision:
+ * - Upscales / preserves resolution with a high 2200px max dimension cap for long receipts with many line items.
+ * - Exports as PNG (lossless) instead of lossy JPEG to prevent 8x8 DCT quantization artifacts from blurring small font characters, decimals, and punctuation.
+ * - Applies a balanced contrast enhancement to help the model decipher faint thermal ink.
  */
 const preprocessForGemini = (imageUri) => {
   return new Promise((resolve) => {
@@ -70,20 +72,20 @@ const preprocessForGemini = (imageUri) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        // Cap at 1600px max dimension (Gemini handles large images but smaller = faster + cheaper)
-        const MAX = 1600;
+        // Cap at 2200px max dimension (accommodates dense grocery and tall restaurant receipts)
+        const MAX = 2200;
         const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
         canvas.width  = Math.round(img.width  * ratio);
         canvas.height = Math.round(img.height * ratio);
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        // Slight contrast boost to help Gemini read faint thermal ink — keep color
-        ctx.filter = 'contrast(130%) brightness(108%)';
+        // Gentle contrast enhancement to clarify faint thermal ink while preserving color gradients
+        ctx.filter = 'contrast(125%) brightness(105%)';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // JPEG at 85% — good quality, ~100-200KB for typical receipt photo
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
+        // Export as PNG (lossless) to preserve razor-sharp edges on small line-item typography
+        resolve(canvas.toDataURL('image/png'));
       } catch {
         resolve(imageUri);
       }
@@ -247,7 +249,17 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
           onProgress(75, 'Normalizing AI extraction results...');
           const normalized = normalizeGeminiResult(raw, parseAmount);
 
-          if (normalized && normalized.total > 0) {
+          // Issue 1: Accept partial Gemini results rather than dropping to Tesseract.
+          // Check if Gemini detected usable data: either a non-empty merchant or line items (or total > 0).
+          // Only fall back to Tesseract if Gemini returned no usable data at all (no merchant AND no items).
+          const hasMerchant = Boolean(
+            (normalized?.hasMerchant && normalized.merchant && normalized.merchant !== 'Scanned Merchant Store') ||
+            (raw.merchant && String(raw.merchant).trim().length > 0)
+          );
+          const hasItems = Array.isArray(normalized?.items) && normalized.items.length > 0;
+          const hasUsableData = Boolean(normalized && (hasMerchant || hasItems || (normalized.total && normalized.total > 0)));
+
+          if (hasUsableData) {
             onProgress(92, 'Finalizing receipt data...');
 
             // Apply brand normalization over what Gemini detected
@@ -262,10 +274,14 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
             // Fallback items if Gemini returned none
             const items = normalized.items.length > 0
               ? normalized.items
-              : [{ name: merchant + ' Purchase', qty: 1, price: normalized.subtotal, total: normalized.subtotal }];
+              : [{ name: merchant + ' Purchase', qty: 1, price: normalized.subtotal || normalized.total || 0, total: normalized.subtotal || normalized.total || 0 }];
 
-            // TIN fallback
-            const tin = normalized.tin || `OR-${Math.floor(100000 + Math.random() * 900000)}`;
+            // Issue 4: Never invent random TIN numbers — use detected TIN or empty string
+            const tin = normalized.tin || '';
+
+            // Compute confidence score, slightly penalizing if low-confidence fields were flagged
+            const lowConfCount = normalized.lowConfidenceFields?.length || 0;
+            const confidenceScore = Math.max(88, 98 - (lowConfCount * 3));
 
             onProgress(100, 'AI Optical Extraction Complete!');
 
@@ -282,7 +298,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
               total: normalized.total,
               items,
               currency: normalized.currency,
-              confidence: 97, // Gemini is highly accurate
+              confidence: confidenceScore,
+              lowConfidenceFields: normalized.lowConfidenceFields || [],
               ocrEngine: 'gemini',
               rawOcrText: JSON.stringify(raw, null, 2),
               detectedBoxes: [
@@ -294,8 +311,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
             };
           }
         }
-        // If Gemini returned nothing useful, fall through to Tesseract
-        console.warn('[OCR] Gemini returned no usable data, falling back to Tesseract.');
+        // Only fall back to Tesseract if Gemini returned no usable data at all (no merchant AND no items)
+        console.warn('[OCR] Gemini returned no usable data (no merchant and no items), falling back to Tesseract.');
       } catch (geminiErr) {
         console.warn('[OCR] Gemini error, falling back to Tesseract:', geminiErr.message);
       }
@@ -747,7 +764,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     }
 
     if (!detectedTin) {
-      detectedTin = detectedInvoiceNo ? `REF-${detectedInvoiceNo}` : `OR-${Math.floor(100000 + Math.random() * 900000)}`;
+      detectedTin = detectedInvoiceNo ? `REF-${detectedInvoiceNo}` : '';
     }
 
     // =========================================================================
@@ -1071,7 +1088,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     return {
       isValid: true,
       merchant: 'Scanned Merchant',
-      tin: `OR-${Math.floor(100000 + Math.random() * 900000)}`,
+      tin: '',
       date: todayStr,
       time: '12:00 PM',
       category: 'Food',

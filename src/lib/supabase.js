@@ -14,13 +14,13 @@ export const isSupabaseConfigured = Boolean(
 // Create Supabase Client instance with persistent session storage
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        detectSessionInUrl: true,
-      },
-    })
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      detectSessionInUrl: true,
+    },
+  })
   : null;
 
 

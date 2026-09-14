@@ -383,7 +383,7 @@ export const ScannerView = () => {
       merchant: 'Scanned Receipt',
       date: dateStr,
       time: timeStr,
-      tin: '000-000-000-000',
+      tin: '',
       category: 'Food',
       paymentMethod: 'Cash',
       subtotal: 0.0,
@@ -415,7 +415,7 @@ export const ScannerView = () => {
       merchant: 'Manual Merchant Entry',
       date: new Date().toISOString().split('T')[0],
       time: '12:00 PM',
-      tin: '000-000-000-000',
+      tin: '',
       category: 'Food',
       paymentMethod: 'Cash',
       subtotal: 100.0,
@@ -1427,6 +1427,30 @@ export const ScannerView = () => {
 
                 {currentReceipt ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Low Confidence Warning Notice */}
+                    {Array.isArray(currentReceipt.lowConfidenceFields) && currentReceipt.lowConfidenceFields.length > 0 && (
+                      <div
+                        style={{
+                          padding: '9px 13px',
+                          borderRadius: '10px',
+                          background: 'rgba(245, 158, 11, 0.12)',
+                          border: '1px solid rgba(245, 158, 11, 0.35)',
+                          color: '#fbbf24',
+                          fontSize: '0.76rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          lineHeight: '1.4',
+                        }}
+                      >
+                        <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                        <span>
+                          Please review uncertain field{currentReceipt.lowConfidenceFields.length > 1 ? 's' : ''}:{' '}
+                          <strong>{currentReceipt.lowConfidenceFields.join(', ')}</strong>
+                        </span>
+                      </div>
+                    )}
+
                     {/* Vendor Field */}
                     <div>
                       <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
@@ -1458,6 +1482,7 @@ export const ScannerView = () => {
                         </label>
                         <input
                           className="liquid-input"
+                          placeholder="Not Detected"
                           value={currentReceipt.tin || ''}
                           onChange={(e) => setCurrentReceipt({ ...currentReceipt, tin: e.target.value })}
                         />

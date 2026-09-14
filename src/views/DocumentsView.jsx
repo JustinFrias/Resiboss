@@ -471,7 +471,7 @@ export const DocumentsView = () => {
                     </h3>
 
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                      TIN: {doc.tin || 'N/A'} • {doc.date}
+                      TIN: {doc.tin || 'Not Detected'} • {doc.date}
                     </div>
 
                     {/* Items summary */}

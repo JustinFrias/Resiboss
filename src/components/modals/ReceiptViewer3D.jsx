@@ -288,7 +288,7 @@ export const ReceiptViewer3D = () => {
                   {inspectingDoc.merchant}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#78716c', marginTop: '2px' }}>
-                  TIN: {inspectingDoc.tin || '000-000-000-000'}
+                  TIN: {inspectingDoc.tin || 'Not Detected'}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#78716c' }}>
                   {inspectingDoc.date} • {inspectingDoc.time}
@@ -466,7 +466,7 @@ export const ReceiptViewer3D = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t.scanner.invoiceNo}:</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{inspectingDoc.tin}</span>
+                <span style={{ fontFamily: 'var(--font-mono)' }}>{inspectingDoc.tin || 'Not Detected'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t.scanner.paymentMethod}:</span>
