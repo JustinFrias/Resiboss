@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useApp } from '../context/AppContext';
 import { extractReceiptWithOCR } from '../utils/receiptOcrParser';
 import { soundFx } from '../utils/soundEffects';
@@ -974,6 +975,15 @@ export const ScannerView = () => {
                     title="Powered by Gemini 1.5/2.0 Vision AI"
                   >
                     <Zap size={12} /> GEMINI AI VISION (99% ACCURACY)
+                  </span>
+                ) : (currentReceipt?.ocrEngine === 'mlkit' || Capacitor.isNativePlatform()) ? (
+                  <span
+                    className="liquid-badge liquid-badge-cyan"
+                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
+                    onClick={() => setShowAiModal(true)}
+                    title="Powered by Google ML Kit Neural OCR (Offline / On-Device)"
+                  >
+                    <Zap size={12} /> ML KIT (OFFLINE)
                   </span>
                 ) : (
                   <span

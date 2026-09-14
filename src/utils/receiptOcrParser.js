@@ -331,7 +331,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       try {
         onProgress(30, 'Scanning receipt with Google ML Kit on-device...');
         const mlkitResult = await extractWithMlKit(imageUri);
-        const recognizedText = (mlkitResult?.text || '').trim();
+        const recognizedText = (typeof mlkitResult === 'string' ? mlkitResult : (mlkitResult?.text || '')).trim();
 
         if (recognizedText.length >= 3) {
           fullText = recognizedText;

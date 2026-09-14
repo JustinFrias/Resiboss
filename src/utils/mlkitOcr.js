@@ -36,25 +36,25 @@ export function isMlKitAvailable() {
  * Executes on-device Google ML Kit text recognition on the provided image.
  *
  * @param {string} imageUri - Base64 data URL, file path, or content URI.
- * @returns {Promise<{ text: string, blocks: Array } | null>} Recognized text or null if unavailable.
+ * @returns {Promise<string | null>} Raw recognized text string, or null if unavailable / error.
  */
 export async function extractWithMlKit(imageUri) {
-  // 1. Only execute on native Android/iOS platforms
-  if (!isMlKitAvailable() || !imageUri) {
-    return null;
-  }
-
-  const { TextRecognition: plugin, Script: scriptEnum } = await getMlKitPlugin();
-  if (!plugin) {
+  // Guard: return null if not native platform (web) or empty input
+  if (!Capacitor.isNativePlatform() || !imageUri) {
     return null;
   }
 
   let tempFilePath = null;
 
   try {
+    const { TextRecognition: plugin, Script: scriptEnum } = await getMlKitPlugin();
+    if (!plugin) {
+      return null;
+    }
+
     let localPath = imageUri;
 
-    // If imageUri is a data URL, write it to temporary cache so ML Kit can read it via native file URI
+    // If imageUri is a base64 data URL, write to temporary cache so native ML Kit can read file
     if (typeof imageUri === 'string' && imageUri.startsWith('data:')) {
       const match = imageUri.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
       const ext = match ? match[1] : 'jpg';
@@ -77,20 +77,28 @@ export async function extractWithMlKit(imageUri) {
       localPath = uriResult.uri;
     }
 
-    // Call ML Kit native text recognition
-    const result = await plugin.processImage({
+    // Support plugin.recognize or plugin.processImage (standard CapAwesome API)
+    const recognizeFn = plugin.recognize
+      ? plugin.recognize.bind(plugin)
+      : (plugin.processImage ? plugin.processImage.bind(plugin) : null);
+
+    if (!recognizeFn) {
+      console.warn('[MLKitOCR] Neither recognize nor processImage found on TextRecognition plugin');
+      return null;
+    }
+
+    const options = {
       path: localPath,
       script: scriptEnum?.Latin || 'LATIN',
-    });
-
-    const recognizedText = (result?.text || '').trim();
-
-    return {
-      text: recognizedText,
-      blocks: result?.blocks || [],
     };
+
+    const result = await recognizeFn(options);
+
+    // Return raw text as a string (same format Tesseract.js returns: res.data.text)
+    const rawText = (typeof result === 'string' ? result : result?.text) || '';
+    return rawText.trim() || null;
   } catch (error) {
-    console.warn('[MLKitOCR] Native text recognition failed, will fall back:', error?.message || error);
+    console.warn('[MLKitOCR] Native text recognition failed, returning null:', error?.message || error);
     return null;
   } finally {
     // Clean up temporary cache file if one was written
@@ -104,3 +112,4 @@ export async function extractWithMlKit(imageUri) {
     }
   }
 }
+

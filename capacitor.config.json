@@ -2,9 +2,6 @@
   "appId": "com.resiboss.app",
   "appName": "Resiboss",
   "webDir": "dist",
-  "server": {
-    "androidScheme": "https"
-  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 3000,
