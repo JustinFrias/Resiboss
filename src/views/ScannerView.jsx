@@ -968,16 +968,7 @@ export const ScannerView = () => {
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {currentReceipt?.ocrEngine === 'gemini' ? (
-                  <span
-                    className="liquid-badge liquid-badge-emerald"
-                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
-                    onClick={() => setShowAiModal(true)}
-                    title="Powered by Gemini 1.5/2.0 Vision AI"
-                  >
-                    <Zap size={12} /> GEMINI AI VISION (99% ACCURACY)
-                  </span>
-                ) : (
+                {currentReceipt?.ocrEngine === 'mlkit' ? (
                   <span
                     className="liquid-badge liquid-badge-cyan"
                     style={{ fontSize: '0.72rem', cursor: 'pointer' }}
@@ -986,23 +977,16 @@ export const ScannerView = () => {
                   >
                     <Zap size={12} /> ML KIT (OFFLINE)
                   </span>
+                ) : (
+                  <span
+                    className="liquid-badge liquid-badge-emerald"
+                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
+                    onClick={() => setShowAiModal(true)}
+                    title="Powered by Gemini 1.5/2.0 Vision AI (Default)"
+                  >
+                    <Zap size={12} /> GEMINI AI VISION (99% ACCURACY)
+                  </span>
                 )}
-                <button
-                  onClick={() => setShowAiModal(true)}
-                  className="liquid-btn liquid-btn-secondary"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '3px 8px',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                  }}
-                  title="Configure Gemini AI for instant 99% accuracy"
-                >
-                  <Key size={11} />
-                  <span>{activeGeminiKey ? 'AI Settings' : 'Enable Gemini AI'}</span>
-                </button>
                 {selectedFileName && (
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                     {selectedFileName}
@@ -2004,48 +1988,35 @@ export const ScannerView = () => {
               <div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Active OCR Engine:</div>
                 <div style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {activeGeminiKey ? (
-                    <>
-                      <Zap size={15} color="#10b981" />
-                      <span>Google Gemini 1.5/2.0 Vision AI</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={15} color="var(--cyan-glow)" />
-                      <span>Google ML Kit (Offline)</span>
-                    </>
-                  )}
+                  <Zap size={15} color="#10b981" />
+                  <span>Google Gemini 1.5/2.0 Vision AI</span>
                 </div>
               </div>
-              <span className={activeGeminiKey ? 'liquid-badge liquid-badge-emerald' : 'liquid-badge liquid-badge-cyan'} style={{ fontSize: '0.72rem' }}>
-                {activeGeminiKey ? '99% Precision' : 'Active Engine'}
+              <span className="liquid-badge liquid-badge-emerald" style={{ fontSize: '0.72rem' }}>
+                99% Precision (Default)
               </span>
             </div>
 
             {/* Explanation & Engine Mode Info */}
             <div style={{ marginBottom: '18px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               <p style={{ margin: '0 0 8px 0' }}>
-                {activeGeminiKey
-                  ? 'Cloud AI Vision is active for curved, crumpled, or faint thermal paper receipts with automated offline fallback.'
-                  : 'Fast on-device optical character recognition configured for zero-latency receipt scanning.'}
+                Google Gemini Vision AI is permanently active as the default OCR engine, with automated Google ML Kit (Offline) fallback when offline.
               </p>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  color: 'var(--cyan-glow)',
-                  background: 'rgba(0, 242, 254, 0.06)',
+                  color: '#10b981',
+                  background: 'rgba(16, 185, 129, 0.08)',
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  border: '1px solid rgba(0, 242, 254, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
                 }}
               >
                 <Sparkles size={16} style={{ flexShrink: 0 }} />
                 <span>
-                  {activeGeminiKey
-                    ? 'Google Gemini Vision AI is connected and active at the system level.'
-                    : 'Google ML Kit Neural OCR is running in 100% private offline mode.'}
+                  Primary: <strong>Gemini Vision AI (99% Precision)</strong> • Fallback: <strong>ML Kit (Offline)</strong>
                 </span>
               </div>
             </div>
