@@ -11,6 +11,10 @@ export const isSupabaseConfigured = Boolean(
   !supabaseAnonKey.includes('your-supabase-anon-key')
 );
 
+console.log('[Supabase Diagnostic] VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+console.log('[Supabase Diagnostic] VITE_SUPABASE_ANON_KEY prefix:', import.meta.env.VITE_SUPABASE_ANON_KEY ? import.meta.env.VITE_SUPABASE_ANON_KEY.substring(0, 20) + '...' : 'EMPTY/UNDEFINED');
+console.log('[Supabase Diagnostic] isSupabaseConfigured:', isSupabaseConfigured);
+
 // Create Supabase Client instance with persistent session storage
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
