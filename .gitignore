@@ -30,3 +30,9 @@ dist-ssr
 *.sw?
 /eng.traineddata
 .freebuff/
+
+# Android local and build files
+local.properties
+**/local.properties
+.gradle/
+**/build/
