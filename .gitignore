@@ -28,8 +28,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-/eng.traineddata
-.freebuff/
 
 # Android local and build files
 local.properties

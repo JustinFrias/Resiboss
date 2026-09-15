@@ -1474,8 +1474,6 @@ export const ScannerView = () => {
                               <Sparkles size={11} color="#10b981" />
                               <span>GEMINI AI</span>
                             </>
-                          ) : currentReceipt.ocrEngine === 'textract' ? (
-                            '⚡ AWS Textract'
                           ) : (
                             '⚡ ML Kit (Offline)'
                           )}
