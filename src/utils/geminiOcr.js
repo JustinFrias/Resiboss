@@ -8,19 +8,13 @@
 // Modern, high-performance Gemini models ordered by priority.
 // Newer, actively maintained vision models appear first so deprecated models do not cause silent failures.
 export const DEFAULT_GEMINI_MODELS = [
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-3.8-flash',
-  'gemini-flash-latest',
-  'gemini-2.5-flash',
   'gemini-2.0-flash',
   'gemini-1.5-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-flash-latest',
 ];
 
 export const GEMINI_MODELS = DEFAULT_GEMINI_MODELS;
-
-// System-managed, pre-configured Gemini Vision API key
-export const SYSTEM_DEFAULT_GEMINI_KEY = 'AIzaSyA-AFluD0JZfq0NfyB3L7V5lmDQ6wQELDE';
 
 // In-memory model list cache to prevent redundant API calls
 let cachedAvailableModels = null;
@@ -71,13 +65,12 @@ export async function getAvailableGeminiModels(apiKey) {
         if (discovered.length > 0) {
           // Rank models so newest, stable Flash versions are attempted first
           const rankModel = (name) => {
-            if (name === 'gemini-3.6-flash') return 120;
-            if (name === 'gemini-3.5-flash') return 115;
-            if (name === 'gemini-3.8-flash') return 110;
-            if (name === 'gemini-flash-latest') return 100;
-            if (name === 'gemini-2.5-flash') return 90;
-            if (name === 'gemini-2.0-flash') return 80;
-            if (name === 'gemini-1.5-flash') return 70;
+            if (name === 'gemini-2.0-flash') return 100;
+            if (name === 'gemini-1.5-flash') return 90;
+            if (name === 'gemini-2.5-flash') return 85;
+            if (name === 'gemini-1.5-flash-latest') return 80;
+            if (name.includes('2.0-flash')) return 70;
+            if (name.includes('1.5-flash')) return 60;
             if (name.includes('flash')) return 50;
             return 10;
           };
@@ -105,8 +98,8 @@ export async function getAvailableGeminiModels(apiKey) {
 }
 
 /**
- * Gets the active Gemini API key from environment, localStorage, or system default.
- * Permanently pre-configured so users never have to supply their own key.
+ * Gets the active Gemini API key from localStorage or Vite environment.
+ * Allows mobile and web users to configure their own free Gemini key in settings.
  */
 export function getActiveGeminiKey() {
   const envKey = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -116,7 +109,7 @@ export function getActiveGeminiKey() {
     const userKey = localStorage.getItem('resiboss_gemini_api_key') || localStorage.getItem('gemini_api_key');
     if (userKey && userKey.trim().length > 10) return userKey.trim();
   }
-  return SYSTEM_DEFAULT_GEMINI_KEY;
+  return '';
 }
 
 /**
