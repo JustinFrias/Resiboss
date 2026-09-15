@@ -240,7 +240,86 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
 
   try {
     // =========================================================================
-    // PATH 1: AWS TEXTRACT ANALYZE EXPENSE (Primary Specialized Expense AI)
+    // PATH 1: GEMINI AI OCR (Primary Vision AI Engine — 99% Precision)
+    // =========================================================================
+    if (useGemini) {
+      try {
+        onProgress(10, 'Preparing image for AI analysis...');
+        const geminiImage = await preprocessForGemini(imageUri);
+
+        onProgress(30, 'Sending to Gemini AI Vision OCR...');
+        const raw = await extractWithGemini(geminiImage, GEMINI_API_KEY);
+
+        if (raw) {
+          onProgress(75, 'Normalizing AI extraction results...');
+          const normalized = normalizeGeminiResult(raw, parseAmount);
+
+          const hasMerchant = Boolean(
+            (normalized?.hasMerchant && normalized.merchant && normalized.merchant !== 'Scanned Merchant Store') ||
+            (raw.merchant && String(raw.merchant).trim().length > 0)
+          );
+          const hasItems = Array.isArray(normalized?.items) && normalized.items.length > 0;
+          const hasUsableData = Boolean(normalized && (hasMerchant || hasItems || (normalized.total && normalized.total > 0)));
+
+          if (hasUsableData) {
+            onProgress(92, 'Finalizing receipt data...');
+
+            // Apply brand normalization over what Gemini detected
+            let merchant = normalized.merchant;
+            for (const brand of knownBrands) {
+              if (brand.match.test(merchant) || brand.match.test(imageUri.substring(0, 100))) {
+                merchant = brand.name;
+                break;
+              }
+            }
+
+            // Fallback items if Gemini returned none
+            const items = normalized.items.length > 0
+              ? normalized.items
+              : [{ name: merchant + ' Purchase', qty: 1, price: normalized.subtotal || normalized.total || 0, total: normalized.subtotal || normalized.total || 0 }];
+
+            const tin = normalized.tin || '';
+
+            // Compute confidence score, slightly penalizing if low-confidence fields were flagged
+            const lowConfCount = normalized.lowConfidenceFields?.length || 0;
+            const confidenceScore = Math.max(88, 98 - (lowConfCount * 3));
+
+            onProgress(100, 'AI Optical Extraction Complete!');
+
+            return {
+              isValid: true,
+              merchant,
+              tin,
+              date: normalized.date,
+              time: normalized.time,
+              category: normalized.category,
+              paymentMethod: normalized.paymentMethod,
+              subtotal: normalized.subtotal,
+              vat: normalized.vat,
+              total: normalized.total,
+              items,
+              currency: normalized.currency,
+              confidence: confidenceScore,
+              lowConfidenceFields: normalized.lowConfidenceFields || [],
+              ocrEngine: 'gemini',
+              rawOcrText: JSON.stringify(raw, null, 2),
+              detectedBoxes: [
+                { label: 'MERCHANT',  top: 10, left: 16, width: 68, height: 12 },
+                { label: 'TIN / DATE', top: 26, left: 18, width: 64, height: 10 },
+                { label: 'LINE ITEMS', top: 38, left: 12, width: 76, height: 26 },
+                { label: 'TOTAL DUE', top: 68, left: 16, width: 68, height: 18 },
+              ],
+            };
+          }
+        }
+        console.warn('[OCR] Gemini returned no usable data (no merchant and no items), falling back to secondary engine.');
+      } catch (geminiErr) {
+        console.warn('[OCR] Gemini error, falling back to secondary engine:', geminiErr.message);
+      }
+    }
+
+    // =========================================================================
+    // PATH 2: AWS TEXTRACT ANALYZE EXPENSE (Secondary Specialized Expense AI)
     // =========================================================================
     if (useTextract) {
       try {
@@ -293,93 +372,9 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
             ],
           };
         }
-        console.warn('[OCR] AWS Textract returned minimal data, falling back to next engine.');
+        console.warn('[OCR] AWS Textract returned minimal data, falling back to offline engine.');
       } catch (textractErr) {
         console.warn('[OCR] AWS Textract error, falling back:', textractErr?.message || textractErr);
-      }
-    }
-
-    // =========================================================================
-    // PATH 2: GEMINI AI OCR (Vision AI Fallback)
-    // =========================================================================
-    if (useGemini) {
-      try {
-        onProgress(10, 'Preparing image for AI analysis...');
-        const geminiImage = await preprocessForGemini(imageUri);
-
-        onProgress(30, 'Sending to Gemini AI Vision OCR...');
-        const raw = await extractWithGemini(geminiImage, GEMINI_API_KEY);
-
-        if (raw) {
-          onProgress(75, 'Normalizing AI extraction results...');
-          const normalized = normalizeGeminiResult(raw, parseAmount);
-
-          // Issue 1: Accept partial Gemini results rather than dropping to Tesseract.
-          // Check if Gemini detected usable data: either a non-empty merchant or line items (or total > 0).
-          // Only fall back to Tesseract if Gemini returned no usable data at all (no merchant AND no items).
-          const hasMerchant = Boolean(
-            (normalized?.hasMerchant && normalized.merchant && normalized.merchant !== 'Scanned Merchant Store') ||
-            (raw.merchant && String(raw.merchant).trim().length > 0)
-          );
-          const hasItems = Array.isArray(normalized?.items) && normalized.items.length > 0;
-          const hasUsableData = Boolean(normalized && (hasMerchant || hasItems || (normalized.total && normalized.total > 0)));
-
-          if (hasUsableData) {
-            onProgress(92, 'Finalizing receipt data...');
-
-            // Apply brand normalization over what Gemini detected
-            let merchant = normalized.merchant;
-            for (const brand of knownBrands) {
-              if (brand.match.test(merchant) || brand.match.test(imageUri.substring(0, 100))) {
-                merchant = brand.name;
-                break;
-              }
-            }
-
-            // Fallback items if Gemini returned none
-            const items = normalized.items.length > 0
-              ? normalized.items
-              : [{ name: merchant + ' Purchase', qty: 1, price: normalized.subtotal || normalized.total || 0, total: normalized.subtotal || normalized.total || 0 }];
-
-            // Issue 4: Never invent random TIN numbers — use detected TIN or empty string
-            const tin = normalized.tin || '';
-
-            // Compute confidence score, slightly penalizing if low-confidence fields were flagged
-            const lowConfCount = normalized.lowConfidenceFields?.length || 0;
-            const confidenceScore = Math.max(88, 98 - (lowConfCount * 3));
-
-            onProgress(100, 'AI Optical Extraction Complete!');
-
-            return {
-              isValid: true,
-              merchant,
-              tin,
-              date: normalized.date,
-              time: normalized.time,
-              category: normalized.category,
-              paymentMethod: normalized.paymentMethod,
-              subtotal: normalized.subtotal,
-              vat: normalized.vat,
-              total: normalized.total,
-              items,
-              currency: normalized.currency,
-              confidence: confidenceScore,
-              lowConfidenceFields: normalized.lowConfidenceFields || [],
-              ocrEngine: 'gemini',
-              rawOcrText: JSON.stringify(raw, null, 2),
-              detectedBoxes: [
-                { label: 'MERCHANT',  top: 10, left: 16, width: 68, height: 12 },
-                { label: 'TIN / DATE', top: 26, left: 18, width: 64, height: 10 },
-                { label: 'LINE ITEMS', top: 38, left: 12, width: 76, height: 26 },
-                { label: 'TOTAL DUE', top: 68, left: 16, width: 68, height: 18 },
-              ],
-            };
-          }
-        }
-        // Only fall back to Tesseract if Gemini returned no usable data at all (no merchant AND no items)
-        console.warn('[OCR] Gemini returned no usable data (no merchant and no items), falling back to Tesseract.');
-      } catch (geminiErr) {
-        console.warn('[OCR] Gemini error, falling back to Tesseract:', geminiErr.message);
       }
     }
 

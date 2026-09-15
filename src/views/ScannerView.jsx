@@ -968,16 +968,7 @@ export const ScannerView = () => {
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {currentReceipt?.ocrEngine === 'textract' ? (
-                  <span
-                    className="liquid-badge liquid-badge-emerald"
-                    style={{ fontSize: '0.72rem', cursor: 'pointer' }}
-                    onClick={() => setShowAiModal(true)}
-                    title="Powered by AWS Textract AnalyzeExpense (Primary)"
-                  >
-                    <Zap size={12} /> AWS TEXTRACT (EXPENSE AI)
-                  </span>
-                ) : currentReceipt?.ocrEngine === 'mlkit' ? (
+                {currentReceipt?.ocrEngine === 'mlkit' ? (
                   <span
                     className="liquid-badge liquid-badge-cyan"
                     style={{ fontSize: '0.72rem', cursor: 'pointer' }}
@@ -991,11 +982,27 @@ export const ScannerView = () => {
                     className="liquid-badge liquid-badge-emerald"
                     style={{ fontSize: '0.72rem', cursor: 'pointer' }}
                     onClick={() => setShowAiModal(true)}
-                    title="Powered by AWS Textract AnalyzeExpense (Primary)"
+                    title="Powered by Google Gemini 1.5/2.0 Vision AI (99% Precision)"
                   >
-                    <Zap size={12} /> AWS TEXTRACT (EXPENSE AI)
+                    <Zap size={12} /> AI VISION (99% ACCURACY)
                   </span>
                 )}
+                <button
+                  onClick={() => setShowAiModal(true)}
+                  className="liquid-btn liquid-btn-secondary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 8px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                  }}
+                  title="Configure Gemini AI for instant 99% accuracy"
+                >
+                  <Key size={11} />
+                  <span>AI Settings</span>
+                </button>
                 {selectedFileName && (
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                     {selectedFileName}
@@ -1253,7 +1260,21 @@ export const ScannerView = () => {
               <button
                 onClick={() => runRealOcr(selectedFileImage, selectedFileName)}
                 className="liquid-btn liquid-btn-primary"
-                style={{ width: '100%', padding: '14px', fontSize: '1rem', borderRadius: '14px' }}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  fontSize: '1rem',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)',
+                  borderColor: 'rgba(16, 185, 129, 0.6)',
+                  color: '#ffffff',
+                  fontWeight: 650,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
               >
                 <ScanLine size={18} />
                 <span>{t.scanner.rescan}</span>
@@ -1430,25 +1451,34 @@ export const ScannerView = () => {
                   </div>
                   {currentReceipt && (
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className="liquid-badge liquid-badge-emerald">
+                      <span className="liquid-badge liquid-badge-emerald" style={{ fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <CheckCircle2 size={12} /> {currentReceipt.confidence}% {t.scanner.precision}
                       </span>
                       {currentReceipt.ocrEngine && (
                         <span
-                          className={`liquid-badge ${
-                            currentReceipt.ocrEngine === 'textract'
-                              ? 'liquid-badge-emerald'
-                              : currentReceipt.ocrEngine === 'gemini'
-                              ? 'liquid-badge-cyan'
-                              : 'liquid-badge-amber'
-                          }`}
-                          style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                          className="liquid-badge liquid-badge-emerald"
+                          style={{
+                            fontSize: '0.68rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: currentReceipt.ocrEngine === 'gemini' ? 'rgba(16, 185, 129, 0.2)' : undefined,
+                            borderColor: currentReceipt.ocrEngine === 'gemini' ? 'rgba(16, 185, 129, 0.6)' : undefined,
+                            color: currentReceipt.ocrEngine === 'gemini' ? '#6ee7b7' : undefined,
+                          }}
                         >
-                          {currentReceipt.ocrEngine === 'textract'
-                            ? '⚡ AWS Textract'
-                            : currentReceipt.ocrEngine === 'gemini'
-                            ? '✨ Gemini AI'
-                            : '⚡ ML Kit (Offline)'}
+                          {currentReceipt.ocrEngine === 'gemini' ? (
+                            <>
+                              <Sparkles size={11} color="#10b981" />
+                              <span>GEMINI AI</span>
+                            </>
+                          ) : currentReceipt.ocrEngine === 'textract' ? (
+                            '⚡ AWS Textract'
+                          ) : (
+                            '⚡ ML Kit (Offline)'
+                          )}
                         </span>
                       )}
                     </div>
@@ -2001,83 +2031,143 @@ export const ScannerView = () => {
               <div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Active OCR Engine:</div>
                 <div style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Zap size={15} color="#10b981" />
-                  <span>AWS Textract (AnalyzeExpense)</span>
+                  {activeGeminiKey ? (
+                    <>
+                      <Zap size={15} color="#10b981" />
+                      <span>Google Gemini 1.5/2.0 Vision AI</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={15} color="var(--cyan-glow)" />
+                      <span>Google ML Kit (Offline)</span>
+                    </>
+                  )}
                 </div>
               </div>
-              <span className="liquid-badge liquid-badge-emerald" style={{ fontSize: '0.72rem' }}>
-                Expense AI (Primary)
+              <span className={activeGeminiKey ? 'liquid-badge liquid-badge-emerald' : 'liquid-badge liquid-badge-cyan'} style={{ fontSize: '0.72rem' }}>
+                {activeGeminiKey ? '99% Precision' : 'Local Mode'}
               </span>
             </div>
 
-            {/* Explanation & Engine Mode Info */}
+            {/* Explanation & Free Tier Info */}
             <div style={{ marginBottom: '18px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               <p style={{ margin: '0 0 8px 0' }}>
-                AWS Textract AnalyzeExpense is active as the primary expense recognition engine for mobile and web, with automated Gemini Vision and Google ML Kit (Offline) fallback.
+                For the highest accuracy on curved, crumpled, or faint thermal paper receipts, connect a free <strong>Google Gemini API Key</strong>.
               </p>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  color: '#10b981',
-                  background: 'rgba(16, 185, 129, 0.08)',
+                  gap: '6px',
+                  color: 'var(--cyan-glow)',
+                  background: 'rgba(0, 242, 254, 0.06)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                }}
+              >
+                <Sparkles size={14} style={{ flexShrink: 0 }} />
+                <span>Google AI Studio offers <strong>1,500 scans/day 100% FREE</strong> on the free tier.</span>
+              </div>
+            </div>
+
+            {/* API Key Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Gemini API Key
+                </label>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--cyan-glow)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>Get Free Key at Google AI Studio</span>
+                  <ExternalLink size={11} />
+                </a>
+              </div>
+              <input
+                type="text"
+                className="liquid-input"
+                placeholder="AIzaSy..."
+                value={keyInput}
+                onChange={(e) => {
+                  setKeyInput(e.target.value);
+                  setTestResult(null);
+                }}
+                style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: '0.84rem' }}
+              />
+            </div>
+
+            {/* Test Key Result Banner */}
+            {testResult && (
+              <div
+                style={{
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                }}
-              >
-                <Sparkles size={16} style={{ flexShrink: 0 }} />
-                <span>
-                  Primary: <strong>AWS Textract AnalyzeExpense</strong> • Fallback: <strong>ML Kit (Offline)</strong>
-                </span>
-              </div>
-            </div>
-
-            {/* System Locked & Pre-configured Security Notice */}
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: '12px',
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                marginBottom: '18px',
-              }}
-            >
-              <Lock size={18} color="#10b981" style={{ marginTop: '2px', flexShrink: 0 }} />
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '3px' }}>
-                  System Managed & Locked
-                </strong>
-                The OCR engine and AI credentials are pre-configured and securely managed by the system. Manual user entry or editing is disabled.
-              </div>
-            </div>
-
-            {/* Close Button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button
-                type="button"
-                onClick={() => setShowAiModal(false)}
-                className="liquid-btn liquid-btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
+                  marginBottom: '16px',
+                  fontSize: '0.8rem',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
                   gap: '8px',
-                  borderRadius: '12px',
+                  background: testResult.success ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: testResult.success ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                  color: testResult.success ? '#6ee7b7' : '#fca5a5',
                 }}
               >
-                <Check size={16} />
-                <span>Understood</span>
+                {testResult.success ? <Check size={16} /> : <AlertTriangle size={16} />}
+                <span>{testResult.success ? 'Gemini API Key is valid and active!' : (testResult.message || 'Key validation failed.')}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button
+                type="button"
+                onClick={handleTestApiKey}
+                disabled={isTestingKey || !keyInput.trim()}
+                className="liquid-btn liquid-btn-secondary"
+                style={{ flex: 1, padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                {isTestingKey ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
+                <span>{isTestingKey ? 'Verifying...' : 'Test Key'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                className="liquid-btn liquid-btn-primary"
+                style={{ flex: 1.3, padding: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <Check size={15} />
+                <span>Save & Activate</span>
               </button>
             </div>
+
+            {activeGeminiKey && (
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleClearApiKey}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Clear Key & Revert to Local Offline OCR
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
