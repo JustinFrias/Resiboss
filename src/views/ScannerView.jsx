@@ -175,7 +175,7 @@ export const ScannerView = () => {
     if (file) processUploadedFile(file);
   };
 
-  // Run Real Tesseract OCR Extraction with Receipt Validation
+  // Run Real OCR Extraction with Receipt Validation
   const runRealOcr = async (imageUri, filename = '') => {
     setScanMode('scanned');
     setIsScanning(true);
@@ -188,23 +188,43 @@ export const ScannerView = () => {
     setPanOffset({ x: 0, y: 0 });
     soundFx.playLaserHum();
 
-    try {
-      const ocrResult = await extractReceiptWithOCR(imageUri, (progress, step) => {
-        setScanProgress(progress);
-        setScanStepText(step);
-        if (progress % 25 === 0) soundFx.playScanBlip();
-      });
-
-      // Check if image was detected as a valid receipt
-      if (!ocrResult.isValid) {
+    // 20-second watchdog timer: guarantees the scan never gets stuck loading
+    let isCompleted = false;
+    const watchdogTimer = setTimeout(() => {
+      if (!isCompleted) {
         setIsScanning(false);
         setScanError({
+          title: 'Scan Timed Out',
+          message: 'OCR extraction took longer than expected. Please check that the receipt is clearly visible and try again.',
+          tip: 'Hold the camera still, ensure good lighting, and keep the receipt flat.',
+          imageUri: imageUri,
+          filename: filename,
+        });
+        soundFx.playWarning();
+      }
+    }, 20000);
+
+    try {
+      const ocrResult = await extractReceiptWithOCR(imageUri, (progress, step) => {
+        if (!isCompleted) {
+          setScanProgress(progress);
+          setScanStepText(step);
+          if (progress % 25 === 0) soundFx.playScanBlip();
+        }
+      });
+
+      isCompleted = true;
+      clearTimeout(watchdogTimer);
+
+      // Check if image was detected as a valid receipt
+      if (!ocrResult || !ocrResult.isValid) {
+        setScanError({
           title: 'Non-Receipt Image Detected',
-          message: ocrResult.errorReason || 'The uploaded photo does not appear to be an official receipt or sales invoice.',
+          message: ocrResult?.errorReason || 'The uploaded photo does not appear to be an official receipt or sales invoice.',
           tip: 'Ensure the image is clear, flat, and focused on a receipt containing a store name and prices.',
           imageUri: imageUri,
           filename: filename,
-          rawOcrText: ocrResult.rawOcrText || '',
+          rawOcrText: ocrResult?.rawOcrText || '',
         });
         soundFx.playWarning();
         return;
@@ -219,11 +239,11 @@ export const ScannerView = () => {
 
       setCurrentReceipt(completeReceipt);
       setDetectedBoxes(ocrResult.detectedBoxes || []);
-      setIsScanning(false);
       soundFx.playSuccessChime();
     } catch (err) {
+      isCompleted = true;
+      clearTimeout(watchdogTimer);
       console.error('OCR run error:', err);
-      setIsScanning(false);
       setScanError({
         title: 'Receipt Unreadable',
         message: 'Could not extract readable text or receipt details from this image.',
@@ -232,6 +252,10 @@ export const ScannerView = () => {
         filename: filename,
       });
       soundFx.playWarning();
+    } finally {
+      isCompleted = true;
+      clearTimeout(watchdogTimer);
+      setIsScanning(false);
     }
   };
 

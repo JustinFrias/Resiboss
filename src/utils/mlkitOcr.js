@@ -11,23 +11,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-
-// Lazy-load TextRecognition plugin only when on a native platform
-let TextRecognition = null;
-let Script = null;
-
-async function getMlKitPlugin() {
-  if (TextRecognition) return { TextRecognition, Script };
-  try {
-    const mlkit = await import('@capacitor-mlkit/text-recognition');
-    TextRecognition = mlkit.TextRecognition;
-    Script = mlkit.Script || { Latin: 'LATIN' };
-    return { TextRecognition, Script };
-  } catch (err) {
-    console.warn('[MLKitOCR] Failed to load @capacitor-mlkit/text-recognition:', err);
-    return { TextRecognition: null, Script: null };
-  }
-}
+import { TextRecognition, Script } from '@capacitor-mlkit/text-recognition';
 
 /**
  * Checks if ML Kit on-device OCR is available on the current device.
@@ -49,17 +33,20 @@ export const preprocessForMlKit = (imageUri) => {
   }
 
   return new Promise((resolve) => {
+    const safetyTimer = setTimeout(() => resolve(imageUri), 2500);
+
     const img = new Image();
     if (typeof imageUri === 'string' && !imageUri.startsWith('data:')) {
       img.crossOrigin = 'anonymous';
     }
 
     img.onload = () => {
+      clearTimeout(safetyTimer);
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        const MAX = 2200;
+        const MAX = 2000;
         const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
         canvas.width = Math.round(img.width * ratio);
         canvas.height = Math.round(img.height * ratio);
@@ -68,17 +55,20 @@ export const preprocessForMlKit = (imageUri) => {
         ctx.imageSmoothingQuality = 'high';
 
         // Enhance contrast and brightness to make faint thermal dots and creased columns readable
-        ctx.filter = 'contrast(135%) brightness(105%)';
+        ctx.filter = 'contrast(130%) brightness(105%)';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        resolve(canvas.toDataURL('image/jpeg', 0.95));
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
       } catch (err) {
         console.warn('[MLKitOCR] Canvas preprocessing warning, using original image:', err);
         resolve(imageUri);
       }
     };
 
-    img.onerror = () => resolve(imageUri);
+    img.onerror = () => {
+      clearTimeout(safetyTimer);
+      resolve(imageUri);
+    };
     img.src = imageUri;
   });
 };
@@ -258,11 +248,6 @@ export async function extractWithMlKit(imageUri) {
   let tempFilePath = null;
 
   try {
-    const { TextRecognition: plugin, Script: scriptEnum } = await getMlKitPlugin();
-    if (!plugin) {
-      return null;
-    }
-
     // Preprocess image with canvas contrast/brightness enhancement
     let processedUri = imageUri;
     try {
@@ -296,22 +281,18 @@ export async function extractWithMlKit(imageUri) {
       localPath = uriResult.uri;
     }
 
-    // Support plugin.recognize or plugin.processImage (standard CapAwesome API)
-    const recognizeFn = plugin.recognize
-      ? plugin.recognize.bind(plugin)
-      : (plugin.processImage ? plugin.processImage.bind(plugin) : null);
-
-    if (!recognizeFn) {
-      console.warn('[MLKitOCR] Neither recognize nor processImage found on TextRecognition plugin');
-      return null;
-    }
-
     const options = {
       path: localPath,
-      script: scriptEnum?.Latin || 'LATIN',
+      script: Script?.Latin || 'LATIN',
     };
 
-    const result = await recognizeFn(options);
+    // Run recognition with a 10s watchdog timeout so it can never freeze
+    const recognitionPromise = TextRecognition.processImage(options);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('ML Kit recognition timeout')), 10000)
+    );
+
+    const result = await Promise.race([recognitionPromise, timeoutPromise]);
 
     // Reconstruct spatial rows from structured result (bounding boxes)
     const reconstructedText = reconstructRowsFromMlKit(result);

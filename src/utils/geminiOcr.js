@@ -6,7 +6,6 @@
  */
 
 // Modern, high-performance Gemini models ordered by priority.
-// Newer, actively maintained vision models appear first so deprecated models do not cause silent failures.
 export const DEFAULT_GEMINI_MODELS = [
   'gemini-2.0-flash',
   'gemini-1.5-flash',
@@ -16,25 +15,28 @@ export const DEFAULT_GEMINI_MODELS = [
 
 export const GEMINI_MODELS = DEFAULT_GEMINI_MODELS;
 
-// Permanent system default Gemini API key (99% Precision Vision AI for receipt scanner)
-// Base64 encoded to bypass GitHub Secret Push Protection on public repositories
-const _RAW_SYS_KEY = 'QVEuQWI4Uk42Sm1ZbUxMV29QX2F3RmVKY3ZGMktpUDBYVWhpNEpod0c0UkVIYzFmbUU5ckE=';
-export const SYSTEM_DEFAULT_GEMINI_KEY = typeof atob === 'function' ? atob(_RAW_SYS_KEY) : '';
+// Valid Google AI Studio Gemini keys start with 'AIzaSy'
+export function isValidGeminiKey(key) {
+  if (!key || typeof key !== 'string') return false;
+  const trimmed = key.trim();
+  if (trimmed.startsWith('test-') || trimmed.startsWith('mock-')) return true;
+  return trimmed.startsWith('AIzaSy') && trimmed.length >= 30;
+}
+
+// System default key: empty unless a valid AIza key is configured
+export const SYSTEM_DEFAULT_GEMINI_KEY = '';
 
 /**
- * Builds request options supporting both AQ. auth keys (x-goog-api-key header)
- * and legacy AIza query parameter keys.
+ * Builds request options supporting both standard Google AI Studio keys
+ * and header-based keys.
  */
 function getGeminiRequestConfig(apiKey, urlPath) {
   const cleanKey = (apiKey || '').trim();
-  const isAq = cleanKey.startsWith('AQ.');
   const headers = {
     'Content-Type': 'application/json',
     'x-goog-api-key': cleanKey,
   };
-  const url = isAq
-    ? urlPath
-    : `${urlPath}${urlPath.includes('?') ? '&' : '?'}key=${encodeURIComponent(cleanKey)}`;
+  const url = `${urlPath}${urlPath.includes('?') ? '&' : '?'}key=${encodeURIComponent(cleanKey)}`;
   return { headers, url };
 }
 
@@ -49,7 +51,7 @@ const MODEL_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
  * Falls back to DEFAULT_GEMINI_MODELS if offline, rate limited, or invalid key.
  */
 export async function getAvailableGeminiModels(apiKey) {
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {
+  if (!isValidGeminiKey(apiKey)) {
     return [...DEFAULT_GEMINI_MODELS];
   }
 
@@ -125,9 +127,14 @@ export async function getAvailableGeminiModels(apiKey) {
  */
 export function getActiveGeminiKey() {
   const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) || '';
-  if (envKey && envKey.trim().length > 10) return envKey.trim();
+  if (isValidGeminiKey(envKey)) return envKey.trim();
 
-  return SYSTEM_DEFAULT_GEMINI_KEY;
+  if (typeof window !== 'undefined') {
+    const userKey = localStorage.getItem('resiboss_gemini_api_key') || localStorage.getItem('gemini_api_key');
+    if (isValidGeminiKey(userKey)) return userKey.trim();
+  }
+
+  return '';
 }
 
 /**
@@ -233,7 +240,7 @@ function dataUrlToGeminiPart(dataUrl) {
  * Returns parsed JSON object or null on failure.
  */
 export async function extractWithGemini(imageDataUrl, apiKey) {
-  if (!apiKey || !imageDataUrl) return null;
+  if (!isValidGeminiKey(apiKey) || !imageDataUrl) return null;
 
   const imagePart = dataUrlToGeminiPart(imageDataUrl);
   if (!imagePart) return null;
@@ -266,6 +273,9 @@ export async function extractWithGemini(imageDataUrl, apiKey) {
 
   for (const model of modelsToTry) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
       const { url: endpoint, headers } = getGeminiRequestConfig(
         apiKey,
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
@@ -274,9 +284,15 @@ export async function extractWithGemini(imageDataUrl, apiKey) {
         method: 'POST',
         headers,
         body: JSON.stringify(requestBody),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
+        if (response.status === 400 || response.status === 401 || response.status === 403) {
+          console.warn(`[GeminiOCR] Gemini key rejected (${response.status}). Immediately aborting AI path to prevent hanging.`);
+          return null;
+        }
         const errText = await response.text();
         lastError = new Error(`Gemini ${model} ${response.status}: ${errText.substring(0, 200)}`);
         console.warn(`[GeminiOCR] ${model} HTTP ${response.status}, trying next fallback model...`);

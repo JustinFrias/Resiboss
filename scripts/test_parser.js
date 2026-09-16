@@ -1,68 +1,83 @@
 import { parseReceiptFromText } from '../src/utils/receiptOcrParser.js';
 
-const sampleReceipt1 = `
-JOLLIBEE FOODS CORP
-TIN: 000-477-103-000
-STORE # 1245 - SM MEGAMALL
-DATE: 09/15/2026  12:45 PM
+const screenshotReceipt = `
+CASH RECEIPT
+Adress: 1234 Lorem Ipsum, Dolor
+Tel: 123-456-7890
+--------------------------------
+Date: 01-01-2018         10:35
+--------------------------------
+Lorem                     6.50
+Ipsum                     7.50
+Dolor Sit                48.00
+Amet                      9.30
+Consectetur              11.90
+Adipiscing Elit           1.20
+Sed Do                    0.40
+--------------------------------
+Total                    84.80
+Sub-total                76.80
+Sales Tax                 8.00
+Balance                  84.80
 
-1 1PC CHICKENJOY          95.00 V
-2 YUMBURGER W/ CHS       120.00 V
-1 JOLLY SPAGHETTI         65.00 V
-1 REGULAR COKE            40.00 V
-
-SUBTOTAL                 320.00
-VAT 12%                   34.29
-TOTAL AMOUNT DUE         320.00
-CASH                     500.00
-CHANGE                   180.00
+THANK YOU
 `;
 
-const sampleReceipt2 = `
-MCDONALD'S
-GOLDEN ARCHES DEV CORP
-TIN: 000-123-456-000
-09/14/2026 18:22
-ORDER # 45
+console.log('--- TEST USER SCREENSHOT RECEIPT ---');
+const r = parseReceiptFromText(screenshotReceipt, 'mlkit', 95);
+console.log('Merchant:', r.merchant);
+console.log('Date:', r.date);
+console.log('Total:', r.total);
+console.log('Subtotal:', r.subtotal);
+console.log('VAT/Tax:', r.vat);
+console.log('Items count:', r.items.length);
+console.log('Items:', r.items);
 
-1 BIG MAC                 210.00 T
-1 MEDIUM FRIES             75.00 T
-1 COKE ZERO 16OZ           45.00 T
-
-TOTAL                    330.00
-CASH                     500.00
-CHANGE                   170.00
+const jollibeeReceipt = `
+JOLLIBEE
+Store #1234 SM Megamall
+TIN: 000-123-456-000-VAT
+Date: 12/25/2025 14:30
+1 1pc Chickenjoy w/ Rice 95.00 V
+2 Peach Mango Pie 96.00 V
+1 Regular Coke 45.00 V
+Subtotal: 236.00
+VAT 12%: 25.29
+Total Amount Due: 236.00
+CASH 500.00
+CHANGE 264.00
 `;
 
-const sampleReceipt3 = `
-7-ELEVEN STORE 3122
-PHILIPPINE SEVEN CORP
-SI # 987654
-12-SEP-2026 08:15:00
+console.log('\n--- TEST JOLLIBEE RECEIPT WITH TAX CODES ---');
+const rJollibee = parseReceiptFromText(jollibeeReceipt, 'mlkit', 95);
+console.log('Merchant:', rJollibee.merchant);
+console.log('Date:', rJollibee.date);
+console.log('Total:', rJollibee.total);
+console.log('Subtotal:', rJollibee.subtotal);
+console.log('VAT/Tax:', rJollibee.vat);
+console.log('Items count:', rJollibee.items.length);
+console.log('Items:', rJollibee.items);
 
-BIG BITE HOTDOG           45.00
-GULP 22OZ                 35.00
-SIOPAO ASADO              42.00
-
-TOTAL DUE                122.00
-GCASH                    122.00
+const sevenElevenReceipt = `
+7-ELEVEN STORE 3042
+BGC TAGUIG CITY
+TIN: 111-222-333-000
+05/18/2026 08:15 AM
+1 BIG BITE HOTDOG 49.00
+2 C2 ICED TEA 500ML 70.00
+Vatable Sales 106.25
+12% VAT 12.75
+Total Amount: 119.00
+GCASH 119.00
 `;
 
-console.log('--- TEST 1: Jollibee with V flag ---');
-const r1 = parseReceiptFromText(sampleReceipt1, 'mlkit', 95);
-console.log('Items count:', r1.items.length);
-console.log('Items:', r1.items);
-console.log('Total:', r1.total, 'Date:', r1.date, 'Merchant:', r1.merchant);
-console.log('Dropped rows:', r1.droppedRows);
-
-console.log('\n--- TEST 2: McDonald with T flag and no DATE label ---');
-const r2 = parseReceiptFromText(sampleReceipt2, 'mlkit', 95);
-console.log('Items count:', r2.items.length);
-console.log('Items:', r2.items);
-console.log('Total:', r2.total, 'Date:', r2.date, 'Merchant:', r2.merchant);
-
-console.log('\n--- TEST 3: 7-Eleven ---');
-const r3 = parseReceiptFromText(sampleReceipt3, 'mlkit', 95);
-console.log('Items count:', r3.items.length);
-console.log('Items:', r3.items);
-console.log('Total:', r3.total, 'Date:', r3.date, 'Merchant:', r3.merchant);
+console.log('\n--- TEST 7-ELEVEN RECEIPT ---');
+const r711 = parseReceiptFromText(sevenElevenReceipt, 'mlkit', 95);
+console.log('Merchant:', r711.merchant);
+console.log('Date:', r711.date);
+console.log('Total:', r711.total);
+console.log('Subtotal:', r711.subtotal);
+console.log('VAT/Tax:', r711.vat);
+console.log('Payment Method:', r711.paymentMethod);
+console.log('Items count:', r711.items.length);
+console.log('Items:', r711.items);

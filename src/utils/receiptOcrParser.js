@@ -1,5 +1,6 @@
 import Tesseract from 'tesseract.js';
-import { extractWithGemini, normalizeGeminiResult, getActiveGeminiKey } from './geminiOcr.js';
+import { Capacitor } from '@capacitor/core';
+import { extractWithGemini, normalizeGeminiResult, getActiveGeminiKey, isValidGeminiKey } from './geminiOcr.js';
 import { extractWithMlKit, isMlKitAvailable } from './mlkitOcr.js';
 
 /**
@@ -240,6 +241,9 @@ export const normalizeOcrRow = (line) => {
   if (!line || typeof line !== 'string') return '';
   let cleaned = line.trim();
 
+  // Strip trailing tax flags, brackets, asterisks, e.g. " 95.00 V" -> " 95.00", " 120.00 T" -> " 120.00"
+  cleaned = cleaned.replace(/\s+([VTNABFX\*\#\(\)\[\]]{1,3})\s*$/i, '');
+
   // Normalize thousands dot: e.g. 7.402.60 -> 7402.60
   cleaned = cleaned.replace(/\b(\d+)\.(\d{3})\.(\d{2})\b/g, '$1$2.$3');
 
@@ -445,7 +449,19 @@ export const extractDatesFromText = (fullText) => {
     generalDate = parseDateString(genMatch[1]);
   }
 
-  const primaryDate = billDate || generalDate || dueDate || null;
+  let primaryDate = billDate || generalDate || dueDate || null;
+
+  // Standalone date fallback: scan individual lines if labeled dates weren't matched
+  if (!primaryDate) {
+    const candidateLines = fullText.split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const line of candidateLines) {
+      const parsed = parseDateString(line);
+      if (parsed) {
+        primaryDate = parsed;
+        break;
+      }
+    }
+  }
 
   return {
     date: primaryDate,
@@ -537,11 +553,11 @@ export const computeRealConfidenceScore = ({ total, subtotal, vat, discount, ite
 export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => {
   const GEMINI_API_KEY = getActiveGeminiKey();
   const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
-  const useGemini = Boolean(GEMINI_API_KEY && isOnline);
+  const useGemini = Boolean(isValidGeminiKey(GEMINI_API_KEY) && isOnline);
 
   try {
     // =========================================================================
-    // PATH 1: GEMINI AI OCR (Primary Vision AI Engine — 99% Precision)
+    // PATH 1: GEMINI AI OCR (Vision AI Engine — Activated if valid key is supplied)
     // =========================================================================
     if (useGemini) {
       try {
@@ -613,7 +629,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
             };
           }
         }
-        console.warn('[OCR] Gemini returned no usable data (no merchant and no items), falling back to offline engine.');
+        console.warn('[OCR] Gemini returned no usable data, falling back to offline engine.');
       } catch (geminiErr) {
         console.warn('[OCR] Gemini error, falling back to offline engine:', geminiErr.message);
       }
@@ -624,7 +640,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     // =========================================================================
     let fullText = '';
     let confidenceVal = 85;
-    let activeEngine = 'tesseract';
+    let activeEngine = 'mlkit';
 
     if (isMlKitAvailable()) {
       try {
@@ -638,141 +654,102 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
           activeEngine = 'mlkit';
           onProgress(75, 'Analyzing extracted receipt characters...');
         } else {
-          console.warn('[OCR] ML Kit returned minimal text, falling back to Tesseract.');
+          console.warn('[OCR] ML Kit returned minimal text.');
         }
       } catch (mlkitErr) {
-        console.warn('[OCR] ML Kit error, falling back to Tesseract:', mlkitErr?.message || mlkitErr);
+        console.warn('[OCR] ML Kit error:', mlkitErr?.message || mlkitErr);
       }
     }
 
     // =========================================================================
-    // PATH C: TESSERACT LSTM FALLBACK (Web fallback or if ML Kit unavailable)
+    // PATH C: TESSERACT LSTM FALLBACK (Web fallback only - NEVER run in native APK)
     // =========================================================================
     if (!fullText) {
-      activeEngine = 'mlkit';
-      onProgress(useGemini ? 15 : 10, useGemini
-        ? 'AI unavailable — switching to ML Kit (Offline)...'
-        : 'Enhancing image for OCR recognition...');
+      if (Capacitor.isNativePlatform()) {
+        console.warn('[OCR] On native platform, ML Kit returned no text; bypassing Tesseract web worker to prevent WebView freeze.');
+      } else {
+        activeEngine = 'tesseract';
+        onProgress(useGemini ? 15 : 10, useGemini
+          ? 'AI unavailable — switching to local OCR...'
+          : 'Enhancing image for OCR recognition...');
 
-      const processedImageUri = await preprocessForTesseract(imageUri);
+        const processedImageUri = await preprocessForTesseract(imageUri);
+        onProgress(25, 'Running optical character recognition...');
 
-      onProgress(25, 'Running ML Kit (Offline) recognition...');
-
-    // Try Tesseract worker with PSM 6 (uniform block of text, best for itemized receipts)
-    try {
-      let worker;
-      try {
-        const localLangPath = `${window.location.origin}/tessdata`;
-        worker = await Tesseract.createWorker('eng', 1, {
-          langPath: localLangPath,
-          gzip: false,
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              const pct = Math.floor(25 + (m.progress || 0) * 65);
-              onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
-            }
-          },
-        });
-      } catch (localWorkerErr) {
-        console.warn('Local traineddata notice, falling back to CDN worker:', localWorkerErr);
-        worker = await Tesseract.createWorker('eng', 1, {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              const pct = Math.floor(25 + (m.progress || 0) * 65);
-              onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
-            }
-          },
-        });
-      }
-
-      // PSM 6: Uniform block of text - optimal for receipts with store header, items, totals
-      try {
-        await worker.setParameters({
-          tessedit_pageseg_mode: '6',
-          preserve_interword_spaces: '1',
-        });
-      } catch (paramErr) {
-        console.warn('Worker setParameters note:', paramErr);
-      }
-
-      const res = await worker.recognize(processedImageUri);
-      fullText = (res?.data?.text || '').trim();
-      confidenceVal = Math.round(res?.data?.confidence || 85);
-
-      // If PSM 6 yielded minimal characters, try PSM 4
-      if (fullText.length < 25) {
         try {
-          await worker.setParameters({ tessedit_pageseg_mode: '4' });
-          const psm4Res = await worker.recognize(processedImageUri);
-          const psm4Text = (psm4Res?.data?.text || '').trim();
-          if (psm4Text.length > fullText.length) {
-            fullText = psm4Text;
-            confidenceVal = Math.round(psm4Res?.data?.confidence || confidenceVal);
-          }
-        } catch (e) {}
-      }
-
-      await worker.terminate();
-    } catch (workerErr) {
-      console.warn('createWorker fallback to recognize:', workerErr);
-      try {
-        const directRes = await Tesseract.recognize(processedImageUri, 'eng', {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              const pct = Math.floor(25 + (m.progress || 0) * 65);
-              onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+          const runTesseract = async () => {
+            let worker;
+            try {
+              const localLangPath = `${window.location.origin}/tessdata`;
+              worker = await Tesseract.createWorker('eng', 1, {
+                langPath: localLangPath,
+                gzip: false,
+                logger: (m) => {
+                  if (m.status === 'recognizing text') {
+                    const pct = Math.floor(25 + (m.progress || 0) * 65);
+                    onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+                  }
+                },
+              });
+            } catch (localWorkerErr) {
+              worker = await Tesseract.createWorker('eng', 1, {
+                logger: (m) => {
+                  if (m.status === 'recognizing text') {
+                    const pct = Math.floor(25 + (m.progress || 0) * 65);
+                    onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+                  }
+                },
+              });
             }
-          },
-        });
-        fullText = (directRes?.data?.text || '').trim();
-        confidenceVal = Math.round(directRes?.data?.confidence || 80);
-      } catch (directErr) {
-        console.error('Direct recognize note:', directErr);
+
+            try {
+              await worker.setParameters({
+                tessedit_pageseg_mode: '6',
+                preserve_interword_spaces: '1',
+              });
+            } catch (paramErr) {}
+
+            const res = await worker.recognize(processedImageUri);
+            await worker.terminate();
+            return {
+              text: (res?.data?.text || '').trim(),
+              confidence: Math.round(res?.data?.confidence || 85),
+            };
+          };
+
+          const timeoutTess = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Tesseract timeout')), 12000)
+          );
+
+          const tessResult = await Promise.race([runTesseract(), timeoutTess]);
+          fullText = tessResult.text;
+          confidenceVal = tessResult.confidence;
+        } catch (tessErr) {
+          console.warn('Tesseract failed or timed out:', tessErr?.message || tessErr);
+        }
       }
     }
 
-    // Secondary fallback: if processed image yielded little text, try raw image directly
-    if (fullText.length < 25) {
-      try {
-        const rawRes = await Tesseract.recognize(imageUri, 'eng');
-        const rawText = (rawRes?.data?.text || '').trim();
-        if (rawText.length > fullText.length) {
-          fullText = rawText;
-          confidenceVal = Math.round(rawRes?.data?.confidence || confidenceVal);
-        }
-      } catch (rawErr) {
-        console.warn('Raw image OCR note:', rawErr);
-      }
-    }
+    if (!fullText || fullText.trim().length < 3) {
+      return {
+        isValid: false,
+        errorReason: 'Could not extract readable text from this receipt. Please ensure the receipt is well-lit, flat, and in clear focus.',
+        rawOcrText: fullText || '',
+        confidence: 0,
+      };
     }
 
     onProgress(92, 'Analyzing itemized breakdown, taxes, and vendor...');
     const parsed = parseReceiptFromText(fullText, activeEngine, confidenceVal);
-    onProgress(100, 'AI Optical Extraction Finished!');
+    onProgress(100, 'Optical Extraction Complete!');
     return parsed;
   } catch (error) {
-    console.error('OCR Extraction error, recovering with graceful defaults:', error);
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    console.error('OCR Extraction error:', error);
     return {
-      isValid: true,
-      merchant: 'Scanned Merchant',
-      tin: '',
-      date: todayStr,
-      time: '12:00 PM',
-      category: null,
-      paymentMethod: null,
-      subtotal: null,
-      vat: null,
-      total: 100.0,
-      items: [{ name: 'Scanned Item', qty: 1, price: 100.0, total: 100.0 }],
-      currency: 'PHP',
-      confidence: 50,
-      rawOcrText: 'Scanned Document',
-      detectedBoxes: [
-        { label: 'MERCHANT', top: 10, left: 16, width: 68, height: 12 },
-        { label: 'TOTAL DUE', top: 68, left: 16, width: 68, height: 18 },
-      ],
+      isValid: false,
+      errorReason: 'Receipt scanning was interrupted or timed out. Please try capturing a clearer, brighter photo.',
+      rawOcrText: '',
+      confidence: 0,
     };
   }
 };
@@ -792,6 +769,9 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
       confidence: 0,
     };
   }
+
+  const decimalPriceRegex = /(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:,\d{3})+[.,]\d{1,2}|\d+[.,]\d{1,2})\s*(?:[VTNABFX\*\#\(\)\[\]]{1,3})?\s*$/i;
+  const currencyIntRegex = /(?:[\$₱P€£]|php|eur)\s*(\d{1,6})\s*(?:[VTNABFX\*\#\(\)\[\]]{1,3})?\s*$/i;
 
   const rawLines = fullText
     .split('\n')
@@ -845,17 +825,17 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
       const lower = line.toLowerCase();
       const isIgnored = ignoreHeaders.some((h) => lower === h || lower.startsWith(h));
       const hasDigitsOnly = /^[\d\s\-_:.]+$/.test(line);
+      const isContactOrAddr = /^(?:address|adress|tel|phone|fax|email|website|tin|date|sil|order)\b/i.test(line);
+      const norm = normalizeOcrRow(line);
+      const hasPrice = norm.match(decimalPriceRegex) || norm.match(currencyIntRegex);
 
-      if (!isIgnored && !hasDigitsOnly && line.length > 3 && line.length < 45) {
+      if (!isIgnored && !hasDigitsOnly && !isContactOrAddr && !hasPrice && line.length > 3 && line.length < 45) {
         detectedMerchant = line.replace(/^[#\*\-=\s|\[\]]+|[#\*\-=\s|\[\]]+$/g, '');
         break;
       }
     }
   }
 
-  if (!detectedMerchant && rawLines.length > 0) {
-    detectedMerchant = rawLines[0].substring(0, 35);
-  }
   if (!detectedMerchant || detectedMerchant.length < 3) {
     detectedMerchant = 'Scanned Merchant Store';
   }
@@ -968,13 +948,13 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
   // =========================================================================
   // 7. Subtotal and Tax (BUG 2 FIX: Never back-compute! Only use values found in document)
   // =========================================================================
-  const subMatch = fullText.match(/(?:sub\s*total|base\s*imponible|vatable\s*sales|gross\s*amount)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
+  const subMatch = fullText.match(/(?:sub[-\s]*total|base\s*imponible|vatable\s*sales|gross\s*amount)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
   if (subMatch) {
     detectedSubtotal = parseAmount(subMatch[1]);
   }
 
   // Strict Tax / VAT detection outside line items
-  const taxMatch = fullText.match(/(?:(?:12%\s*)?\bvat\b(?!\s*able)|(?:\bvat\s*12%\b)|\biva\b|(?:eat\s*in\s*)?\bsales\s*tax\b|\binput\s*tax\b)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:,\d{3})+[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
+  const taxMatch = fullText.match(/(?:(?:12%\s*)?\bvat\b(?!\s*able(?:\s*sales)?)(?:\s*(?:12%|\(12%\)|amount))?|\b12%\s*vat\b|\biva\b|(?:eat\s*in\s*)?\bsales\s*tax\b|\boutput\s*tax\b|\binput\s*tax\b|\btax\b(?!\s*invoice))[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:,\d{3})+[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
   if (taxMatch && taxMatch[1]) {
     detectedTax = parseAmount(taxMatch[1]);
   }
@@ -987,14 +967,20 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
 
   const skipPrefixes = [
     'subtotal', 'sub-total', 'sub total', 'total', 'cash', 'change', 'tendered',
-    'balance', 'amount due', 'total amount due', 'total due', 'please pay',
-    'due date', 'billing period', 'bill date', 'customer account', 'account number',
-    'meter number', 'multiplier', 'remaining balance', 'previous bill', 'tin:',
-    'computation summary', 'your electric bill', 'rate:', 'can:', 'can ('
+    'amount tendered', 'cash tendered', 'balance', 'amount due', 'total amount due',
+    'total due', 'please pay', 'due date', 'billing period', 'bill date',
+    'customer account', 'account number', 'meter number', 'multiplier',
+    'remaining balance', 'previous bill', 'tin:', 'tin #', 'vat reg', 'tax id',
+    'computation summary', 'your electric bill', 'rate:', 'can:', 'can (',
+    'vat', '12% vat', 'vat 12%', 'vatable', 'vatable sales', 'vat exempt', 'zero rated', 'non-vat',
+    'sales tax', 'local tax', 'tax', 'taxable', 'service charge',
+    'discount', 'less discount', 'senior citizen', 'pwd disc', 'promo disc',
+    'gcash', 'maya', 'paymaya', 'grabpay', 'shopeepay', 'visa', 'mastercard',
+    'credit card', 'debit card', 'card', 'online payment', 'check', 'gift cert',
+    'items count', 'total items', 'item count', 'no. of items', 'total qty',
+    'order #', 'order no', 'order:', 'trans #', 'txn #', 'pos #', 'or #', 'si #',
+    'cashier:', 'cashier', 'server:', 'terminal:', 'table:', 'table #', 'dine in', 'take out'
   ];
-
-  const decimalPriceRegex = /(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:,\d{3})+[.,]\d{1,2}|\d+[.,]\d{1,2})\s*[\)\]\|}]*$/i;
-  const currencyIntRegex = /(?:[\$₱P€£]|php|eur)\s*(\d{1,6})\s*[\)\]\|}]*$/i;
 
   const itemPriceCeiling = detectedTotal && detectedTotal > 0 ? detectedTotal * 1.05 : 999999;
 
@@ -1004,7 +990,7 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
     const lowerNorm = normLine.toLowerCase();
 
     // Check if line should be skipped
-    const isSkipPrefix = skipPrefixes.some((p) => lowerNorm.startsWith(p));
+    const isSkipPrefix = skipPrefixes.some((p) => lowerNorm.startsWith(p) || lowerNorm === p);
     if (isSkipPrefix) {
       droppedRows.push({ line: rawLine, reason: 'Matched skipPrefix (header or total summary)' });
       continue;
@@ -1014,7 +1000,7 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
       droppedRows.push({ line: rawLine, reason: 'Address/contact line' });
       continue;
     }
-    if (/\b\d{1,2}:\d{2}(?::\d{2})?\b/.test(rawLine)) {
+    if (/\b\d{1,2}:\d{2}(?::\d{2})?\b/.test(rawLine) && !normLine.match(decimalPriceRegex)) {
       droppedRows.push({ line: rawLine, reason: 'Timestamp line' });
       continue;
     }
@@ -1060,8 +1046,18 @@ export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfi
         }
       }
 
-      const unitPriceMatch = desc.match(/@\s*(\d+[.,]\d{1,2})/);
+      // Check if desc has a unit price at the end, e.g. "HAMBURGER 50.00" -> unit 50, total 100
       let unitPrice = +(priceVal / qty).toFixed(2);
+      const trailingUnitPrice = desc.match(/\s+(\d+[.,]\d{1,2})\s*$/);
+      if (trailingUnitPrice) {
+        const up = parseAmount(trailingUnitPrice[1]);
+        if (up && Math.abs(up * qty - priceVal) < 0.05) {
+          unitPrice = up;
+          desc = desc.substring(0, trailingUnitPrice.index).trim();
+        }
+      }
+
+      const unitPriceMatch = desc.match(/@\s*(\d+[.,]\d{1,2})/);
       if (unitPriceMatch) {
         const parsedUnit = parseAmount(unitPriceMatch[1]);
         if (parsedUnit && parsedUnit > 0) unitPrice = parsedUnit;

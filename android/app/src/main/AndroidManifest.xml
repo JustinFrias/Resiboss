@@ -54,6 +54,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <!-- Storage permissions needed for Capacitor Filesystem + Share (Excel/CSV export) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
