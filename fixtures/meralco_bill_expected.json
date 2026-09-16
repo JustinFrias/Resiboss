@@ -1,0 +1,24 @@
+{
+  "merchant": "MANILA ELECTRIC COMPANY",
+  "tin": "000-101-528-000",
+  "date": "2024-07-17",
+  "bill_date": "2024-07-17",
+  "due_date": "2024-07-29",
+  "billing_period": "18 Jun 2024 to 17 Jul 2024",
+  "total": 7402.60,
+  "subtotal": null,
+  "vat": null,
+  "currency": "PHP",
+  "category": "Utilities",
+  "paymentMethod": null,
+  "items": [
+    { "name": "Generation Charge", "qty": 1, "price": 4128.52, "total": 4128.52 },
+    { "name": "Transmission Charge", "qty": 1, "price": 580.40, "total": 580.40 },
+    { "name": "System Loss", "qty": 1, "price": 194.86, "total": 194.86 },
+    { "name": "Distribution Charge", "qty": 1, "price": 1280.15, "total": 1280.15 },
+    { "name": "Subsidies", "qty": 1, "price": 14.20, "total": 14.20 },
+    { "name": "Government Taxes", "qty": 1, "price": 765.42, "total": 765.42 },
+    { "name": "Universal Charges", "qty": 1, "price": 188.05, "total": 188.05 },
+    { "name": "FIT-All Renewable", "qty": 1, "price": 251.00, "total": 251.00 }
+  ]
+}

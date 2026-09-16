@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { normalizeGeminiResult, getAvailableGeminiModels, DEFAULT_GEMINI_MODELS } from '../src/utils/geminiOcr.js';
-import { parseAmount } from '../src/utils/receiptOcrParser.js';
+import {
+  parseAmount,
+  parseReceiptFromText,
+  normalizeOcrRow,
+  inferCurrencyFromText,
+  inferCategoryFromText,
+  inferPaymentMethodFromText,
+  cleanTin,
+  extractDatesFromText,
+  computeRealConfidenceScore,
+} from '../src/utils/receiptOcrParser.js';
 
 console.log('🧪 Running Resiboss Receipt OCR Accuracy Test Suite...\n');
 
@@ -628,6 +640,75 @@ runTest('ML Kit Two-Column Alignment: Reconstructs McDonald receipt items with m
   assert.equal(item2.total, 1.39, 'Snack wrap total must match 1.39');
 
   assert.equal(parsed.total, 3.41, 'Receipt total must equal 3.41');
+});
+
+// =========================================================================
+// TEST 17: MERALCO UTILITY BILL OCR REGRESSION (BUG 1 THROUGH BUG 8)
+// =========================================================================
+runTest('MERALCO Bill: Resolves all 8 OCR parsing bugs against golden fixture', () => {
+  const fixturePath = path.resolve('fixtures', 'meralco_bill.txt');
+  const expectedPath = path.resolve('fixtures', 'meralco_bill_expected.json');
+
+  const rawText = fs.readFileSync(fixturePath, 'utf8');
+  const expected = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
+
+  // 1. Unit assertions on dedicated normalization helpers
+  // BUG 1: Amount normalization \d.\d{3}.\d{2} -> single number
+  assert.equal(parseAmount('P7.402.60'), 7402.60, 'BUG 1: parseAmount must parse P7.402.60 as 7402.60');
+  assert.equal(parseAmount('7.402.60'), 7402.60, 'BUG 1: parseAmount must parse 7.402.60 as 7402.60');
+
+  // BUG 5: OCR noise row normalization (O->0, l->1, etc.)
+  assert.equal(normalizeOcrRow('Transmission Charge 58O.4O'), 'Transmission Charge 580.40', 'BUG 5: O replaced with 0');
+  assert.equal(normalizeOcrRow('Distribution Charge 128O.l5'), 'Distribution Charge 1280.15', 'BUG 5: O->0 and l->1');
+  assert.equal(normalizeOcrRow('Subsidies 14.2O'), 'Subsidies 14.20', 'BUG 5: O replaced with 0');
+  assert.equal(normalizeOcrRow('Universal Charges 188.O5'), 'Universal Charges 188.05', 'BUG 5: O replaced with 0');
+  assert.equal(normalizeOcrRow('FIT-All Renewable 25l.OO'), 'FIT-All Renewable 251.00', 'BUG 5: l->1 and OO->00');
+
+  // BUG 7: Clean TIN
+  assert.equal(cleanTin('000-101-528-000-YAT'), '000-101-528-000', 'BUG 7: Trailing OCR noise stripped from TIN');
+
+  // 2. Full end-to-end parseReceiptFromText execution
+  const parsed = parseReceiptFromText(rawText, 'regex', 85);
+
+  // BUG 1 Assertions: Total amount parsing
+  assert.equal(parsed.total, expected.total, `BUG 1: Total must equal ${expected.total}, got ${parsed.total}`);
+
+  // BUG 2 Assertions: Subtotal and VAT must be null (never back-derived)
+  assert.equal(parsed.subtotal, expected.subtotal, 'BUG 2: Subtotal must be null when not in document');
+  assert.equal(parsed.vat, expected.vat, 'BUG 2: VAT must be null when not explicitly labeled outside line items');
+
+  // BUG 3 Assertions: Currency inferred as PHP (never defaults to EUR)
+  assert.equal(parsed.currency, expected.currency, 'BUG 3: Currency must be PHP from symbol/locale signals');
+
+  // BUG 4 Assertions: Category inferred from text, Payment Method is null without evidence
+  assert.equal(parsed.category, expected.category, 'BUG 4: Category must be Utilities from document keywords');
+  assert.equal(parsed.paymentMethod, expected.paymentMethod, 'BUG 4: Payment method must be null without evidence');
+
+  // BUG 5 Assertions: All 8 line items extracted
+  assert.equal(parsed.items.length, expected.items.length, `BUG 5: Must extract all ${expected.items.length} items, got ${parsed.items.length}`);
+  for (let i = 0; i < expected.items.length; i++) {
+    assert.equal(parsed.items[i].name, expected.items[i].name, `Item ${i + 1} name mismatch`);
+    assert.equal(parsed.items[i].qty, expected.items[i].qty, `Item ${i + 1} qty mismatch`);
+    assert.equal(parsed.items[i].price, expected.items[i].price, `Item ${i + 1} price mismatch`);
+    assert.equal(parsed.items[i].total, expected.items[i].total, `Item ${i + 1} total mismatch`);
+  }
+
+  // BUG 6 Assertions: Date fields separated
+  assert.equal(parsed.date, expected.date, 'BUG 6: Primary date must prefer bill_date');
+  assert.equal(parsed.bill_date, expected.bill_date, 'BUG 6: bill_date extracted correctly');
+  assert.equal(parsed.due_date, expected.due_date, 'BUG 6: due_date extracted correctly');
+  assert.equal(parsed.billing_period, expected.billing_period, 'BUG 6: billing_period extracted correctly');
+
+  // BUG 7 Assertions: TIN cleaned
+  assert.equal(parsed.tin, expected.tin, 'BUG 7: TIN must match expected format');
+
+  // BUG 8 Assertions: Real mathematical confidence score
+  assert.ok(parsed.confidence >= 90, `BUG 8: Real confidence score must be >= 90, got ${parsed.confidence}`);
+  assert.ok(Array.isArray(parsed.auditChecks), 'BUG 8: auditChecks must be present');
+  assert.ok(parsed.auditChecks.length > 0, 'BUG 8: auditChecks must have entries');
+  assert.equal(parsed.auditChecks[0].passed, true, 'BUG 8: Item sum check must pass');
+  assert.equal(parsed.auditChecks[0].expected, expected.total, 'BUG 8: Item sum check target matches total');
+  assert.equal(parsed.auditChecks[0].actual, expected.total, 'BUG 8: Item sum matches total');
 });
 
 console.log(`\n🎉 All tests passed successfully!`);

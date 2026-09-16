@@ -144,7 +144,8 @@ const knownBrands = [
   { match: /the\s*generics\s*pharmacy|tgp/i, name: 'TGP (THE GENERICS PHARMACY)' },
 
   // Utilities, Energy & Telecoms
-  { match: /meralco|manila\s*electric/i, name: 'MERALCO ELECTRIC' },
+  { match: /manila\s*electric(?:\s*company)?/i, name: 'MANILA ELECTRIC COMPANY' },
+  { match: /meralco/i, name: 'MERALCO ELECTRIC' },
   { match: /manila\s*water/i, name: 'MANILA WATER COMPANY' },
   { match: /maynilad/i, name: 'MAYNILAD WATER SERVICES' },
   { match: /pldt|telecom|smart\s*communications/i, name: 'PLDT TELECOM' },
@@ -182,9 +183,10 @@ const knownBrands = [
 
 /**
  * Robust currency and number parser that handles:
- * - Thousands commas (e.g. 7,402.60 -> 7402.60, 3,793.50 -> 3793.50)
+ * - Thousands commas and dots (e.g. 7,402.60 -> 7402.60, 7.402.60 -> 7402.60, 3,793.50 -> 3793.50)
  * - Decimals with dot or comma (402.60, 402,60)
  * - Philippine Peso symbols (₱, PHP, P) and dollar ($)
+ * BUG 1 FIX: Normalizes \d\.\d{3}\.\d{2} -> single number before parsing.
  */
 export const parseAmount = (val) => {
   if (typeof val === 'number') return Number.isFinite(val) ? val : null;
@@ -192,6 +194,9 @@ export const parseAmount = (val) => {
 
   let s = val.replace(/[\$₱P€£]|php|pesos?|eur/gi, '').trim();
   s = s.replace(/[\)\]\|}]+$/, '').trim();
+
+  // BUG 1 FIX: Normalize comma-period error in numbers: e.g. 7.402.60 -> 7402.60
+  s = s.replace(/(\d+)\.(\d{3})\.(\d{2})\b/g, '$1$2.$3');
 
   const lastComma = s.lastIndexOf(',');
   const lastDot = s.lastIndexOf('.');
@@ -223,6 +228,305 @@ export const parseAmount = (val) => {
   s = s.replace(/[^\d.-]/g, '');
   const num = parseFloat(s);
   return Number.isFinite(num) ? +(num.toFixed(2)) : null;
+};
+
+/**
+ * BUG 5 FIX: Normalizes OCR noise in a candidate receipt line row:
+ * - Fixes OCR character confusion in numbers: O/o -> 0, l/I -> 1, S/s -> 5, B -> 8, G -> 6
+ * - Fixes spaces instead of decimal dots: e.g. "1280 15" -> "1280.15"
+ * - Fixes period as thousands separator: \d.\d{3}.\d{2} -> \d\d{3}.\d{2}
+ */
+export const normalizeOcrRow = (line) => {
+  if (!line || typeof line !== 'string') return '';
+  let cleaned = line.trim();
+
+  // Normalize thousands dot: e.g. 7.402.60 -> 7402.60
+  cleaned = cleaned.replace(/\b(\d+)\.(\d{3})\.(\d{2})\b/g, '$1$2.$3');
+
+  // Candidate amount token at the end of the line (e.g. "58O.4O", "128O.l5", "25l.OO", "14.2O", "188.O5")
+  cleaned = cleaned.replace(/([0-9OolISGB]+[.,\s][0-9OolISGB]+)\s*$/i, (match) => {
+    let norm = match
+      .replace(/[Oo]/g, '0')
+      .replace(/[lI]/g, '1')
+      .replace(/[Ss]/g, '5')
+      .replace(/B/g, '8')
+      .replace(/G/g, '6');
+    norm = norm.replace(/(\d+)\s+(\d{2})$/, '$1.$2');
+    return norm;
+  });
+
+  return cleaned;
+};
+
+/**
+ * BUG 3 FIX: Currency detection: Symbol -> Locale signals -> Merchant country -> null.
+ * Never guesses or defaults to EUR.
+ */
+export const inferCurrencyFromText = (fullText) => {
+  if (!fullText || typeof fullText !== 'string') return null;
+
+  // 1. Explicit symbols & currency codes
+  if (/[₱]|\bPHP\b|\bPhp\b|\bpesos?\b/i.test(fullText)) return 'PHP';
+  // Peso sign OCR'd as "P" followed by number, e.g. "P7.402.60", "P 100.00"
+  if (/(?:^|\s|[^\w])P\s*\d{1,3}(?:[,\.]\d{3})*(?:[.,]\d{2})?\b/.test(fullText)) return 'PHP';
+
+  if (/[\$]|\bUSD\b/i.test(fullText)) return 'USD';
+  if (/[€]|\bEUR\b/i.test(fullText)) return 'EUR';
+  if (/[£]|\bGBP\b/i.test(fullText)) return 'GBP';
+
+  // 2. Locale signals
+  // Philippine signals: TIN pattern, kWh, CAN, Metro Manila, Ortigas, Pasig, Makati, BIR, etc.
+  const hasPhSignals = (
+    /\b\d{3}[-\s]\d{3}[-\s]\d{3}\b/.test(fullText) ||
+    /\b(?:kwh|can|bir|barangay|brgy|ortigas|pasig|makati|manila|quezon\s*city|taguig|alabang|cebu|davao)\b/i.test(fullText) ||
+    /customer\s*account\s*number|electric\s*bill/i.test(fullText)
+  );
+  if (hasPhSignals) return 'PHP';
+
+  // US signals: US phone (XXX) XXX-XXXX, US state codes with 5-digit zip
+  const hasUsSignals = (
+    /\b(?:MN|FL|CA|NY|TX|WA|IL|OH|PA|GA|NC|MI|NJ|VA|AZ|MA|TN|IN|MO|MD|WI|CO|OR)\s+\d{5}\b/.test(fullText) ||
+    /\(\d{3}\)\s*\d{3}[-\s]?\d{4}/.test(fullText) ||
+    /minneapolis|miami|new york|los angeles|chicago/i.test(fullText)
+  );
+  if (hasUsSignals) return 'USD';
+
+  // European / Spanish signals (only when no PH signals)
+  const hasEuSignals = (
+    /madrid|barcelona|valencia|sevilla|espana|españa|spain|factura\s*simplificada|base\s*imponible|\biva\b/i.test(fullText)
+  );
+  if (hasEuSignals) return 'EUR';
+
+  // 3. Return null if undetermined (NEVER guess or default)
+  return null;
+};
+
+/**
+ * BUG 4 FIX: Merchant/text -> category lookup. Returns null if no match.
+ */
+export const inferCategoryFromText = (fullText, merchant = '') => {
+  const combined = `${merchant || ''} ${fullText || ''}`.toLowerCase();
+
+  if (/electric|electricity|meralco|water|maynilad|manila\s*water|utility|power|energy|telecom|broadband|internet|pldt|globe|converge|dito/i.test(combined)) {
+    return 'Utilities';
+  }
+  if (/grocer|supermarket|puregold|sm\s*market|savemore|hypermarket|landers|waltermart|robinsons\s*supermarket|s&r|shopwise|allday/i.test(combined)) {
+    return 'Groceries';
+  }
+  if (/burger|pizza|chicken|mcdonald|jollibee|kfc|chowking|mang\s*inasal|shakey|greenwich|starbucks|dunkin|restaurant|cafe|resto|bistro|bar\b|cerveza|taberna|dining|meal|bakery|bakeshop|food/i.test(combined)) {
+    return 'Food';
+  }
+  if (/pharmacy|mercury\s*drug|watsons|generika|drugstore|medicine|clinic|hospital|dental|optical|tgp/i.test(combined)) {
+    return 'Healthcare';
+  }
+  if (/gas\b|gasoline|petrol|fuel|petron|shell|caltex|cleanfuel|seaoil|phoenix|grab|angkas|joyride|moveit|transport|taxi|fare|toll/i.test(combined)) {
+    return 'Travel';
+  }
+  if (/apple|gadget|laptop|phone|tech|computer|electronics|shopee|lazada|tiktok\s*shop/i.test(combined)) {
+    return 'Technology';
+  }
+  if (/hardware|wilcon|handyman|ace\s*hardware|tools|construction/i.test(combined)) {
+    return 'Hardware';
+  }
+
+  return null;
+};
+
+/**
+ * BUG 4 FIX: Payment method extraction. Returns null if no evidence.
+ */
+export const inferPaymentMethodFromText = (fullText) => {
+  if (!fullText || typeof fullText !== 'string') return null;
+
+  if (/cash\s*tendered|cash\s*sale|paid\s*in\s*cash|tender\s*cash|\bcash\s*[:$₱P\d]|\bexact\s*cash\b|\bcash\s*received\b|\bamount\s*tendered\b/i.test(fullText)) {
+    return 'Cash';
+  }
+  if (/^(?:cash|cash:)\s*(?:[\$₱P€£]|php)?\s*[\d,.]+/im.test(fullText)) {
+    return 'Cash';
+  }
+  if (/visa/i.test(fullText)) {
+    const cardMatch = fullText.match(/(?:card\s*#|[#*]{4,})[^\d\n]*(\d{4})/i) || fullText.match(/(\d{4})(?=\s*§|\s*H|$)/);
+    return cardMatch ? `VISA Card ****${cardMatch[1]}` : 'VISA Card';
+  }
+  if (/(?:mastercard|master\s*card|\bcard\s*type[:\s]*mc\b|\bmc\s*card\b)/i.test(fullText)) {
+    return 'MasterCard';
+  }
+  if (/gcash/i.test(fullText)) return 'GCash';
+  if (/maya/i.test(fullText)) return 'Maya Pay';
+  if (/credit\s*card|debit\s*card|\bcard\b/i.test(fullText) && !/card\s*holder/i.test(fullText)) {
+    return 'Credit / Debit Card';
+  }
+
+  return null;
+};
+
+/**
+ * BUG 7 FIX: TIN cleaner that strips trailing non-digit characters.
+ */
+export const cleanTin = (rawTin) => {
+  if (!rawTin || typeof rawTin !== 'string') return '';
+  const match = rawTin.match(/(\d{3}[-\s]\d{3}[-\s]\d{3}(?:[-\s]\d{3,5})?)/);
+  if (match) {
+    return match[1].replace(/\s+/g, '-');
+  }
+  return rawTin.trim().replace(/[^0-9]+$/, '').replace(/-+$/, '');
+};
+
+/**
+ * BUG 6 FIX: Extracts bill_date, due_date, billing_period and sets primary date to bill_date.
+ */
+export const extractDatesFromText = (fullText) => {
+  const monthMap = {
+    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+    jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+  };
+
+  const parseDateString = (str) => {
+    if (!str) return null;
+    const s = str.trim();
+    // Day Month Year: e.g. 17 Jul 2024, 29 Jul 2024, 17-Jul-2024
+    const dmy = s.match(/\b(\d{1,2})(?:st|nd|rd|th)?[\s\-\/\.']+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:[\s,\-\/\.']+|['])(?:20|19)?(\d{2,4})\b/i);
+    if (dmy) {
+      let yr = dmy[3];
+      if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
+      return `${yr}-${monthMap[dmy[2].toLowerCase().substring(0, 3)]}-${String(dmy[1]).padStart(2, '0')}`;
+    }
+    // Month Day Year: e.g. Jul 17, 2024
+    const mdy = s.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?[\s\-\/\.']+(\d{1,2})(?:st|nd|rd|th)?(?:[\s,\-\/\.']+|['])(?:20|19)?(\d{2,4})\b/i);
+    if (mdy) {
+      let yr = mdy[3];
+      if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
+      return `${yr}-${monthMap[mdy[1].toLowerCase().substring(0, 3)]}-${String(mdy[2]).padStart(2, '0')}`;
+    }
+    // Numeric dates: YYYY-MM-DD, DD/MM/YYYY
+    const num = s.match(/\b(\d{1,4})[\/\.-](\d{1,2})[\/\.-](\d{2,4})\b/);
+    if (num) {
+      if (num[1].length === 4) {
+        return `${num[1]}-${String(num[2]).padStart(2, '0')}-${String(num[3]).padStart(2, '0')}`;
+      } else {
+        let yr = num[3];
+        if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
+        const first = parseInt(num[1], 10);
+        const second = parseInt(num[2], 10);
+        const mo = first > 12 ? second : first;
+        const dy = first > 12 ? first : second;
+        return `${yr}-${String(mo).padStart(2, '0')}-${String(dy).padStart(2, '0')}`;
+      }
+    }
+    return null;
+  };
+
+  let billDate = null;
+  let dueDate = null;
+  let billingPeriod = null;
+
+  // Bill Date
+  const billMatch = fullText.match(/(?:bill\s*date|billing\s*date|statement\s*date|invoice\s*date|sil\s*date)\s*[:#\-]?\s*([A-Za-z0-9\s,\/\.\-']{6,25})/i);
+  if (billMatch) {
+    billDate = parseDateString(billMatch[1]);
+  }
+
+  // Due Date
+  const dueMatch = fullText.match(/(?:due\s*date|date\s*due|pay\s*by|payment\s*due)\s*[:#\-]?\s*([A-Za-z0-9\s,\/\.\-']{6,25})/i);
+  if (dueMatch) {
+    dueDate = parseDateString(dueMatch[1]);
+  }
+
+  // Billing Period
+  const periodMatch = fullText.match(/(?:billing\s*period|period\s*covered|billing\s*cycle)\s*[:#\-]?\s*([^\r\n]{8,40})/i);
+  if (periodMatch) {
+    billingPeriod = periodMatch[1].trim();
+  }
+
+  // General receipt date
+  let generalDate = null;
+  const genMatch = fullText.match(/(?:fecha|receipt\s*date|date)\s*[:#\-]?\s*([A-Za-z0-9\s,\/\.\-']{6,25})/i);
+  if (genMatch) {
+    generalDate = parseDateString(genMatch[1]);
+  }
+
+  const primaryDate = billDate || generalDate || dueDate || null;
+
+  return {
+    date: primaryDate,
+    bill_date: billDate,
+    due_date: dueDate,
+    billing_period: billingPeriod,
+  };
+};
+
+/**
+ * BUG 8 FIX: Real confidence score computed from mathematical cross-field checks:
+ * 1. sum(line_items) ≈ subtotal (or total)
+ * 2. subtotal + vat - discounts ≈ total
+ * 3. tendered - total ≈ change
+ */
+export const computeRealConfidenceScore = ({ total, subtotal, vat, discount, items, tendered, change, merchant, date, tin }) => {
+  const auditChecks = [];
+  let score = 65;
+
+  if (merchant && merchant !== 'Scanned Merchant Store') score += 10;
+  if (date) score += 5;
+  if (tin) score += 5;
+
+  // Check 1: Items sum check
+  if (items && items.length > 0) {
+    const itemsSum = +(items.reduce((acc, it) => acc + (it.total || 0), 0)).toFixed(2);
+    const target = subtotal !== null && subtotal !== undefined ? subtotal : total;
+    if (target && target > 0) {
+      const diff = Math.abs(itemsSum - target);
+      const passed = diff <= 0.05;
+      auditChecks.push({
+        name: 'Item Sum Consistency',
+        rule: 'sum(line_items) ≈ subtotal (or total)',
+        expected: target,
+        actual: itemsSum,
+        diff: +(diff.toFixed(2)),
+        passed,
+      });
+      if (passed) {
+        score += 15;
+      } else {
+        score -= 10;
+      }
+    }
+  }
+
+  // Check 2: Tax & Subtotal cross-check
+  if (subtotal !== null && subtotal !== undefined && vat !== null && vat !== undefined && total && total > 0) {
+    const expectedTotal = +(subtotal + vat - (discount || 0)).toFixed(2);
+    const diff = Math.abs(expectedTotal - total);
+    const passed = diff <= 0.05;
+    auditChecks.push({
+      name: 'Tax Balance Consistency',
+      rule: 'subtotal + vat - discount ≈ total',
+      expected: total,
+      actual: expectedTotal,
+      diff: +(diff.toFixed(2)),
+      passed,
+    });
+    if (passed) score += 10;
+    else score -= 10;
+  }
+
+  // Check 3: Tendered & Change check
+  if (tendered !== null && tendered !== undefined && change !== null && change !== undefined && total && total > 0) {
+    const expectedChange = +(tendered - total).toFixed(2);
+    const diff = Math.abs(expectedChange - change);
+    const passed = diff <= 0.05;
+    auditChecks.push({
+      name: 'Payment Tender Consistency',
+      rule: 'tendered - total ≈ change',
+      expected: change,
+      actual: expectedChange,
+      diff: +(diff.toFixed(2)),
+      passed,
+    });
+    if (passed) score += 5;
+  }
+
+  const confidence = Math.min(99, Math.max(50, Math.round(score)));
+  return { confidence, auditChecks };
 };
 
 /**
@@ -443,668 +747,9 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     }
 
     onProgress(92, 'Analyzing itemized breakdown, taxes, and vendor...');
-
-    const rawLines = fullText
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    // =========================================================================
-    // ULTRA-FORGIVING RECEIPT VALIDATION — accept ANY image with readable content.
-    // Only reject completely blank / unreadable images.
-    // =========================================================================
-    const cleanWords = fullText
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter((w) => w.length >= 2);
-
-    let isValidReceipt = false;
-    let invalidReason = '';
-
-    if (fullText.trim().length < 3) {
-      // Truly blank: OCR found nothing
-      isValidReceipt = false;
-      invalidReason = 'No readable characters found. Please ensure the receipt is well-lit, in focus, and flat.';
-    } else {
-      // Accept ANYTHING that has at least a few words or digits
-      isValidReceipt = true;
-    }
-
-    if (!isValidReceipt) {
-      return {
-        isValid: false,
-        errorReason: invalidReason,
-        rawOcrText: fullText,
-        confidence: confidenceVal,
-      };
-    }
-
-    // =========================================================================
-    // 1. Precise Merchant & Store Location Detection
-    // =========================================================================
-    let detectedMerchant = '';
-    
-    for (const brand of knownBrands) {
-      if (brand.match.test(fullText)) {
-        detectedMerchant = brand.name;
-        const storeNumMatch = fullText.match(/(?:store\s*#|storeh\s*|store\s+|branch\s*#|#bk[-\s]*)\s*([A-Za-z0-9\-]+)/i);
-        const locMatch = fullText.match(/(?:eating\s+at|at|near|location:?)\s+([A-Za-z0-9\s]{3,20})/i);
-
-        // Blacklist of words that look like store IDs but are actually noise
-        const storeIdBlacklist = /^(?:receipt|slip|copy|kiosk|order|hot|eat|in|out|tax|the|and|for|you|sir|mam|please|cash|visa|card|thank|welcome|here|now)$/i;
-
-        const parts = [];
-        if (locMatch && locMatch[1]) {
-          const cleanLoc = locMatch[1].replace(/[\d\n\r|\[\]]+.*$/g, '').trim();
-          if (cleanLoc.length >= 3 && !/mcdonald/i.test(cleanLoc)) {
-            parts.push(cleanLoc);
-          }
-        }
-        // Only attach store number if it looks genuinely like a store ID: digits, or short mixed alphanum like "001", "NCR1"
-        if (
-          storeNumMatch && storeNumMatch[1] &&
-          !storeIdBlacklist.test(storeNumMatch[1]) &&
-          /^[A-Za-z0-9]{1,8}$/.test(storeNumMatch[1]) &&
-          !/^[A-Z]{3,}$/.test(storeNumMatch[1]) // reject all-uppercase 3+ letter "words"
-        ) {
-          parts.push(`Store #${storeNumMatch[1]}`);
-        }
-        if (parts.length > 0) {
-          detectedMerchant += ` - ${parts.join(' ')}`;
-        }
-        break;
-      }
-    }
-
-    // Fallback: scan top lines if no brand matched
-    if (!detectedMerchant) {
-      const ignoreHeaders = [
-        'welcome', 'official receipt', 'sales invoice', 'cash receipt', 'order receipt',
-        'customer copy', 'store copy', 'tax invoice', 'receipt', 'pos provider', 'terminal',
-        'kiosk receipt', 'kiosk', 'dine in', 'take out', 'drive thru', 'eat in', 'ste a h', 'cust ref'
-      ];
-
-      for (let i = 0; i < Math.min(rawLines.length, 8); i++) {
-        const line = rawLines[i];
-        const lower = line.toLowerCase();
-        const isIgnored = ignoreHeaders.some((h) => lower === h || lower.startsWith(h));
-        const hasDigitsOnly = /^[\d\s\-_:.]+$/.test(line);
-
-        if (!isIgnored && !hasDigitsOnly && line.length > 3 && line.length < 45) {
-          detectedMerchant = line.replace(/^[#\*\-=\s|\[\]]+|[#\*\-=\s|\[\]]+$/g, '');
-          break;
-        }
-      }
-    }
-
-    if (!detectedMerchant && rawLines.length > 0) {
-      detectedMerchant = rawLines[0].substring(0, 35);
-    }
-    if (!detectedMerchant || detectedMerchant.length < 3) {
-      detectedMerchant = 'Scanned Merchant Store';
-    }
-
-    // =========================================================================
-    // 2. Exact Date Detection (Handles DD Mon YYYY, Mon DD YYYY, numeric & labeled dates)
-    // =========================================================================
-    let detectedDate = '';
-    const monthMap = {
-      jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
-      jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
-    };
-
-    const currentYear = new Date().getFullYear();
-    const candidateDates = [];
-
-    // Check labeled date lines first (e.g. "FECHA: 07/11/2016", "Due Date: 29 Jul 2024", "Date: 17 Jul 2024")
-    const labeledDateRegex = /(?:fecha|due\s*date|billing\s*date|bill\s*date|sil\s*date|statement\s*date|invoice\s*date|receipt\s*date|date\s*due|billing\s*period|date)\s*[:#\-]?\s*([A-Za-z0-9\s,\/\.\-']{6,30})/gi;
-    let labelMatch;
-    while ((labelMatch = labeledDateRegex.exec(fullText)) !== null) {
-      const seg = labelMatch[1];
-      // Try Day Month Year in digits (e.g. 07/11/2016)
-      const numericDmy = seg.match(/\b(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})\b/);
-      if (numericDmy) {
-        let yr = numericDmy[3];
-        if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
-        candidateDates.push({
-          date: `${yr}-${String(numericDmy[2]).padStart(2, '0')}-${String(numericDmy[1]).padStart(2, '0')}`,
-          score: 130,
-          year: parseInt(yr, 10),
-        });
-      }
-      // Try Day Month Year (e.g. 29 Jul 2024, 17 Aug 2024)
-      const dmy = seg.match(/\b(\d{1,2})(?:st|nd|rd|th)?[\s\-\/\.']+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:[\s,\-\/\.']+|['])(?:20|19)?(\d{2,4})\b/i);
-      if (dmy) {
-        let yr = dmy[3];
-        if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
-        candidateDates.push({
-          date: `${yr}-${monthMap[dmy[2].toLowerCase().substring(0, 3)]}-${String(dmy[1]).padStart(2, '0')}`,
-          score: 125,
-          year: parseInt(yr, 10)
-        });
-      }
-      // Try Month Day Year (e.g. Jul 29, 2024 or Nov. 10'08)
-      const mdy = seg.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?[\s\-\/\.']+(\d{1,2})(?:st|nd|rd|th)?(?:[\s,\-\/\.']+|['])(?:20|19)?(\d{2,4})\b/i);
-      if (mdy) {
-        let yr = mdy[3];
-        if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
-        candidateDates.push({
-          date: `${yr}-${monthMap[mdy[1].toLowerCase().substring(0, 3)]}-${String(mdy[2]).padStart(2, '0')}`,
-          score: 125,
-          year: parseInt(yr, 10)
-        });
-      }
-    }
-
-    // Check fullText for Month Day Year (e.g. Nov 10, 2024, Nov. 10'08)
-    const allMdy = [...fullText.matchAll(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?[\s\-\/\.']+(\d{1,2})(?:st|nd|rd|th)?(?:[\s,\-\/\.']+|['])(?:20|19)?(\d{2,4})\b/gi)];
-    for (const m of allMdy) {
-      let yr = m[3];
-      if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
-      candidateDates.push({
-        date: `${yr}-${monthMap[m[1].toLowerCase().substring(0, 3)]}-${String(m[2]).padStart(2, '0')}`,
-        score: 110,
-        year: parseInt(yr, 10)
-      });
-    }
-
-    // Check fullText for Day Month Year (e.g. 17 Aug 2024, 29 Jul 2024, 17-Jul-2024)
-    const allDmy = [...fullText.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?[\s\-\/\.']+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:[\s,\-\/\.']+|['])(?:20|19)?(\d{2,4})\b/gi)];
-    for (const m of allDmy) {
-      let yr = m[3];
-      if (yr.length === 2) yr = parseInt(yr, 10) > 50 ? `19${yr}` : `20${yr}`;
-      candidateDates.push({
-        date: `${yr}-${monthMap[m[2].toLowerCase().substring(0, 3)]}-${String(m[1]).padStart(2, '0')}`,
-        score: 105,
-        year: parseInt(yr, 10)
-      });
-    }
-
-    // Check numeric dates (e.g. 2024-07-29 or 29/07/2024 or 12/05/2024)
-    const numericMatches = [...fullText.matchAll(/\b(\d{1,4})[\/\.-](\d{1,2})[\/\.-](\d{2,4})\b/g)];
-    for (const nm of numericMatches) {
-      let yr, mo, dy;
-      if (nm[1].length === 4) {
-        // YYYY-MM-DD
-        yr = nm[1];
-        mo = nm[2];
-        dy = nm[3];
-      } else if (nm[3].length === 4 || nm[3].length === 2) {
-        let first = parseInt(nm[1], 10);
-        let second = parseInt(nm[2], 10);
-        let yearVal = nm[3];
-        if (yearVal.length === 2) yearVal = parseInt(yearVal, 10) > 50 ? `19${yearVal}` : `20${yearVal}`;
-        yr = yearVal;
-        if (first > 12 && second <= 12) {
-          // DD/MM/YYYY
-          dy = nm[1];
-          mo = nm[2];
-        } else if (first <= 12 && second > 12) {
-          // MM/DD/YYYY
-          mo = nm[1];
-          dy = nm[2];
-        } else {
-          // Default to MM/DD/YYYY
-          mo = nm[1];
-          dy = nm[2];
-        }
-      }
-      if (yr && mo && dy && parseInt(mo, 10) >= 1 && parseInt(mo, 10) <= 12 && parseInt(dy, 10) >= 1 && parseInt(dy, 10) <= 31) {
-        const yInt = parseInt(yr, 10);
-        if (yInt >= 1995 && yInt <= currentYear + 2) {
-          candidateDates.push({
-            date: `${yr}-${String(mo).padStart(2, '0')}-${String(dy).padStart(2, '0')}`,
-            score: 80,
-            year: yInt
-          });
-        }
-      }
-    }
-
-    // Filter and score candidate dates
-    if (candidateDates.length > 0) {
-      candidateDates.forEach((cand) => {
-        // Boost recent realistic years
-        if (cand.year >= 2020 && cand.year <= currentYear + 1) {
-          cand.score += 25;
-        }
-      });
-
-      candidateDates.sort((a, b) => b.score - a.score);
-      detectedDate = candidateDates[0].date;
-    }
-
-    if (!detectedDate) {
-      const now = new Date();
-      detectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    }
-
-    // =========================================================================
-    // 3. Time Detection (12-hour normalized)
-    // =========================================================================
-    let detectedTime = '12:00 PM';
-    const timeMatch = fullText.match(/\b(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\b/);
-    if (timeMatch) {
-      let t = timeMatch[1].trim();
-      if (!/am|pm/i.test(t)) {
-        const parts = t.split(':').map((x) => parseInt(x, 10));
-        const h = parts[0];
-        const m = parts[1];
-        const period = h >= 12 ? 'PM' : 'AM';
-        const h12 = h % 12 || 12;
-        detectedTime = `${h12}:${String(m).padStart(2, '0')} ${period}`;
-      } else {
-        detectedTime = t.toUpperCase();
-      }
-    }
-
-    // =========================================================================
-    // 4. Currency Detection
-    // =========================================================================
-    const isEUR = (
-      fullText.includes('€') ||
-      /madrid|barcelona|valencia|sevilla|espana|españa|spain|factura|base\s*imponible|\biva\b|cerveza/i.test(fullText)
-    );
-    const isUSD = (
-      fullText.includes('$') ||
-      /\b(?:MN|FL|CA|NY|TX|WA|IL|OH|PA|GA|NC|MI|NJ|VA|AZ|MA|TN|IN|MO|MD|WI|CO|OR)\s+\d{5}\b/i.test(fullText) ||
-      /\(\d{3}\)\s*\d{3}[-\s]?\d{4}/.test(fullText) ||
-      /minneapolis|miami|new york|los angeles|chicago/i.test(fullText) ||
-      (/eat\s*in\s*tax|sales\s*tax/i.test(fullText) && !/bir|tin|vatable|peso|php|₱/i.test(fullText))
-    );
-    const currency = isEUR ? 'EUR' : (isUSD ? 'USD' : 'PHP');
-
-    // =========================================================================
-    // 5. Category — smart detection across common receipt types
-    // =========================================================================
-    let category = 'Others';
-    const lowerAll = fullText.toLowerCase();
-    if (
-      lowerAll.includes('burger') || lowerAll.includes('pizza') || lowerAll.includes('chicken') ||
-      lowerAll.includes('mcdonald') || lowerAll.includes('jollibee') || lowerAll.includes('kfc') ||
-      lowerAll.includes('chowking') || lowerAll.includes('mang inasal') || lowerAll.includes('shakey') ||
-      lowerAll.includes('greenwich') || lowerAll.includes('starbucks') || lowerAll.includes('dunkin') ||
-      lowerAll.includes('restaurant') || lowerAll.includes('cafe') || lowerAll.includes('resto') ||
-      lowerAll.includes('cerveza') || lowerAll.includes('taberna') || lowerAll.includes('bar') ||
-      lowerAll.includes('food') || lowerAll.includes('dine') || lowerAll.includes('eat in') ||
-      lowerAll.includes('kiosk receipt') || lowerAll.includes('meal') || lowerAll.includes('coffee')
-    ) {
-      category = 'Food';
-    } else if (
-      lowerAll.includes('grocer') || lowerAll.includes('supermarket') ||
-      lowerAll.includes('puregold') || lowerAll.includes('sm market') || lowerAll.includes('savemore') ||
-      lowerAll.includes('landers') || lowerAll.includes('waltermart') || lowerAll.includes('robinsons')
-    ) {
-      category = 'Groceries';
-    } else if (
-      lowerAll.includes('electric') || lowerAll.includes('meralco') ||
-      lowerAll.includes('water') || lowerAll.includes('utility') || lowerAll.includes('bill')
-    ) {
-      category = 'Utilities';
-    } else if (
-      lowerAll.includes('gas') || lowerAll.includes('fuel') || lowerAll.includes('petron') ||
-      lowerAll.includes('shell') || lowerAll.includes('caltex') || lowerAll.includes('seaoil') ||
-      lowerAll.includes('grab') || lowerAll.includes('angkas') || lowerAll.includes('transport')
-    ) {
-      category = 'Travel';
-    } else if (
-      lowerAll.includes('pharmacy') || lowerAll.includes('mercury') || lowerAll.includes('watsons') ||
-      lowerAll.includes('generika') || lowerAll.includes('drugstore') || lowerAll.includes('medicine')
-    ) {
-      category = 'Healthcare';
-    } else if (
-      lowerAll.includes('apple') || lowerAll.includes('gadget') || lowerAll.includes('laptop') ||
-      lowerAll.includes('phone') || lowerAll.includes('tech') || lowerAll.includes('computer') ||
-      lowerAll.includes('shopee') || lowerAll.includes('lazada')
-    ) {
-      category = 'Technology';
-    } else if (
-      lowerAll.includes('ace hardware') || lowerAll.includes('wilcon') || lowerAll.includes('handyman') ||
-      lowerAll.includes('hardware') || lowerAll.includes('tools')
-    ) {
-      category = 'Hardware';
-    }
-
-    // =========================================================================
-    // 6. Reference / Order Number / TIN (Universal Real Data Detection)
-    // =========================================================================
-    let detectedTin = '';
-    let detectedInvoiceNo = '';
-
-    // Taxpayer Identification Number (TIN)
-    const tinMatch = fullText.match(/(?:TIN|TAX\s*ID|VAT\s*REG|NIF|CIF|REG)\s*[:#\-]?\s*([0-9\-\s]{9,18})/i);
-    if (tinMatch && tinMatch[1]) {
-      const cleanTin = tinMatch[1].trim().replace(/\s+/g, '-');
-      if (cleanTin.replace(/-/g, '').length >= 9) {
-        detectedTin = cleanTin;
-      }
-    }
-
-    // Official Receipt / Sales Invoice / Factura / CAN / Bill / Order Number
-    const invMatch = fullText.match(/(?:factura\s*simplificada|factura|official\s*receipt\s*#?|sales\s*invoice\s*#?|cash\s*invoice\s*#?|customer\s*account\s*number|invoice\s*#?|or\s*#|si\s*#|can\s*#?|bill\s*no\.?|order\s*#?|transaction\s*id|trans\s*id|t#|txn\s*#?|ref\s*#?|auth\s*#?)\s*[:#\-]?\s*([A-Za-z0-9\-\/]{4,24})/i);
-    if (invMatch && invMatch[1]) {
-      detectedInvoiceNo = invMatch[1].trim();
-    }
-
-    if (!detectedTin) {
-      detectedTin = detectedInvoiceNo ? `REF-${detectedInvoiceNo}` : '';
-    }
-
-    // =========================================================================
-    // 7. Total, Subtotal, Tax, Discounts Extraction (Accurate & Mathematically Sound)
-    // =========================================================================
-    let detectedSubtotal = null;
-    let detectedTax = null;
-    let detectedTotal = null;
-    let detectedDiscount = null;
-
-    // Search for Discounts (Senior Citizen, PWD, Promo, Less Discount)
-    const discMatch = fullText.match(/(?:senior\s*citizen|pwd\s*disc|less\s*discount|discount|promo\s*disc|voucher)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:,\d{3})+(?:[.,]\d{1,2})?|\d+[.,]\d{1,2})/i);
-    if (discMatch) {
-      detectedDiscount = parseAmount(discMatch[1]);
-    }
-
-    // Priority Total Matches (explicit labeled totals like "TOTAL AMOUNT DUE", "GRAND TOTAL", "TOTAL DUE", "PLEASE PAY")
-    const priorityTotalMatches = [
-      ...fullText.matchAll(/(?:total\s*amount\s*due|amount\s*due|total\s*due|please\s*pay|rese\s*pay|net\s*amount\s*due|total\s*payable|amount\s*to\s*pay|total\s*charges|grand\s*total|balance\s*due|total\s*amount|importe\s*total|total\s*a\s*pagar|total\s*eur|total\s*php)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/gi)
-    ];
-
-    for (const ptm of priorityTotalMatches) {
-      let val = parseAmount(ptm[1]);
-      if (val && val > 0) {
-        // Correct OCR artifact where leading '7' is actually the Peso sign '₱' (e.g. 77,402.60 -> 7,402.60)
-        const valStr = val.toFixed(2);
-        if (valStr.startsWith('7') && valStr.length > 6) {
-          const candidateStripped = parseFloat(valStr.substring(1));
-          if (candidateStripped > 20 && (fullText.includes(valStr.substring(1)) || fullText.includes(candidateStripped.toFixed(2)))) {
-            val = candidateStripped;
-          }
-        }
-        detectedTotal = val;
-        break;
-      }
-    }
-
-    // Standalone / General Total lines (e.g. "TOTAL 3.41", "TOTAL $3.41", "TOTAL 179.00")
-    if (!detectedTotal) {
-      for (let i = 0; i < rawLines.length; i++) {
-        const line = rawLines[i].trim();
-        if (/^(?:total|importe)\b/i.test(line) && !/sub|kwh|items|qty|discount|points/i.test(line)) {
-          const numMatch = line.match(/(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
-          if (numMatch) {
-            const val = parseAmount(numMatch[1]);
-            if (val && val > 0) {
-              detectedTotal = val;
-              break;
-            }
-          } else {
-            // Check next 1-2 lines in case total label and amount were separated by newline
-            for (let j = i + 1; j <= Math.min(i + 2, rawLines.length - 1); j++) {
-              const nextLine = rawLines[j].trim();
-              const nextMatch = nextLine.match(/^(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
-              if (nextMatch) {
-                const val = parseAmount(nextMatch[1]);
-                if (val && val > 0) {
-                  detectedTotal = val;
-                  break;
-                }
-              }
-            }
-            if (detectedTotal) break;
-          }
-        }
-      }
-    }
-
-    // Search for Subtotal (handles SUB TOTAL, BASE IMPONIBLE, Vatable Sales, Current Charges)
-    const subMatch = fullText.match(/(?:sub\s*total|base\s*imponible|\bbase\b|vatable\s*sales|charges\s*for\s*this\s*billing\s*period|current\s*charges|total\s*net|net\s*sales|gross\s*amount)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
-    if (subMatch) {
-      detectedSubtotal = parseAmount(subMatch[1]);
-    }
-
-    // Search for Tax / VAT / IVA (strictly avoid matching "VATABLE" sales)
-    const taxMatch = fullText.match(/(?:(?:12%\s*)?\bvat\b(?!\s*able)|(?:\bvat\s*12%\b)|\biva\b|government\s*taxes|input\s*tax|(?:eat\s*in\s*)?(?:sales\s*)?tax)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
-    if (taxMatch && taxMatch[1]) {
-      detectedTax = parseAmount(taxMatch[1]);
-    }
-
-    // =========================================================================
-    // 8. Universal Line Items Extraction
-    // =========================================================================
-    const items = [];
-    const skipWords = [
-      'subtotal', 'sub-total', 'sub total', 'total', 'tax', 'vat', 'cash', 'change', 'tendered',
-      'balance', 'due', 'amount', 'card', 'visa', 'mastercard', 'auth', 'transaction',
-      'kiosk', 'perks', 'crowns', 'client receipt', 'dine in', 'order', 'cust ref',
-      'description', 'kiosk receipt', 'welcome', 'operation', 'contactless', 'store', 'thank you',
-      'eat in', 'take out', 'please see', 'for more details', 'rate this month', 'monthly consumption',
-      'environmental impact', 'customer account', 'account number', 'meter number', 'multiplier',
-      'remaining balance', 'previous bill', 'payment options', 'disclaimer', 'registered name',
-      'sin#', 'authorized agent', 'barcode', 'due date', 'billing period', 'bill date', 'total amount due',
-      'please pay', 'total due', 'bir permit', 'machine serial', 'vatable sales', 'vat exempt',
-      'zero rated', 'gross sales', 'net of vat', 'this serves as', 'cashier', 'terminal',
-      'base', 'base imponible', '% iva', 'iva', 'importe', 'unid', 'descripcion', 'factura', 'fecha', 'hora'
-    ];
-
-    const isUtilityBill = /meralco|electric|maynilad|manila\s*water|utility/i.test(detectedMerchant) || category === 'Utilities';
-
-    // Strict price matching: require a decimal point OR explicit currency symbol.
-    // Never match raw multi-digit integers without decimals or symbols (which are phone numbers, zip codes, store IDs, or timestamps).
-    const decimalPriceRegex = /(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2})\s*[\)\]\|}]*$/i;
-    const currencyIntRegex = /(?:[\$₱P€£]|php|eur)\s*(\d{1,6})\s*[\)\]\|}]*$/i;
-
-    const itemPriceCeiling = detectedTotal && detectedTotal > 0 ? detectedTotal * 1.05 : 99999;
-
-    for (let idx = 0; idx < rawLines.length; idx++) {
-      const line = rawLines[idx];
-      const lower = line.toLowerCase().replace(/^[|\[\]\s\-#*]+/, '');
-      if (skipWords.some((w) => lower.startsWith(w) || lower.includes('total:') || lower.includes('subtotal:'))) continue;
-
-      // Filter telephone, address, timestamps, dates, headers
-      if (/(?:tel|phone|fax|hotline|cel|mobile|contact|website|www|http|address|addr|zip|blvd|ave|st\.|rd\.|ln\.|fl\.|suite?|ste\.?)\b/i.test(line)) continue;
-      if (/\b[A-Z]{2}\s+\d{5}\b/i.test(line)) continue; // US state + zip pattern
-      if (/\(\d{2,4}\)/.test(line) || /\b\d{3}[-\s]\d{3}[-\s]\d{4}\b/.test(line)) continue; // phone formats
-      if (/\b\d{5}(?:-\d{4})?\b/.test(line) && !/\d+[.,]\d{2}/.test(line)) continue; // zip code without price
-      if (/\b\d{1,2}:\d{2}(?::\d{2})?\b/.test(line)) continue; // timestamps like 13:20
-      if (/\b(?:mon|tue|wed|thu|fri|sat|sun)\b/i.test(line)) continue; // days of week
-      if (/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(line)) continue; // dates
-      if (/(?:order\s*#|store\s*#|reg\s*#|term\s*#|pos\s*#|cashier)/i.test(line)) continue;
-      if (/(?:eat\s*in|take\s*out|dine\s*in|drive\s*thru)/i.test(line)) continue;
-
-      const matchDec = line.match(decimalPriceRegex);
-      const matchInt = line.match(currencyIntRegex);
-      const priceMatch = matchDec || matchInt;
-
-      if (priceMatch) {
-        const priceVal = parseAmount(priceMatch[1]);
-        if (!priceVal || priceVal <= 0 || priceVal >= 1000000) continue;
-        if (priceVal > itemPriceCeiling) continue;
-
-        let desc = line.substring(0, priceMatch.index).trim();
-        let qty = 1;
-
-        // Clean leading barcode / SKU numbers
-        desc = desc.replace(/^\d{5,14}\s+/, '').trim();
-        desc = desc.replace(/^[#\-\.\*\s§©|~\[\]_]+|[#\-\.\*\s§©|~\[\]_]+$/g, '').trim();
-        desc = desc.replace(/[₱\$€£]$/, '').trim();
-
-        // 1. Explicit quantity: "2x", "3 *", "1 @", "4 pcs", "2 PK", "1 BOX"
-        const explicitQty = desc.match(/^[|\[\]\s]*(\d+)\s*(?:[xX\*]|pcs?|@|pk|box|can|und)\s*/i);
-        if (explicitQty) {
-          qty = parseInt(explicitQty[1], 10) || 1;
-          desc = desc.substring(explicitQty[0].length).trim();
-        } else {
-          // 2. Soft quantity: e.g. "2 HAMBURGER" or "1 C1 1PC CHICKENJOY"
-          const softQty = desc.match(/^[|\[\]\s]*(\d{1,2})\s+/);
-          if (softQty) {
-            const potentialNumber = parseInt(softQty[1], 10);
-            const remainder = desc.substring(softQty[0].length).trim();
-            const isMonthFollowup = /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|kwh|v|kw|a|%)/i.test(remainder);
-            if (!isMonthFollowup && potentialNumber > 0 && potentialNumber <= 50) {
-              qty = potentialNumber;
-              desc = remainder;
-            }
-          }
-        }
-
-        // Unit price inside desc: "ITEM @ 45.00"
-        const unitPriceMatch = desc.match(/@\s*(\d+[.,]\d{1,2})/);
-        let unitPrice = +(priceVal / qty).toFixed(2);
-        if (unitPriceMatch) {
-          const parsedUnit = parseAmount(unitPriceMatch[1]);
-          if (parsedUnit && parsedUnit > 0) unitPrice = parsedUnit;
-          desc = desc.replace(/@\s*[\d.,]+/, '').trim();
-        }
-
-        desc = desc.replace(/^[#\-\.\*\s§©|~\[\]_]+|[#\-\.\*\s§©|~\[\]_]+$/g, '').trim();
-
-        // Reject noise descriptions
-        const isNoiseDesc =
-          desc.length < 2 ||
-          /^\d+$/.test(desc) ||
-          /^[\(\)\d\-\s]{2,10}$/.test(desc) ||
-          /^(?:[A-Z]{2,3}\s+\d{5})/i.test(desc) ||
-          desc.replace(/[\w\s]/g, '').length > desc.length * 0.4;
-
-        if (!isNoiseDesc) {
-          items.push({
-            name: desc || 'Item',
-            qty,
-            price: unitPrice,
-            total: priceVal,
-          });
-        }
-      }
-    }
-
-    // Utility bill fallback
-    if (isUtilityBill && (items.length === 0 || items.length > 5 || items.some((it) => /aug|jul|rate|kwh|charger/i.test(it.name)))) {
-      items.length = 0;
-      items.push({
-        name: 'Electricity Consumption (Billing Period Charges)',
-        qty: 1,
-        price: detectedSubtotal || detectedTotal || 100.0,
-        total: detectedSubtotal || detectedTotal || 100.0,
-      });
-      if (detectedTax > 0) {
-        items.push({
-          name: 'Government Taxes (12% VAT)',
-          qty: 1,
-          price: detectedTax,
-          total: detectedTax,
-        });
-      }
-    }
-
-    // Item & Total Reconciliation:
-    // If detectedTotal was NOT found, infer it from itemsSum
-    if (items.length > 0) {
-      const itemsSum = +(items.reduce((acc, it) => acc + it.total, 0)).toFixed(2);
-      if (!detectedTotal || detectedTotal <= 0) {
-        detectedTotal = itemsSum;
-      } else if (itemsSum > detectedTotal * 1.25) {
-        // Items sum is larger than the detected total: filter out any rogue item
-        const filteredItems = items.filter((it) => it.total <= detectedTotal);
-        if (filteredItems.length > 0) {
-          items.length = 0;
-          filteredItems.forEach((it) => items.push(it));
-        }
-      }
-    }
-
-    // Fallbacks if total is still completely missing
-    if (!detectedTotal || detectedTotal <= 0) {
-      detectedTotal = currency === 'USD' ? 10.00 : (currency === 'EUR' ? 10.00 : 100.00);
-    }
-
-    // Mathematical consistency check for Subtotal & Tax
-    if (detectedTotal && detectedTotal > 0) {
-      if (detectedSubtotal && detectedTax && Math.abs((detectedSubtotal + detectedTax) - detectedTotal) <= 0.08) {
-        // Consistent subtotal and tax directly from receipt
-      } else if (detectedTax && detectedTax > 0 && detectedTax < detectedTotal) {
-        detectedSubtotal = +(detectedTotal - detectedTax).toFixed(2);
-      } else if (detectedSubtotal && detectedSubtotal > 0 && detectedSubtotal < detectedTotal) {
-        detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
-      } else {
-        const vatRate = currency === 'PHP' ? 0.12 : (currency === 'EUR' ? 0.10 : 0.08);
-        detectedSubtotal = +(detectedTotal / (1 + vatRate)).toFixed(2);
-        detectedTax = +(detectedTotal - detectedSubtotal).toFixed(2);
-      }
-    }
-
-    // Fallback item if no items were detected
-    if (items.length === 0) {
-      items.push({
-        name: `${detectedMerchant} Purchase`,
-        qty: 1,
-        price: detectedSubtotal || detectedTotal,
-        total: detectedSubtotal || detectedTotal,
-      });
-    }
-
-    // =========================================================================
-    // 9. Payment Method (Cash prioritized, strict MasterCard check avoiding McDonald's)
-    // =========================================================================
-    let paymentMethod = 'Cash';
-    if (/cash\s*tendered|cash\s*sale|paid\s*in\s*cash|tender\s*cash|\bcash\b/i.test(fullText)) {
-      paymentMethod = 'Cash';
-    } else if (/visa/i.test(fullText)) {
-      const cardMatch = fullText.match(/(?:card\s*#|[#*]{4,})[^\d\n]*(\d{4})/i) || fullText.match(/(\d{4})(?=\s*§|\s*H|$)/);
-      paymentMethod = cardMatch ? `VISA Card ****${cardMatch[1]}` : 'VISA Card';
-    } else if (/(?:mastercard|master\s*card|\bcard\s*type[:\s]*mc\b|\bmc\s*card\b)/i.test(fullText)) {
-      paymentMethod = 'MasterCard';
-    } else if (/gcash/i.test(fullText)) {
-      paymentMethod = 'GCash';
-    } else if (/maya/i.test(fullText)) {
-      paymentMethod = 'Maya Pay';
-    } else if (/credit\s*card|debit\s*card|\bcard\b/i.test(fullText)) {
-      paymentMethod = 'Credit / Debit Card';
-    }
-
-    // =========================================================================
-    // 10. Detected Boxes
-    // =========================================================================
-    const detectedBoxes = [
-      { label: 'MERCHANT', top: 10, left: 16, width: 68, height: 12 },
-      { label: 'TIN / DATE', top: 26, left: 18, width: 64, height: 10 },
-      { label: 'LINE ITEMS', top: 38, left: 12, width: 76, height: 26 },
-      { label: 'TOTAL DUE', top: 68, left: 16, width: 68, height: 18 },
-    ];
-
+    const parsed = parseReceiptFromText(fullText, activeEngine, confidenceVal);
     onProgress(100, 'AI Optical Extraction Finished!');
-
-    const computedConfidence = Math.min(
-      98,
-      Math.max(
-        75,
-        Math.round(
-          (detectedTotal > 0 ? 35 : 0) +
-          (detectedMerchant && detectedMerchant !== 'Scanned Merchant Store' ? 25 : 0) +
-          (items.length > 0 ? 25 : 10) +
-          (detectedTin ? 15 : 5)
-        )
-      )
-    );
-
-    return {
-      isValid: true,
-      merchant: detectedMerchant,
-      tin: detectedTin,
-      date: detectedDate,
-      time: detectedTime,
-      category: category,
-      paymentMethod: paymentMethod,
-      subtotal: detectedSubtotal,
-      vat: detectedTax,
-      total: detectedTotal,
-      items: items,
-      currency: currency,
-      confidence: activeEngine === 'mlkit' ? Math.max(92, computedConfidence) : computedConfidence,
-      ocrEngine: activeEngine,
-      rawOcrText: fullText,
-      detectedBoxes: detectedBoxes,
-    };
+    return parsed;
   } catch (error) {
     console.error('OCR Extraction error, recovering with graceful defaults:', error);
     const now = new Date();
@@ -1115,14 +760,14 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       tin: '',
       date: todayStr,
       time: '12:00 PM',
-      category: 'Food',
-      paymentMethod: 'Cash',
-      subtotal: 100.0,
-      vat: 12.0,
-      total: 112.0,
+      category: null,
+      paymentMethod: null,
+      subtotal: null,
+      vat: null,
+      total: 100.0,
       items: [{ name: 'Scanned Item', qty: 1, price: 100.0, total: 100.0 }],
       currency: 'PHP',
-      confidence: 75,
+      confidence: 50,
       rawOcrText: 'Scanned Document',
       detectedBoxes: [
         { label: 'MERCHANT', top: 10, left: 16, width: 68, height: 12 },
@@ -1130,4 +775,379 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
       ],
     };
   }
+};
+
+/**
+ * Universal Offline / Regex Receipt Parser
+ * Parses document text strictly from document structure without merchant hardcodes.
+ * Exports all extracted fields including bill_date, due_date, billing_period,
+ * and performs real mathematical cross-field verification.
+ */
+export const parseReceiptFromText = (fullText, activeEngine = 'regex', baseConfidence = 85) => {
+  if (!fullText || typeof fullText !== 'string' || fullText.trim().length < 3) {
+    return {
+      isValid: false,
+      errorReason: 'No readable characters found. Please ensure the receipt is well-lit, in focus, and flat.',
+      rawOcrText: fullText || '',
+      confidence: 0,
+    };
+  }
+
+  const rawLines = fullText
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  // =========================================================================
+  // 1. Precise Merchant Detection (known brands or document header)
+  // =========================================================================
+  let detectedMerchant = '';
+  for (const brand of knownBrands) {
+    if (brand.match.test(fullText)) {
+      detectedMerchant = brand.name;
+      const storeNumMatch = fullText.match(/(?:store\s*#|storeh\s*|store\s+|branch\s*#|#bk[-\s]*)\s*([A-Za-z0-9\-]+)/i);
+      const locMatch = fullText.match(/\b(?:eating\s+at|branch|location:?)\s+([A-Za-z0-9\s]{3,20})/i);
+
+      const storeIdBlacklist = /^(?:receipt|slip|copy|kiosk|order|hot|eat|in|out|tax|the|and|for|you|sir|mam|please|cash|visa|card|thank|welcome|here|now)$/i;
+
+      const parts = [];
+      if (locMatch && locMatch[1]) {
+        const cleanLoc = locMatch[1].replace(/[\d\n\r|\[\]]+.*$/g, '').trim();
+        if (cleanLoc.length >= 3 && !/mcdonald/i.test(cleanLoc)) {
+          parts.push(cleanLoc);
+        }
+      }
+      if (
+        storeNumMatch && storeNumMatch[1] &&
+        !storeIdBlacklist.test(storeNumMatch[1]) &&
+        /^[A-Za-z0-9]{1,8}$/.test(storeNumMatch[1]) &&
+        !/^[A-Z]{3,}$/.test(storeNumMatch[1])
+      ) {
+        parts.push(`Store #${storeNumMatch[1]}`);
+      }
+      if (parts.length > 0) {
+        detectedMerchant += ` - ${parts.join(' ')}`;
+      }
+      break;
+    }
+  }
+
+  // Fallback: scan top lines if no brand matched
+  if (!detectedMerchant) {
+    const ignoreHeaders = [
+      'welcome', 'official receipt', 'sales invoice', 'cash receipt', 'order receipt',
+      'customer copy', 'store copy', 'tax invoice', 'receipt', 'pos provider', 'terminal',
+      'kiosk receipt', 'kiosk', 'dine in', 'take out', 'drive thru', 'eat in', 'ste a h', 'cust ref'
+    ];
+
+    for (let i = 0; i < Math.min(rawLines.length, 8); i++) {
+      const line = rawLines[i];
+      const lower = line.toLowerCase();
+      const isIgnored = ignoreHeaders.some((h) => lower === h || lower.startsWith(h));
+      const hasDigitsOnly = /^[\d\s\-_:.]+$/.test(line);
+
+      if (!isIgnored && !hasDigitsOnly && line.length > 3 && line.length < 45) {
+        detectedMerchant = line.replace(/^[#\*\-=\s|\[\]]+|[#\*\-=\s|\[\]]+$/g, '');
+        break;
+      }
+    }
+  }
+
+  if (!detectedMerchant && rawLines.length > 0) {
+    detectedMerchant = rawLines[0].substring(0, 35);
+  }
+  if (!detectedMerchant || detectedMerchant.length < 3) {
+    detectedMerchant = 'Scanned Merchant Store';
+  }
+
+  // =========================================================================
+  // 2. Date Extraction (BUG 6 FIX: bill_date, due_date, billing_period)
+  // =========================================================================
+  const dateInfo = extractDatesFromText(fullText);
+
+  // Time Detection (12-hour normalized)
+  let detectedTime = '12:00 PM';
+  const timeMatch = fullText.match(/\b(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\b/);
+  if (timeMatch) {
+    let t = timeMatch[1].trim();
+    if (!/am|pm/i.test(t)) {
+      const parts = t.split(':').map((x) => parseInt(x, 10));
+      const h = parts[0];
+      const m = parts[1];
+      const period = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      detectedTime = `${h12}:${String(m).padStart(2, '0')} ${period}`;
+    } else {
+      detectedTime = t.toUpperCase();
+    }
+  }
+
+  // =========================================================================
+  // 3. Currency Detection (BUG 3 FIX: Symbol -> Locale signals -> Merchant country -> null)
+  // =========================================================================
+  const currency = inferCurrencyFromText(fullText);
+
+  // =========================================================================
+  // 4. Category Detection (BUG 4 FIX: Dictionary lookup -> null)
+  // =========================================================================
+  const category = inferCategoryFromText(fullText, detectedMerchant);
+
+  // =========================================================================
+  // 5. Reference / Order Number / TIN (BUG 7 FIX: Strips trailing non-digits)
+  // =========================================================================
+  let detectedTin = '';
+  let detectedInvoiceNo = '';
+
+  const tinMatch = fullText.match(/(?:TIN|TAX\s*ID|VAT\s*REG|NIF|CIF|REG)\s*[:#\-]?\s*([0-9\-\sA-Za-z]{9,25})/i);
+  if (tinMatch && tinMatch[1]) {
+    detectedTin = cleanTin(tinMatch[1]);
+  } else {
+    // Standalone Philippine TIN pattern without label
+    const rawTinMatch = fullText.match(/\b(\d{3}[-\s]\d{3}[-\s]\d{3}(?:[-\s]\d{3,5})?)\b/);
+    if (rawTinMatch) {
+      detectedTin = cleanTin(rawTinMatch[1]);
+    }
+  }
+
+  const invMatch = fullText.match(/(?:factura\s*simplificada|factura|official\s*receipt\s*#?|sales\s*invoice\s*#?|cash\s*invoice\s*#?|customer\s*account\s*number|invoice\s*#?|or\s*#|si\s*#|can\s*#?|bill\s*no\.?|order\s*#?|transaction\s*id|trans\s*id|t#|txn\s*#?|ref\s*#?|auth\s*#?)\s*[:#\-]?\s*([A-Za-z0-9\-\/]{4,24})/i);
+  if (invMatch && invMatch[1]) {
+    detectedInvoiceNo = invMatch[1].trim();
+  }
+
+  // =========================================================================
+  // 6. Total Amount Parsing (BUG 1 FIX: Normalize comma/period, Total Amount Due priority)
+  // =========================================================================
+  let detectedTotal = null;
+  let detectedSubtotal = null;
+  let detectedTax = null;
+  let detectedDiscount = null;
+
+  // Search for Discounts
+  const discMatch = fullText.match(/(?:senior\s*citizen|pwd\s*disc|less\s*discount|discount|promo\s*disc|voucher)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:,\d{3})+(?:[.,]\d{1,2})?|\d+[.,]\d{1,2})/i);
+  if (discMatch) {
+    detectedDiscount = parseAmount(discMatch[1]);
+  }
+
+  // Priority 1: Explicit "Total Amount Due" / "Amount Due" / "Grand Total"
+  const totalDueMatch = fullText.match(/(?:total\s*amount\s*due|net\s*amount\s*due|amount\s*due|total\s*due|please\s*pay|rese\s*pay|grand\s*total)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
+  if (totalDueMatch) {
+    detectedTotal = parseAmount(totalDueMatch[1]);
+  }
+
+  // Priority 2: Other labeled totals
+  if (!detectedTotal) {
+    const priorityTotalMatches = [
+      ...fullText.matchAll(/(?:total\s*payable|amount\s*to\s*pay|total\s*charges|balance\s*due|total\s*amount|importe\s*total|total\s*a\s*pagar)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/gi)
+    ];
+    for (const ptm of priorityTotalMatches) {
+      const val = parseAmount(ptm[1]);
+      if (val && val > 0) {
+        detectedTotal = val;
+        break;
+      }
+    }
+  }
+
+  // Priority 3: Standalone Total line
+  if (!detectedTotal) {
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i].trim();
+      if (/^(?:total|importe)\b/i.test(line) && !/sub|kwh|items|qty|discount|points/i.test(line)) {
+        const numMatch = line.match(/(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
+        if (numMatch) {
+          const val = parseAmount(numMatch[1]);
+          if (val && val > 0) {
+            detectedTotal = val;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // =========================================================================
+  // 7. Subtotal and Tax (BUG 2 FIX: Never back-compute! Only use values found in document)
+  // =========================================================================
+  const subMatch = fullText.match(/(?:sub\s*total|base\s*imponible|vatable\s*sales|gross\s*amount)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:[,\.]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
+  if (subMatch) {
+    detectedSubtotal = parseAmount(subMatch[1]);
+  }
+
+  // Strict Tax / VAT detection outside line items
+  const taxMatch = fullText.match(/(?:(?:12%\s*)?\bvat\b(?!\s*able)|(?:\bvat\s*12%\b)|\biva\b|(?:eat\s*in\s*)?\bsales\s*tax\b|\binput\s*tax\b)[^\d\n:]*[:\s]*[\$₱P€£]?\s*(?:php|eur)?\s*(\d{1,3}(?:,\d{3})+[.,]\d{1,2}|\d+[.,]\d{1,2})/i);
+  if (taxMatch && taxMatch[1]) {
+    detectedTax = parseAmount(taxMatch[1]);
+  }
+
+  // =========================================================================
+  // 8. Line Items Extraction (BUG 5 FIX: Row normalization, no isUtilityBill hack)
+  // =========================================================================
+  const items = [];
+  const droppedRows = [];
+
+  const skipPrefixes = [
+    'subtotal', 'sub-total', 'sub total', 'total', 'cash', 'change', 'tendered',
+    'balance', 'amount due', 'total amount due', 'total due', 'please pay',
+    'due date', 'billing period', 'bill date', 'customer account', 'account number',
+    'meter number', 'multiplier', 'remaining balance', 'previous bill', 'tin:',
+    'computation summary', 'your electric bill', 'rate:', 'can:', 'can ('
+  ];
+
+  const decimalPriceRegex = /(?:[\$₱P€£]|php|eur)?\s*(\d{1,3}(?:,\d{3})+[.,]\d{1,2}|\d+[.,]\d{1,2})\s*[\)\]\|}]*$/i;
+  const currencyIntRegex = /(?:[\$₱P€£]|php|eur)\s*(\d{1,6})\s*[\)\]\|}]*$/i;
+
+  const itemPriceCeiling = detectedTotal && detectedTotal > 0 ? detectedTotal * 1.05 : 999999;
+
+  for (let idx = 0; idx < rawLines.length; idx++) {
+    const rawLine = rawLines[idx];
+    const normLine = normalizeOcrRow(rawLine);
+    const lowerNorm = normLine.toLowerCase();
+
+    // Check if line should be skipped
+    const isSkipPrefix = skipPrefixes.some((p) => lowerNorm.startsWith(p));
+    if (isSkipPrefix) {
+      droppedRows.push({ line: rawLine, reason: 'Matched skipPrefix (header or total summary)' });
+      continue;
+    }
+
+    if (/(?:tel|phone|fax|hotline|cel|mobile|contact|website|www|http|address|addr|zip|blvd|ave|st\.|rd\.|ln\.|fl\.|suite?|ste\.?)\b/i.test(rawLine)) {
+      droppedRows.push({ line: rawLine, reason: 'Address/contact line' });
+      continue;
+    }
+    if (/\b\d{1,2}:\d{2}(?::\d{2})?\b/.test(rawLine)) {
+      droppedRows.push({ line: rawLine, reason: 'Timestamp line' });
+      continue;
+    }
+
+    const matchDec = normLine.match(decimalPriceRegex);
+    const matchInt = normLine.match(currencyIntRegex);
+    const priceMatch = matchDec || matchInt;
+
+    if (priceMatch) {
+      const priceVal = parseAmount(priceMatch[1]);
+      if (!priceVal || priceVal <= 0 || priceVal >= 1000000) {
+        droppedRows.push({ line: rawLine, reason: 'Invalid or out-of-bounds price' });
+        continue;
+      }
+      if (priceVal > itemPriceCeiling) {
+        droppedRows.push({ line: rawLine, reason: 'Price exceeds total ceiling' });
+        continue;
+      }
+
+      let desc = normLine.substring(0, priceMatch.index).trim();
+      let qty = 1;
+
+      // Clean leading barcode / SKU numbers
+      desc = desc.replace(/^\d{5,14}\s+/, '').trim();
+      desc = desc.replace(/^[#\-\.\*\s§©|~\[\]_]+|[#\-\.\*\s§©|~\[\]_]+$/g, '').trim();
+      desc = desc.replace(/[₱\$€£]$/, '').trim();
+
+      // Explicit quantity: "2x", "3 *", "1 @", "4 pcs", "2 PK", "1 BOX"
+      const explicitQty = desc.match(/^[|\[\]\s]*(\d+)\s*(?:[xX\*]|pcs?|@|pk|box|can|und)\s*/i);
+      if (explicitQty) {
+        qty = parseInt(explicitQty[1], 10) || 1;
+        desc = desc.substring(explicitQty[0].length).trim();
+      } else {
+        const softQty = desc.match(/^[|\[\]\s]*(\d{1,2})\s+/);
+        if (softQty) {
+          const potentialNumber = parseInt(softQty[1], 10);
+          const remainder = desc.substring(softQty[0].length).trim();
+          const isMonthFollowup = /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|kwh|v|kw|a|%)/i.test(remainder);
+          if (!isMonthFollowup && potentialNumber > 0 && potentialNumber <= 50) {
+            qty = potentialNumber;
+            desc = remainder;
+          }
+        }
+      }
+
+      const unitPriceMatch = desc.match(/@\s*(\d+[.,]\d{1,2})/);
+      let unitPrice = +(priceVal / qty).toFixed(2);
+      if (unitPriceMatch) {
+        const parsedUnit = parseAmount(unitPriceMatch[1]);
+        if (parsedUnit && parsedUnit > 0) unitPrice = parsedUnit;
+        desc = desc.replace(/@\s*[\d.,]+/, '').trim();
+      }
+
+      desc = desc.replace(/^[#\-\.\*\s§©|~\[\]_]+|[#\-\.\*\s§©|~\[\]_]+$/g, '').trim();
+
+      const isNoiseDesc =
+        desc.length < 2 ||
+        /^\d+$/.test(desc) ||
+        /^[\(\)\d\-\s]{2,10}$/.test(desc) ||
+        desc.replace(/[\w\s]/g, '').length > desc.length * 0.4;
+
+      if (!isNoiseDesc) {
+        items.push({
+          name: desc || 'Item',
+          qty,
+          price: unitPrice,
+          total: priceVal,
+        });
+      } else {
+        droppedRows.push({ line: rawLine, reason: 'Description flagged as noise' });
+      }
+    } else {
+      droppedRows.push({ line: rawLine, reason: 'No valid price found at end of line' });
+    }
+  }
+
+  // If detectedTotal was missing, reconcile from itemsSum
+  if (items.length > 0) {
+    const itemsSum = +(items.reduce((acc, it) => acc + it.total, 0)).toFixed(2);
+    if (!detectedTotal || detectedTotal <= 0) {
+      detectedTotal = itemsSum;
+    }
+  }
+
+  // =========================================================================
+  // 9. Payment Method Detection (BUG 4 FIX: null if undetermined)
+  // =========================================================================
+  const paymentMethod = inferPaymentMethodFromText(fullText);
+
+  // =========================================================================
+  // 10. Real Mathematical Confidence Score (BUG 8 FIX)
+  // =========================================================================
+  const { confidence, auditChecks } = computeRealConfidenceScore({
+    total: detectedTotal,
+    subtotal: detectedSubtotal,
+    vat: detectedTax,
+    discount: detectedDiscount,
+    items,
+    tendered: null,
+    change: null,
+    merchant: detectedMerchant,
+    date: dateInfo.date,
+    tin: detectedTin,
+  });
+
+  const detectedBoxes = [
+    { label: 'MERCHANT', top: 10, left: 16, width: 68, height: 12 },
+    { label: 'TIN / DATE', top: 26, left: 18, width: 64, height: 10 },
+    { label: 'LINE ITEMS', top: 38, left: 12, width: 76, height: 26 },
+    { label: 'TOTAL DUE', top: 68, left: 16, width: 68, height: 18 },
+  ];
+
+  return {
+    isValid: true,
+    merchant: detectedMerchant,
+    tin: detectedTin,
+    date: dateInfo.date,
+    bill_date: dateInfo.bill_date,
+    due_date: dateInfo.due_date,
+    billing_period: dateInfo.billing_period,
+    time: detectedTime,
+    category,
+    paymentMethod,
+    subtotal: detectedSubtotal,
+    vat: detectedTax,
+    total: detectedTotal,
+    items,
+    currency,
+    confidence: activeEngine === 'mlkit' ? Math.max(92, confidence) : confidence,
+    auditChecks,
+    droppedRows,
+    ocrEngine: activeEngine,
+    rawOcrText: fullText,
+    detectedBoxes,
+  };
 };

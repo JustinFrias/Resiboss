@@ -1509,9 +1509,10 @@ export const ScannerView = () => {
                         </label>
                         <select
                           className="liquid-input"
-                          value={currentReceipt.category || 'Food'}
-                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, category: e.target.value })}
+                          value={currentReceipt.category || ''}
+                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, category: e.target.value || null })}
                         >
+                          <option value="">-- Undetermined --</option>
                           {Object.keys(t.categories).map((catKey) => (
                             <option key={catKey} value={catKey}>
                               {t.categories[catKey]}
@@ -1525,8 +1526,9 @@ export const ScannerView = () => {
                         </label>
                         <input
                           className="liquid-input"
-                          value={currentReceipt.paymentMethod || 'Cash'}
-                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, paymentMethod: e.target.value })}
+                          placeholder="Undetermined"
+                          value={currentReceipt.paymentMethod || ''}
+                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, paymentMethod: e.target.value || null })}
                         />
                       </div>
                     </div>
@@ -1555,22 +1557,65 @@ export const ScannerView = () => {
                       </div>
 
                       {showRawOcr && (
-                        <div
-                          style={{
-                            padding: '10px',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            borderRadius: '8px',
-                            fontSize: '0.75rem',
-                            fontFamily: 'var(--font-mono)',
-                            color: '#94a3b8',
-                            maxHeight: '120px',
-                            overflowY: 'auto',
-                            marginBottom: '10px',
-                            whiteSpace: 'pre-wrap',
-                            border: '1px solid var(--glass-border)',
-                          }}
-                        >
-                          {currentReceipt.rawOcrText || 'No raw text available'}
+                        <div style={{ marginBottom: '10px' }}>
+                          {/* Mathematical Cross-Field Verification Checks (BUG 8) */}
+                          {Array.isArray(currentReceipt.auditChecks) && currentReceipt.auditChecks.length > 0 && (
+                            <div
+                              style={{
+                                padding: '10px 12px',
+                                background: 'rgba(0, 242, 254, 0.05)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(0, 242, 254, 0.2)',
+                                marginBottom: '8px',
+                                fontSize: '0.75rem',
+                              }}
+                            >
+                              <div style={{ fontWeight: 700, color: 'var(--cyan-glow)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <CheckCircle2 size={13} /> Mathematical Cross-Field Verification:
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                {currentReceipt.auditChecks.map((chk, cIdx) => (
+                                  <div
+                                    key={cIdx}
+                                    style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      padding: '3px 6px',
+                                      borderRadius: '4px',
+                                      background: chk.passed ? 'rgba(32, 248, 161, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                      color: chk.passed ? '#20F8A1' : '#f87171',
+                                      fontSize: '0.72rem',
+                                    }}
+                                  >
+                                    <span>
+                                      <strong>{chk.name}:</strong> <code>{chk.rule}</code> (expected {chk.expected}, actual {chk.actual})
+                                    </span>
+                                    <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                                      {chk.passed ? 'PASSED' : 'DISCREPANCY'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div
+                            style={{
+                              padding: '10px',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              borderRadius: '8px',
+                              fontSize: '0.75rem',
+                              fontFamily: 'var(--font-mono)',
+                              color: '#94a3b8',
+                              maxHeight: '120px',
+                              overflowY: 'auto',
+                              whiteSpace: 'pre-wrap',
+                              border: '1px solid var(--glass-border)',
+                            }}
+                          >
+                            {currentReceipt.rawOcrText || 'No raw text available'}
+                          </div>
                         </div>
                       )}
 
@@ -1702,14 +1747,15 @@ export const ScannerView = () => {
                               padding: '2px 4px',
                               outline: 'none',
                             }}
-                            value={currentReceipt.subtotal !== undefined ? currentReceipt.subtotal : ''}
+                            value={currentReceipt.subtotal !== undefined && currentReceipt.subtotal !== null ? currentReceipt.subtotal : ''}
+                            placeholder="—"
                             onChange={(e) => handleSubtotalChange(e.target.value)}
                             title="Edit subtotal"
                           />
                           <span style={{ opacity: 0.5 }}>•</span>
                           <span>{t.scanner.vat}:</span>
                           <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-                            {currentReceipt.currency === 'USD' ? '$' : '₱'}
+                            {currentReceipt.currency === 'USD' ? '$' : (currentReceipt.currency === 'EUR' ? '€' : '₱')}
                           </span>
                           <input
                             type="number"
@@ -1725,7 +1771,8 @@ export const ScannerView = () => {
                               padding: '2px 4px',
                               outline: 'none',
                             }}
-                            value={currentReceipt.vat !== undefined ? currentReceipt.vat : ''}
+                            value={currentReceipt.vat !== undefined && currentReceipt.vat !== null ? currentReceipt.vat : ''}
+                            placeholder="—"
                             onChange={(e) => handleVatChange(e.target.value)}
                             title="Edit VAT"
                           />

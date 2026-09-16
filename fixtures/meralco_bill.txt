@@ -1,0 +1,20 @@
+MANILA ELECTRIC COMPANY
+Lopez Building, Ortigas Avenue, Pasig City
+TIN: 000-101-528-000-YAT
+Your electric bill
+Billing Period: 18 Jun 2024 to 17 Jul 2024
+Bill Date: 17 Jul 2024
+Due Date: 29 Jul 2024
+Customer Account Number (CAN): 012345678901
+Rate: Residential
+Total Amount Due: P7.402.60
+
+Computation Summary
+Generation Charge 4128.52
+Transmission Charge 58O.4O
+System Loss 194.86
+Distribution Charge 128O.l5
+Subsidies 14.2O
+Government Taxes 765.42
+Universal Charges 188.O5
+FIT-All Renewable 25l.OO
