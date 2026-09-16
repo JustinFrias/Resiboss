@@ -140,10 +140,14 @@ export function getActiveGeminiKey() {
 /**
  * Ensures system key stability by clearing any legacy local storage keys.
  */
-export function saveGeminiKey(_key) {
+export function saveGeminiKey(key) {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('resiboss_gemini_api_key');
-    localStorage.removeItem('gemini_api_key');
+    if (key && typeof key === 'string' && key.trim().length > 0) {
+      localStorage.setItem('resiboss_gemini_api_key', key.trim());
+    } else {
+      localStorage.removeItem('resiboss_gemini_api_key');
+      localStorage.removeItem('gemini_api_key');
+    }
   }
   cachedAvailableModels = null;
   lastModelFetchTimestamp = 0;

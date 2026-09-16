@@ -44,6 +44,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1eGJkb3JkZWhodmtsbnl4bWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MDc1ODYsImV4cCI6MjEwNDI4MzU4Nn0._-ZqGs72P2hHHLPxC3utHSzWWSI5R27MEuP1bdYVem8' }}
           VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'https://resiboss.vercel.app' }}
           VITE_APP_ENV: production
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY || '' }}
 
       - name: Ensure Android Assets Directory
         run: mkdir -p android/app/src/main/assets

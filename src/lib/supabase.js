@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const DEFAULT_SUPABASE_URL = 'https://ruxbdordehhvklnyxmcw.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1eGJkb3JkZWhodmtsbnl4bWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MDc1ODYsImV4cCI6MjEwNDI4MzU4Nn0._-ZqGs72P2hHHLPxC3utHSzWWSI5R27MEuP1bdYVem8';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
+const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || DEFAULT_SUPABASE_ANON_KEY;
 
 // Check if credentials have been configured with real values
 export const isSupabaseConfigured = Boolean(
