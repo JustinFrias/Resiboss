@@ -43,6 +43,8 @@ export const TopBar = ({ onOpenMobile }) => {
     pendingSyncCount,
     isSyncing,
     triggerManualSync,
+    refreshAppAndData,
+    hasNewVersion,
   } = useApp();
 
   // Search Bar State
@@ -582,6 +584,55 @@ export const TopBar = ({ onOpenMobile }) => {
             <span>Sync ({pendingSyncCount})</span>
           </button>
         ) : null}
+
+        {/* Quick Refresh App & Data Button */}
+        <button
+          onClick={() => refreshAppAndData({ hardReload: false, showFeedback: true })}
+          onDoubleClick={() => refreshAppAndData({ hardReload: true, showFeedback: true })}
+          title="I-refresh ang data (Double-click para i-reload ang buong app)"
+          className={`topbar-action-btn topbar-refresh-btn ${isSyncing ? 'is-refreshing' : ''}`}
+          style={{
+            width: '32px',
+            height: '32px',
+            background: hasNewVersion ? 'rgba(0, 242, 254, 0.15)' : 'none',
+            border: hasNewVersion ? '1px solid rgba(0, 242, 254, 0.4)' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: hasNewVersion ? '#00f2fe' : isLight ? '#1e3a8a' : 'var(--text-secondary)',
+            borderRadius: '8px',
+            transition: 'all 0.2s ease',
+            flexShrink: 0,
+            padding: 0,
+            position: 'relative',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = isLight ? '#0284c7' : '#00f2fe')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = hasNewVersion ? '#00f2fe' : isLight ? '#1e3a8a' : 'var(--text-secondary)')}
+        >
+          <RefreshCw
+            size={17}
+            strokeWidth={1.9}
+            style={{
+              animation: isSyncing ? 'spin 0.8s linear infinite' : 'none',
+              transformOrigin: 'center',
+            }}
+          />
+          {hasNewVersion && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '2px',
+                right: '2px',
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: '#00f2fe',
+                boxShadow: '0 0 6px #00f2fe',
+              }}
+            />
+          )}
+        </button>
 
         {/* Dark Mode & Light Mode Switcher */}
         <button

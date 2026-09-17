@@ -571,6 +571,157 @@ export const AppProvider = ({ children }) => {
     setActiveToast(null);
   };
 
+  // Live Update & App Version Management
+  const appBuildTime = typeof __APP_BUILD_TIME__ !== 'undefined' ? Number(__APP_BUILD_TIME__) : Date.now();
+  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.2.0';
+  const [hasNewVersion, setHasNewVersion] = useState(false);
+  const [remoteVersionInfo, setRemoteVersionInfo] = useState(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState(() => Date.now());
+
+  const checkForAppUpdates = async ({ silent = false } = {}) => {
+    if (typeof window === 'undefined') return false;
+    setIsCheckingUpdate(true);
+    try {
+      const res = await fetch(`/version.json?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRemoteVersionInfo(data);
+        const isNewer = data.buildTime && data.buildTime > appBuildTime;
+        if (isNewer) {
+          setHasNewVersion(true);
+          if (!silent) {
+            showToast({
+              id: 'update-available',
+              title: 'May Bagong Update!',
+              message: 'Available na ang pinakabagong bersyon ng Resiboss.',
+              type: 'info',
+            });
+          }
+          return true;
+        } else {
+          setHasNewVersion(false);
+          if (!silent) {
+            showToast({
+              id: 'up-to-date',
+              title: 'Up to Date!',
+              message: 'Nasa pinakabagong bersyon ka na ng Resiboss.',
+              type: 'success',
+            });
+          }
+          return false;
+        }
+      }
+    } catch (e) {
+      console.warn('[Updater] Could not check remote version:', e);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+    return false;
+  };
+
+  const applyAppUpdate = () => {
+    soundFx?.playClick?.();
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('_v', Date.now().toString());
+      window.location.href = url.toString();
+    }
+  };
+
+  const refreshAppAndData = async ({ hardReload = false, showFeedback = true } = {}) => {
+    soundFx?.playClick?.();
+    setIsSyncing(true);
+    setLastRefreshTime(Date.now());
+    try {
+      const online = await checkIsOnline();
+      setIsOnline(online);
+
+      if (online && userProfile) {
+        const { data } = await fetchReceiptsFromSupabase(userProfile);
+        if (Array.isArray(data)) {
+          const liveDocs = data.map(mapSupabaseToDoc);
+          const offlineQueue = getOfflineQueue();
+          const pendingOffline = offlineQueue.filter(
+            (it) => it.syncStatus === 'pending' || it.syncStatus === 'failed'
+          );
+          const liveIds = new Set(liveDocs.map((d) => d.id));
+          const mergedDocs = [
+            ...pendingOffline.filter((p) => !liveIds.has(p.id)),
+            ...liveDocs,
+          ];
+          setDocuments(mergedDocs);
+          const storageKey = getUserReceiptsStorageKey(userProfile);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(mergedDocs));
+          } catch (e) {}
+        }
+
+        await handleTriggerSync();
+        await checkForAppUpdates({ silent: true });
+      }
+
+      if (showFeedback) {
+        showToast({
+          id: 'refresh-done',
+          title: 'Nai-refresh na!',
+          message: online ? 'Updated na ang lahat ng receipts at connection.' : 'Offline mode: Na-load ang local cache.',
+          type: 'success',
+        });
+      }
+
+      if (hardReload && typeof window !== 'undefined') {
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+      }
+    } catch (err) {
+      console.warn('[Refresh] Error during refresh:', err);
+      if (showFeedback) {
+        showToast({
+          id: 'refresh-err',
+          title: 'Refresh Status',
+          message: 'Na-update ang local state.',
+          type: 'info',
+        });
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    const initialCheck = setTimeout(() => {
+      checkForAppUpdates({ silent: true });
+    }, 3000);
+
+    const handleFocus = () => {
+      checkForAppUpdates({ silent: true });
+    };
+    window.addEventListener('focus', handleFocus);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkForAppUpdates({ silent: true });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    const pollTimer = setInterval(() => {
+      checkForAppUpdates({ silent: true });
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearTimeout(initialCheck);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(pollTimer);
+    };
+  }, []);
+
   const toggleTheme = () => {
     soundFx.playClick();
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -1603,6 +1754,15 @@ export const AppProvider = ({ children }) => {
         pendingSyncCount,
         isSyncing,
         triggerManualSync: handleTriggerSync,
+        appBuildTime,
+        appVersion,
+        hasNewVersion,
+        remoteVersionInfo,
+        isCheckingUpdate,
+        lastRefreshTime,
+        checkForAppUpdates,
+        applyAppUpdate,
+        refreshAppAndData,
       }}
     >
       {children}

@@ -2,6 +2,16 @@
   "appId": "com.resiboss.app",
   "appName": "Resiboss",
   "webDir": "dist",
+  "server": {
+    "url": "https://resiboss.vercel.app",
+    "cleartext": false,
+    "androidScheme": "https",
+    "errorPath": "index.html",
+    "allowNavigation": [
+      "resiboss.vercel.app",
+      "*.supabase.co"
+    ]
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 3000,

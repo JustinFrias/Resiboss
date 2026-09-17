@@ -32,6 +32,8 @@ import {
   Volume2,
   VolumeX,
   AlertTriangle,
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 
 export const SettingsView = () => {
@@ -62,6 +64,17 @@ export const SettingsView = () => {
     checkSpendingThreshold,
     sendTestEmailDigest,
     addNotification,
+    isOnline,
+    isSyncing,
+    appVersion,
+    appBuildTime,
+    hasNewVersion,
+    remoteVersionInfo,
+    isCheckingUpdate,
+    lastRefreshTime,
+    checkForAppUpdates,
+    applyAppUpdate,
+    refreshAppAndData,
   } = useApp();
 
   const isLight = theme === 'light';
@@ -351,6 +364,7 @@ export const SettingsView = () => {
     { id: 'categories', label: 'Categories' },
     { id: 'security', label: 'Security' },
     { id: 'notifications', label: 'Notifications' },
+    { id: 'updates', label: 'Updates & Live' },
   ];
 
   return (
@@ -2156,6 +2170,285 @@ export const SettingsView = () => {
               </div>
             </div>
           )}
+
+          {/* ============================================================== */}
+          {/* TAB 5: APP UPDATES & LIVE REFRESH                              */}
+          {/* ============================================================== */}
+          {activeTabKey === 'updates' && (
+            <div>
+              <div style={{ margin: '0 0 16px 0' }}>
+                <h2
+                  style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    color: isLight ? '#0f2942' : '#f8fafc',
+                    margin: 0,
+                  }}
+                >
+                  App Updates & Live Sync
+                </h2>
+                <p
+                  style={{
+                    fontSize: '0.84rem',
+                    color: isLight ? '#64748b' : '#94a3b8',
+                    margin: '4px 0 0 0',
+                  }}
+                >
+                  Pamamahala sa auto-updates ng APK nang hindi na kailangang mag-install ulit.
+                </p>
+              </div>
+              <div
+                style={{
+                  height: '1px',
+                  background: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)',
+                  marginBottom: '24px',
+                }}
+              />
+
+              {/* Status Banner */}
+              <div
+                style={{
+                  padding: '16px 18px',
+                  borderRadius: '16px',
+                  background: hasNewVersion
+                    ? 'linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(30, 58, 138, 0.25))'
+                    : isLight
+                    ? '#f0fdf4'
+                    : 'rgba(16, 185, 129, 0.1)',
+                  border: hasNewVersion
+                    ? '1.5px solid rgba(0, 242, 254, 0.5)'
+                    : isLight
+                    ? '1.5px solid #bbf7d0'
+                    : '1px solid rgba(52, 211, 153, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '14px',
+                  flexWrap: 'wrap',
+                  marginBottom: '24px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '12px',
+                      background: hasNewVersion ? '#00f2fe' : '#10b981',
+                      color: '#000000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: hasNewVersion
+                        ? '0 0 16px rgba(0, 242, 254, 0.4)'
+                        : '0 0 16px rgba(16, 185, 129, 0.3)',
+                    }}
+                  >
+                    {hasNewVersion ? <Sparkles size={22} /> : <CheckCircle2 size={22} />}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.96rem', fontWeight: 700, color: isLight ? '#0f2942' : '#ffffff' }}>
+                      {hasNewVersion ? 'May Bagong Cloud Update Na!' : 'Updated ang Iyong Resiboss APK'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: isLight ? '#475569' : '#94a3b8', marginTop: '2px' }}>
+                      {hasNewVersion
+                        ? 'May bagong pagbabago na na-deploy sa Vercel. I-tap ang I-refresh para agad itong magamit.'
+                        : 'Naka-konekta sa Live Cloud. Lahat ng bagong updates sa code ay agad na maglo-load dito.'}
+                    </div>
+                  </div>
+                </div>
+
+                {hasNewVersion && (
+                  <button
+                    type="button"
+                    onClick={applyAppUpdate}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #00f2fe, #0284c7)',
+                      border: 'none',
+                      color: '#000000',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(0, 242, 254, 0.4)',
+                    }}
+                  >
+                    <RefreshCw size={15} strokeWidth={2.4} />
+                    <span>I-apply Update</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Information Cards Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  gap: '16px',
+                  marginBottom: '24px',
+                }}
+              >
+                {/* Mode & URL Card */}
+                <div
+                  style={{
+                    padding: '16px',
+                    borderRadius: '14px',
+                    background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.03)',
+                    border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.08)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: isLight ? '#64748b' : '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Live Cloud Endpoint
+                  </div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isLight ? '#0f2942' : '#ffffff', fontFamily: 'monospace' }}>
+                    resiboss.vercel.app
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#10b981', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    Live OTA Updates Enabled
+                  </div>
+                </div>
+
+                {/* Connection Status Card */}
+                <div
+                  style={{
+                    padding: '16px',
+                    borderRadius: '14px',
+                    background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.03)',
+                    border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.08)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: isLight ? '#64748b' : '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Network Status
+                  </div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isOnline ? '#10b981' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {isOnline ? 'Online (Connected)' : 'Offline (Local Cache Active)'}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: isLight ? '#64748b' : '#94a3b8', marginTop: '4px' }}>
+                    {isOnline ? 'Direct Cloud Sync & Updates' : 'Fallback sa local bundled storage'}
+                  </div>
+                </div>
+
+                {/* Version Card */}
+                <div
+                  style={{
+                    padding: '16px',
+                    borderRadius: '14px',
+                    background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.03)',
+                    border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.08)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: isLight ? '#64748b' : '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Current Version
+                  </div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isLight ? '#0f2942' : '#ffffff' }}>
+                    v{appVersion || '1.2.0'}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: isLight ? '#64748b' : '#94a3b8', marginTop: '4px' }}>
+                    Last Refresh: {new Date(lastRefreshTime).toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => refreshAppAndData({ hardReload: false, showFeedback: true })}
+                  disabled={isSyncing}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    background: isLight ? '#0b1e36' : 'linear-gradient(135deg, #00f2fe, #0284c7)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+                    opacity: isSyncing ? 0.7 : 1,
+                  }}
+                >
+                  <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+                  <span>{isSyncing ? 'Inirerefresh...' : 'I-refresh ang App & Data'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => checkForAppUpdates({ silent: false })}
+                  disabled={isCheckingUpdate}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    background: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                    border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    color: isLight ? '#1e293b' : '#f8fafc',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Sparkles size={16} />
+                  <span>{isCheckingUpdate ? 'Nagche-check...' : 'Mag-check ng Update'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => refreshAppAndData({ hardReload: true, showFeedback: true })}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    background: 'transparent',
+                    border: isLight ? '1px solid #94a3b8' : '1px solid rgba(255, 255, 255, 0.25)',
+                    color: isLight ? '#475569' : '#cbd5e1',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <RefreshCw size={16} />
+                  <span>Force Hard Reload (Bypass Cache)</span>
+                </button>
+              </div>
+
+              {/* Instructions / How It Works Explainer */}
+              <div
+                style={{
+                  padding: '16px',
+                  borderRadius: '14px',
+                  background: isLight ? '#f8fafc' : 'rgba(255, 255, 255, 0.02)',
+                  border: isLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.06)',
+                  fontSize: '0.82rem',
+                  lineHeight: 1.6,
+                  color: isLight ? '#475569' : '#94a3b8',
+                }}
+              >
+                <div style={{ fontWeight: 700, color: isLight ? '#0f2942' : '#ffffff', marginBottom: '6px' }}>
+                  📱 Paano gumagana ang Live Updates sa APK:
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                  <li><strong>Walang reinstall na kailangan:</strong> Bawat push mo ng update sa GitHub, awtomatikong mag-a-update ang cloud sa loob ng ilang segundo.</li>
+                  <li><strong>Pull-to-Refresh:</strong> Sa iyong cellphone o tablet, maaari mong hilahin pababa ang screen (pull down gesture) para mabilisang i-reload ang pinakabagong update.</li>
+                  <li><strong>TopBar Quick Refresh:</strong> Maaari mo ring pindutin ang umiikot na refresh button sa bandang itaas ng screen anumang oras.</li>
+                  <li><strong>Offline Fallback:</strong> Kapag walang internet, patuloy pa ring gagana ang APK gamit ang naka-save na local offline cache.</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2443,6 +2736,7 @@ export const SettingsView = () => {
                 { id: 'categories', label: 'Categories', icon: FolderArchive, desc: 'Receipt categories & tags' },
                 { id: 'security', label: 'Security', icon: ShieldCheck, desc: 'Password & 2FA security' },
                 { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'Alerts & email preferences' },
+                { id: 'updates', label: 'Updates & Live', icon: RefreshCw, desc: 'APK live update & refresh' },
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTabKey === item.id;

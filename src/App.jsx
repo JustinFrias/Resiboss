@@ -14,6 +14,8 @@ import {
   InAppToast,
   ErrorBoundary,
   AppLoadingScreen,
+  PullToRefresh,
+  UpdateAvailableBanner,
 } from './components';
 
 import { DashboardView } from './views/DashboardView';
@@ -143,8 +145,11 @@ export default function App() {
   return (
     <AppProvider>
       <MobileAppGatekeeper>
-        <MainLayout />
+        <PullToRefresh>
+          <MainLayout />
+        </PullToRefresh>
       </MobileAppGatekeeper>
+      <UpdateAvailableBanner />
       <InAppToast />
       <PrivacyPolicyModal />
       <CookieConsentBanner />
