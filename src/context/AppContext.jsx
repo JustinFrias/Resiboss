@@ -594,26 +594,10 @@ export const AppProvider = ({ children }) => {
         setRemoteVersionInfo(data);
         const isNewer = data.buildTime && data.buildTime > appBuildTime;
         if (isNewer) {
-          setHasNewVersion(true);
-          if (!silent) {
-            showToast({
-              id: 'update-available',
-              title: 'May Bagong Update!',
-              message: 'Available na ang pinakabagong bersyon ng Resiboss.',
-              type: 'info',
-            });
-          }
+          setHasNewVersion(false);
           return true;
         } else {
           setHasNewVersion(false);
-          if (!silent) {
-            showToast({
-              id: 'up-to-date',
-              title: 'Up to Date!',
-              message: 'Nasa pinakabagong bersyon ka na ng Resiboss.',
-              type: 'success',
-            });
-          }
           return false;
         }
       }
@@ -634,7 +618,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const refreshAppAndData = async ({ hardReload = false, showFeedback = true } = {}) => {
+  const refreshAppAndData = async ({ hardReload = false, showFeedback = false } = {}) => {
     soundFx?.playClick?.();
     setIsSyncing(true);
     setLastRefreshTime(Date.now());

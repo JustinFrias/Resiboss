@@ -149,7 +149,6 @@ export default function App() {
           <MainLayout />
         </PullToRefresh>
       </MobileAppGatekeeper>
-      <UpdateAvailableBanner />
       <InAppToast />
       <PrivacyPolicyModal />
       <CookieConsentBanner />
