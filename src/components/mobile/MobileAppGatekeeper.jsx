@@ -18,13 +18,21 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+const checkIsNative = () => {
+  try {
+    return typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
+  } catch (e) {
+    return false;
+  }
+};
+
 export const MobileAppGatekeeper = ({ children }) => {
   const { userProfile } = useApp();
   const [isMobileBrowser, setIsMobileBrowser] = useState(false);
   const [isBypassed, setIsBypassed] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
-        if (Capacitor.isNativePlatform() || hasCachedSession()) {
+        if (checkIsNative() || hasCachedSession()) {
           return true;
         }
         const h = window.location.hostname;
@@ -49,7 +57,7 @@ export const MobileAppGatekeeper = ({ children }) => {
   });
   const [checking, setChecking] = useState(() => {
     if (typeof window !== 'undefined') {
-      if (Capacitor.isNativePlatform() || hasCachedSession()) {
+      if (checkIsNative() || hasCachedSession()) {
         return false;
       }
       const h = window.location.hostname;
@@ -85,7 +93,7 @@ export const MobileAppGatekeeper = ({ children }) => {
     }
 
     // 1. Check if running inside the native Android Capacitor APK
-    const isNative = Capacitor.isNativePlatform();
+    const isNative = checkIsNative();
 
     // 2. Check for manual bypass in sessionStorage or URL query (?web=1 or ?preview=1)
     const urlParams = new URLSearchParams(window.location.search);
@@ -126,7 +134,7 @@ export const MobileAppGatekeeper = ({ children }) => {
     setChecking(false);
 
     const handleResize = () => {
-      if (!Capacitor.isNativePlatform()) {
+      if (!checkIsNative()) {
         const checkSmall = window.innerWidth <= 820 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
         setIsMobileBrowser(isMobileUA || checkSmall);
       }
@@ -169,7 +177,7 @@ export const MobileAppGatekeeper = ({ children }) => {
   };
 
   // If user is already logged in, has cached session, inside native APK, or manually bypassed, render normal application directly
-  if (userProfile || hasCachedSession() || Capacitor.isNativePlatform() || isBypassed) {
+  if (userProfile || hasCachedSession() || checkIsNative() || isBypassed) {
     return children;
   }
 

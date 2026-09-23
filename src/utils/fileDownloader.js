@@ -86,14 +86,14 @@ export async function downloadFile({
   const resolvedMime = getShareMime(filename, mimeType);
   const base64Data = isBase64 ? dataUrlToBase64(content) : textToBase64(content);
   const fileBlob = blob || (isBase64 ? base64ToBlob(content, resolvedMime) : new Blob([content], { type: resolvedMime }));
-  const isNative = Capacitor.isNativePlatform();
+  const isNative = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 
   // -------------------------------------------------------------
   // 1. CAPACITOR NATIVE ANDROID / IOS
   // -------------------------------------------------------------
   if (isNative) {
     // 1.A. Custom NativeDownloader Plugin (Writes directly to Android public Downloads folder)
-    const NativeDownloader = Capacitor?.Plugins?.NativeDownloader;
+    const NativeDownloader = typeof window !== 'undefined' ? window.Capacitor?.Plugins?.NativeDownloader : null;
     if (NativeDownloader?.saveToDownloads) {
       try {
         const nativeRes = await NativeDownloader.saveToDownloads({

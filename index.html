@@ -15,6 +15,23 @@
       })();
     </script>
     
+    <script>
+      // Safe Capacitor stub for web browser environments:
+      // Prevents "ReferenceError: Capacitor is not defined" if any bundle references Capacitor directly
+      (function() {
+        try {
+          if (typeof window !== 'undefined' && !window.Capacitor) {
+            window.Capacitor = {
+              isNativePlatform: function() { return false; },
+              isPluginAvailable: function() { return false; },
+              getPlatform: function() { return 'web'; },
+              Plugins: {}
+            };
+          }
+        } catch (e) {}
+      })();
+    </script>
+    
     <!-- Android Chrome & PWA Mobile Capabilities -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" sizes="192x192" href="/resiboss-emblem.png" />

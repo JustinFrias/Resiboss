@@ -78,17 +78,19 @@ export const ResibossAuthCard = ({ initialMode = 'signin' }) => {
     let resumeSub = null;
 
     try {
-      if (Capacitor.isPluginAvailable('Browser')) {
+      if (typeof window !== 'undefined' && window.Capacitor?.isPluginAvailable?.('Browser')) {
         browserSub = Browser.addListener('browserFinished', resetLoading);
       }
     } catch (e) {}
 
     try {
-      appStateSub = App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) resetLoading();
-      });
-      backSub = App.addListener('backButton', resetLoading);
-      resumeSub = App.addListener('resume', resetLoading);
+      if (typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.())) {
+        appStateSub = App.addListener('appStateChange', ({ isActive }) => {
+          if (isActive) resetLoading();
+        });
+        backSub = App.addListener('backButton', resetLoading);
+        resumeSub = App.addListener('resume', resetLoading);
+      }
     } catch (e) {}
 
     return () => {

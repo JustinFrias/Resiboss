@@ -299,20 +299,22 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    // Register Capacitor Native Network listener
+    // Register Capacitor Native Network listener (native APK only)
     let networkHandle = null;
-    try {
-      Network.addListener('networkStatusChange', (status) => {
-        const connected = Boolean(status.connected);
-        setIsOnline(connected);
-        if (connected) {
-          handleTriggerSync();
-          silentRefreshRef.current?.();
-        }
-      }).then((handle) => {
-        networkHandle = handle;
-      });
-    } catch (_) {}
+    if (typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.())) {
+      try {
+        Network.addListener('networkStatusChange', (status) => {
+          const connected = Boolean(status.connected);
+          setIsOnline(connected);
+          if (connected) {
+            handleTriggerSync();
+            silentRefreshRef.current?.();
+          }
+        }).then((handle) => {
+          networkHandle = handle;
+        });
+      } catch (_) {}
+    }
 
     // Register Web standard online/offline event listeners
     const handleOnlineEvent = () => {
@@ -1070,17 +1072,19 @@ export const AppProvider = ({ children }) => {
     });
 
     let appUrlListener;
-    if (Capacitor.isNativePlatform() || typeof window !== 'undefined') {
-      appUrlListener = App.addListener('appUrlOpen', async (event) => {
-        const url = event.url;
-        if (!url) return;
+    const isNativeMobile = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
+    if (isNativeMobile) {
+      try {
+        appUrlListener = App.addListener('appUrlOpen', async (event) => {
+          const url = event.url;
+          if (!url) return;
 
-        // Auto close in-app browser immediately upon receiving deep link
-        try {
-          if (Capacitor.isPluginAvailable('Browser')) {
-            await Browser.close();
-          }
-        } catch (e) {}
+          // Auto close in-app browser immediately upon receiving deep link
+          try {
+            if (window.Capacitor?.isPluginAvailable?.('Browser')) {
+              await Browser.close();
+            }
+          } catch (e) {}
 
         if (url.includes('com.resiboss.app://') || url.includes('resiboss.vercel.app') || url.includes('localhost') || url.includes('127.0.0.1')) {
           // 1. PKCE Code Exchange Flow (?code=...)
@@ -1118,6 +1122,7 @@ export const AppProvider = ({ children }) => {
           }
         }
       });
+      } catch (e) {}
     }
 
     return () => {
@@ -1198,7 +1203,7 @@ export const AppProvider = ({ children }) => {
       throw new Error('Supabase is not configured.');
     }
 
-    const isNative = Capacitor.isNativePlatform();
+    const isNative = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 
     // On native mobile app, request deep link return to com.resiboss.app
     const redirectTo = isNative
@@ -1221,7 +1226,7 @@ export const AppProvider = ({ children }) => {
 
     if (isNative) {
       // Try in-app Browser plugin if available in native runtime
-      if (Capacitor.isPluginAvailable('Browser')) {
+      if (window.Capacitor?.isPluginAvailable?.('Browser')) {
         try {
           await Browser.open({
             url: data.url,

@@ -18,7 +18,7 @@ import { TextRecognition, Script } from '@capacitor-mlkit/text-recognition';
  * True only when running inside the native Android/iOS Capacitor wrapper.
  */
 export function isMlKitAvailable() {
-  return Capacitor.isNativePlatform();
+  return typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 }
 
 /**
@@ -241,7 +241,8 @@ export function reconstructRowsFromMlKit(result) {
  */
 export async function extractWithMlKit(imageUri) {
   // Guard: return null if not native platform (web) or empty input
-  if (!Capacitor.isNativePlatform() || !imageUri) {
+  const isNative = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
+  if (!isNative || !imageUri) {
     return null;
   }
 

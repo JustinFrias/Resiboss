@@ -665,7 +665,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     // PATH C: TESSERACT LSTM FALLBACK (Web fallback only - NEVER run in native APK)
     // =========================================================================
     if (!fullText) {
-      if (Capacitor.isNativePlatform()) {
+      if (typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.())) {
         console.warn('[OCR] On native platform, ML Kit returned no text; bypassing Tesseract web worker to prevent WebView freeze.');
       } else {
         activeEngine = 'tesseract';

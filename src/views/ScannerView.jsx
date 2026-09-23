@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
 import { useApp } from '../context/AppContext';
 import { extractReceiptWithOCR } from '../utils/receiptOcrParser';
 import { soundFx } from '../utils/soundEffects';
