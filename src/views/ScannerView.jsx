@@ -29,6 +29,7 @@ import {
   ExternalLink,
   RefreshCw,
   Key,
+  ChevronDown,
 } from 'lucide-react';
 
 export const ScannerView = () => {
@@ -59,6 +60,26 @@ export const ScannerView = () => {
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
   const [showBoxes, setShowBoxes] = useState(true);
   const [isFullscreenModal, setIsFullscreenModal] = useState(false);
+
+  // Choice dropdown menu for scanning another receipt (Camera vs Upload)
+  const [showScanAnotherMenu, setShowScanAnotherMenu] = useState(false);
+  const scanAnotherMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (scanAnotherMenuRef.current && !scanAnotherMenuRef.current.contains(e.target)) {
+        setShowScanAnotherMenu(false);
+      }
+    };
+    if (showScanAnotherMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showScanAnotherMenu]);
 
   // AI OCR Engine Status Modal State
   const [showAiModal, setShowAiModal] = useState(false);
@@ -386,13 +407,25 @@ export const ScannerView = () => {
     }
   };
 
-  // Directly trigger system file picker without leaving the scanner view
-  const handleScanAnother = () => {
+  // Scan Another actions: Choice between File Picker and Camera
+  const handleUploadAnother = () => {
     soundFx.playClick();
+    setShowScanAnotherMenu(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
       fileInputRef.current.click();
     }
+  };
+
+  const handleCameraAnother = () => {
+    soundFx.playClick();
+    setShowScanAnotherMenu(false);
+    handleStartCamera();
+  };
+
+  const handleScanAnother = () => {
+    soundFx.playClick();
+    setShowScanAnotherMenu((prev) => !prev);
   };
 
   const handleUsePhotoAnyway = () => {
@@ -749,7 +782,7 @@ export const ScannerView = () => {
 
             {/* Card 2: Upload File (with dashed border) */}
             <div
-              onClick={handleScanAnother}
+              onClick={handleUploadAnother}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -1031,23 +1064,179 @@ export const ScannerView = () => {
                 )}
               </div>
 
-              {/* Scan Another Button: Immediately opens file picker directly without resetting view */}
-              <button
-                onClick={handleScanAnother}
-                className="liquid-btn liquid-btn-secondary"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '5px 12px',
-                  fontSize: '0.78rem',
-                  cursor: 'pointer',
-                }}
-                title="Quickly select a new receipt from files without leaving scanner"
-              >
-                <Upload size={13} />
-                <span>Scan Another</span>
-              </button>
+              {/* Scan Another Menu: Offers choice between Camera or File Upload */}
+              <div style={{ position: 'relative' }} ref={scanAnotherMenuRef}>
+                <button
+                  type="button"
+                  onClick={handleScanAnother}
+                  className="liquid-btn liquid-btn-secondary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 13px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    borderColor: showScanAnotherMenu ? 'var(--cyan-glow, #00f2fe)' : undefined,
+                    boxShadow: showScanAnotherMenu ? '0 0 14px rgba(0, 242, 254, 0.3)' : undefined,
+                  }}
+                  title="Scan another receipt via Camera or File Upload"
+                >
+                  <ScanLine size={13} color="var(--cyan-glow, #00f2fe)" />
+                  <span>Scan Another</span>
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: showScanAnotherMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}
+                  />
+                </button>
+
+                {/* Popover Dropdown for Method Selection */}
+                {showScanAnotherMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 'calc(100% + 8px)',
+                      width: '235px',
+                      background: isLight ? 'rgba(255, 255, 255, 0.98)' : 'rgba(10, 16, 32, 0.96)',
+                      border: isLight ? '1px solid rgba(203, 213, 225, 0.95)' : '1px solid rgba(0, 242, 254, 0.35)',
+                      borderRadius: '14px',
+                      padding: '8px',
+                      boxShadow: isLight
+                        ? '0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08)'
+                        : '0 18px 45px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 242, 254, 0.2)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      zIndex: 1000,
+                      animation: 'fadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '6px 10px 8px 10px',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: 'var(--text-secondary)',
+                        borderBottom: isLight ? '1px solid rgba(226, 232, 240, 0.85)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        marginBottom: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>Scan New Receipt</span>
+                      <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>
+                        CHOICE
+                      </span>
+                    </div>
+
+                    {/* Choice 1: Camera / Take Photo */}
+                    <button
+                      type="button"
+                      onClick={handleCameraAnother}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '9px 10px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(0, 242, 254, 0.12)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          background: isLight ? 'rgba(2, 132, 199, 0.12)' : 'rgba(0, 242, 254, 0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          border: isLight ? '1px solid rgba(2, 132, 199, 0.25)' : '1px solid rgba(0, 242, 254, 0.3)',
+                        }}
+                      >
+                        <Camera size={17} color={isLight ? '#0284c7' : '#00f2fe'} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 650, color: 'var(--text-primary)' }}>
+                          {t.scanner?.takePhoto || 'Camera / Take Photo'}
+                        </div>
+                        <div style={{ fontSize: '0.71rem', color: 'var(--text-secondary)' }}>
+                          Live camera or phone cam
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Choice 2: Upload File / Gallery */}
+                    <button
+                      type="button"
+                      onClick={handleUploadAnother}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '9px 10px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                        marginTop: '2px',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(16, 185, 129, 0.12)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          background: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          border: isLight ? '1px solid rgba(5, 150, 105, 0.25)' : '1px solid rgba(16, 185, 129, 0.3)',
+                        }}
+                      >
+                        <Upload size={17} color={isLight ? '#059669' : '#10b981'} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 650, color: 'var(--text-primary)' }}>
+                          {t.scanner?.uploadFile || 'Upload from Files'}
+                        </div>
+                        <div style={{ fontSize: '0.71rem', color: 'var(--text-secondary)' }}>
+                          Choose image or PDF
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Viewfinder Frame showing the User's Actual Receipt Image with Zoom & Pan */}
@@ -1423,7 +1612,7 @@ export const ScannerView = () => {
                       <span>{t.scanner.takePhoto}</span>
                     </button>
                     <button
-                      onClick={handleScanAnother}
+                      onClick={handleUploadAnother}
                       className="liquid-btn liquid-btn-secondary"
                       style={{ padding: '12px', fontSize: '0.85rem', borderRadius: '12px' }}
                     >
