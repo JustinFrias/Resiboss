@@ -48,6 +48,7 @@ export const translations = {
       taxCreditDesc: "Estimated 12% Input VAT",
       acrossCategories: "Across all categories",
       peakMonth: "Peak",
+      noExpenses: "No expenses",
     },
     scanner: {
       title: "Smart OCR Receipt Scanner",
@@ -256,6 +257,7 @@ export const translations = {
       taxCreditDesc: "Tinatayang 12% Input VAT",
       acrossCategories: "Sa lahat ng kategorya",
       peakMonth: "Pinakamataas",
+      noExpenses: "Walang gastusin",
     },
     scanner: {
       title: "Matalinong Scanner ng Resibo",

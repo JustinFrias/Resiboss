@@ -586,7 +586,7 @@ export const DashboardView = () => {
                         {item.formattedDate}
                       </div>
                       <div style={{ color: hasData ? '#00f2fe' : '#ffffff', fontWeight: 700, fontSize: '0.78rem' }}>
-                        {hasData ? formatCurrency(item.total) : 'Walang expenses'}
+                        {hasData ? formatCurrency(item.total) : (t.dashboard?.noExpenses || 'No expenses')}
                       </div>
                       {hasData && (
                         <div style={{ fontSize: '0.66rem', color: '#38bdf8', marginTop: '1px' }}>
