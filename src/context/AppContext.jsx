@@ -1267,6 +1267,22 @@ export const AppProvider = ({ children }) => {
       }
       throw error;
     }
+
+    if (data?.user) {
+      setCurrentUser(data.user);
+      const provider = data.user.app_metadata?.provider || 'email';
+      const profile = buildUserProfile(data.user, provider);
+      setUserProfile(profile);
+      setIsTermsAccepted(true);
+      try {
+        localStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+        sessionStorage.setItem(SESSION_PROFILE_KEY, JSON.stringify(profile));
+        localStorage.setItem('resiboss_account_created_v1', 'true');
+        localStorage.setItem('resiboss_terms_accepted_v1', 'true');
+        localStorage.setItem('resiboss_mobile_web_bypass', 'true');
+      } catch (e) {}
+    }
+
     return data;
   };
 
