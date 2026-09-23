@@ -31,8 +31,12 @@ export const PullToRefresh = ({ children }) => {
 
   const handleTouchStart = useCallback((e) => {
     // Only allow pull-to-refresh if scrolled right to the top
-    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
-    if (scrollTop <= 2 && !isRefreshingState) {
+    const viewportEl = document.querySelector('.view-viewport');
+    const viewportScroll = viewportEl ? viewportEl.scrollTop : 0;
+    const windowScroll = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    const isAtTop = windowScroll <= 3 && viewportScroll <= 3;
+
+    if (isAtTop && !isRefreshingState) {
       touchStartY.current = e.touches[0].clientY;
       touchStartX.current = e.touches[0].clientX;
       canPullRef.current = true;
