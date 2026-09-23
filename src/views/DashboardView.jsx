@@ -24,6 +24,8 @@ export const DashboardView = () => {
   const [timeRange, setTimeRange] = useState('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef(null);
+  const [hoveredDayIdx, setHoveredDayIdx] = useState(null);
+  const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null);
 
   // Close filter popover on outside click
   useEffect(() => {
@@ -78,30 +80,105 @@ export const DashboardView = () => {
     return formatCurrency(val);
   };
 
-  // 14-Day History for Daily Document Expenses
+  // 14-Day History for Daily Document Expenses (dynamically computed from real documents)
   const dailyHistory = useMemo(() => {
     const days = [];
     const now = new Date();
     for (let i = 13; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       const dayNum = d.getDate();
+      const monthShort = d.toLocaleDateString('en-US', { month: 'short' });
 
-      const dayTotal = documents
-        .filter((doc) => doc.date && doc.date.startsWith(dateStr))
-        .reduce((sum, doc) => sum + (doc.total || 0), 0);
+      const dayDocs = documents.filter((doc) => {
+        if (!doc.date) return false;
+        const s = String(doc.date).slice(0, 10);
+        return s === dateStr;
+      });
+
+      const dayTotal = dayDocs.reduce((sum, doc) => sum + (Number(doc.total) || 0), 0);
 
       days.push({
         dateStr,
+        formattedDate: `${monthShort} ${dayNum}`,
         dayNum,
         total: dayTotal,
+        count: dayDocs.length,
+        isToday: i === 0,
       });
     }
     return days;
   }, [documents]);
 
-  const maxDailyExpense = Math.max(...dailyHistory.map((d) => d.total), 4000);
+  const rawMaxDaily = Math.max(...dailyHistory.map((d) => d.total), 0);
+  const maxDailyExpense = useMemo(() => {
+    if (rawMaxDaily <= 0) return 1000;
+    if (rawMaxDaily > 10000) return Math.ceil(rawMaxDaily / 5000) * 5000;
+    if (rawMaxDaily > 1000) return Math.ceil(rawMaxDaily / 1000) * 1000;
+    if (rawMaxDaily > 100) return Math.ceil(rawMaxDaily / 100) * 100;
+    return Math.ceil(rawMaxDaily / 10) * 10;
+  }, [rawMaxDaily]);
+
+  const yAxisSteps = useMemo(() => {
+    return [1, 0.75, 0.5, 0.25, 0].map((ratio) => maxDailyExpense * ratio);
+  }, [maxDailyExpense]);
+
+  // Real Monthly Spending Flow Trends calculated from user documents
+  const monthlyTrends = useMemo(() => {
+    const now = new Date();
+    const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+    const quarterLabel = `Q${currentQuarter} ${now.getFullYear()}`;
+
+    const months = [];
+    for (let i = 3; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const monthNum = d.getMonth();
+      const prefix = `${year}-${String(monthNum + 1).padStart(2, '0')}`;
+      const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+      const label = `${monthName} ${year}`;
+
+      const monthDocs = documents.filter((doc) => doc.date && String(doc.date).startsWith(prefix));
+      const monthTotal = monthDocs.reduce((sum, doc) => sum + (Number(doc.total) || 0), 0);
+
+      months.push({
+        label,
+        monthName,
+        year,
+        prefix,
+        total: monthTotal,
+        count: monthDocs.length,
+      });
+    }
+
+    const maxTotal = Math.max(...months.map((m) => m.total), 0);
+    const peakIdx = maxTotal > 0 ? months.findIndex((m) => m.total === maxTotal) : -1;
+
+    // Layout 4 points on SVG viewBox 0 0 500 200
+    const xCoords = [55, 185, 315, 445];
+    const points = months.map((m, idx) => {
+      const x = xCoords[idx];
+      const y = maxTotal > 0 ? Math.round(165 - (m.total / maxTotal) * 120) : 165;
+      return { x, y, ...m };
+    });
+
+    const pathD = `M ${points[0].x} ${points[0].y} C ${points[0].x + 45} ${points[0].y}, ${points[1].x - 45} ${points[1].y}, ${points[1].x} ${points[1].y} C ${points[1].x + 45} ${points[1].y}, ${points[2].x - 45} ${points[2].y}, ${points[2].x} ${points[2].y} C ${points[2].x + 45} ${points[2].y}, ${points[3].x - 45} ${points[3].y}, ${points[3].x} ${points[3].y}`;
+    const areaD = `${pathD} L ${points[3].x} 195 L ${points[0].x} 195 Z`;
+
+    return {
+      months,
+      points,
+      pathD,
+      areaD,
+      maxTotal,
+      quarterLabel,
+      peakIdx,
+    };
+  }, [documents]);
 
   // Category breakdown for chart
   const categoryTotals = filteredDocuments.reduce((acc, doc) => {
@@ -424,9 +501,9 @@ export const DashboardView = () => {
           </div>
         </div>
 
-        {/* 14-Day Visual Expenses SVG Chart with Y-Axis */}
+        {/* 14-Day Visual Expenses SVG Chart with Dynamic Y-Axis */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', height: '180px', width: '100%' }}>
-          {/* Y-Axis Labels */}
+          {/* Dynamic Y-Axis Labels */}
           <div
             style={{
               display: 'flex',
@@ -434,19 +511,17 @@ export const DashboardView = () => {
               justifyContent: 'space-between',
               height: '140px',
               paddingBottom: '24px',
-              fontSize: '0.74rem',
-              color: isLight ? '#94a3b8' : '#64748b',
+              fontSize: '0.72rem',
+              color: isLight ? '#64748b' : '#94a3b8',
               fontWeight: 600,
               textAlign: 'right',
               userSelect: 'none',
-              minWidth: '28px',
+              minWidth: '40px',
             }}
           >
-            <span>₱4K</span>
-            <span>₱3K</span>
-            <span>₱2K</span>
-            <span>₱1K</span>
-            <span>0</span>
+            {yAxisSteps.map((stepVal, idx) => (
+              <span key={idx}>{formatCompact(stepVal)}</span>
+            ))}
           </div>
 
           {/* Bar Columns Container */}
@@ -463,8 +538,11 @@ export const DashboardView = () => {
             }}
           >
             {dailyHistory.map((item, idx) => {
-              const heightPct = Math.max(Math.min((item.total / maxDailyExpense) * 100, 100), 4);
               const hasData = item.total > 0;
+              const heightPct = hasData
+                ? Math.max(Math.min((item.total / maxDailyExpense) * 100, 100), 10)
+                : 4;
+              const isHovered = hoveredDayIdx === idx;
 
               return (
                 <div
@@ -477,9 +555,46 @@ export const DashboardView = () => {
                     height: '100%',
                     flex: 1,
                     gap: '6px',
+                    position: 'relative',
                   }}
-                  title={`${item.dateStr}: ${formatCurrency(item.total)}`}
+                  onMouseEnter={() => setHoveredDayIdx(idx)}
+                  onMouseLeave={() => setHoveredDayIdx(null)}
                 >
+                  {/* Floating Interactive Tooltip */}
+                  {isHovered && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 8px)',
+                        background: isLight ? 'rgba(15, 23, 42, 0.94)' : 'rgba(15, 23, 42, 0.96)',
+                        color: '#ffffff',
+                        padding: '6px 12px',
+                        borderRadius: '10px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+                        border: '1px solid rgba(0, 242, 254, 0.45)',
+                        zIndex: 35,
+                        pointerEvents: 'none',
+                        textAlign: 'center',
+                        backdropFilter: 'blur(8px)',
+                      }}
+                    >
+                      <div style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.68rem', marginBottom: '2px' }}>
+                        {item.formattedDate}
+                      </div>
+                      <div style={{ color: hasData ? '#00f2fe' : '#ffffff', fontWeight: 700, fontSize: '0.78rem' }}>
+                        {hasData ? formatCurrency(item.total) : 'Walang expenses'}
+                      </div>
+                      {hasData && (
+                        <div style={{ fontSize: '0.66rem', color: '#38bdf8', marginTop: '1px' }}>
+                          {item.count} {item.count === 1 ? 'receipt' : 'receipts'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div
                     style={{
                       width: '100%',
@@ -488,16 +603,25 @@ export const DashboardView = () => {
                       minHeight: '6px',
                       borderRadius: '4px 4px 0 0',
                       background: hasData
-                        ? (isLight ? 'linear-gradient(180deg, #0284c7, #38bdf8)' : 'linear-gradient(180deg, #00f2fe, #0284c7)')
+                        ? (isLight
+                            ? 'linear-gradient(180deg, #0284c7, #38bdf8)'
+                            : 'linear-gradient(180deg, #00f2fe, #0284c7)')
                         : (isLight ? 'rgba(203, 213, 225, 0.4)' : 'rgba(255, 255, 255, 0.08)'),
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
+                      boxShadow: hasData
+                        ? (isHovered ? '0 0 16px rgba(0, 242, 254, 0.7)' : '0 0 8px rgba(0, 242, 254, 0.25)')
+                        : 'none',
+                      transform: isHovered && hasData ? 'scaleY(1.05)' : 'none',
+                      transformOrigin: 'bottom',
+                      transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      cursor: hasData ? 'pointer' : 'default',
                     }}
                   />
                   <span
                     style={{
                       fontSize: '0.65rem',
-                      color: hasData ? (isLight ? '#0284c7' : '#00f2fe') : (isLight ? '#94a3b8' : '#64748b'),
+                      color: hasData
+                        ? (isLight ? '#0284c7' : '#00f2fe')
+                        : (isLight ? '#94a3b8' : '#64748b'),
                       fontWeight: hasData ? 700 : 500,
                     }}
                   >
@@ -520,16 +644,16 @@ export const DashboardView = () => {
           marginBottom: '28px',
         }}
       >
-        {/* Spending Flow Curve (SVG Canvas) */}
+        {/* Dynamic Spending Flow Curve (SVG Canvas) */}
         <div className="glass-panel" style={{ padding: '26px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard.spendingTrend}</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard?.spendingTrend || 'Expense Flow Trends'}</h3>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                {t.dashboard.spendingSubtitle}
+                {t.dashboard?.spendingSubtitle || 'Monthly expense activity and cash flow breakdown'}
               </span>
             </div>
-            <span className="liquid-badge liquid-badge-cyan">Q3 2026</span>
+            <span className="liquid-badge liquid-badge-cyan">{monthlyTrends.quarterLabel}</span>
           </div>
 
           {/* Dynamic SVG Area Curve */}
@@ -537,74 +661,146 @@ export const DashboardView = () => {
             <svg viewBox="0 0 500 200" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
               <defs>
                 <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.22" />
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
                   <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
               {/* Grid Lines */}
-              <line x1="0" y1="50" x2="500" y2="50" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
-              <line x1="0" y1="100" x2="500" y2="100" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
-              <line x1="0" y1="150" x2="500" y2="150" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
+              <line x1="40" y1="50" x2="460" y2="50" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
+              <line x1="40" y1="100" x2="460" y2="100" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
+              <line x1="40" y1="150" x2="460" y2="150" stroke="var(--chart-grid, rgba(255,255,255,0.06))" strokeDasharray="3 3" />
 
               {/* Filled Area */}
               <path
-                d="M 0 170 Q 70 120 125 140 T 250 80 T 375 110 T 500 45 L 500 200 L 0 200 Z"
+                d={monthlyTrends.areaD}
                 fill="url(#areaGrad)"
+                style={{ transition: 'all 0.5s ease' }}
               />
 
               {/* Clean Line */}
               <path
-                d="M 0 170 Q 70 120 125 140 T 250 80 T 375 110 T 500 45"
+                d={monthlyTrends.pathD}
                 fill="none"
                 stroke="#38bdf8"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                style={{ filter: 'drop-shadow(0 2px 8px rgba(56, 189, 248, 0.45))' }}
               />
 
-              {/* Data Points */}
-              <circle cx="125" cy="140" r="4" fill="var(--bg-surface, #ffffff)" stroke="#38bdf8" strokeWidth="2" />
-              <circle cx="250" cy="80" r="4" fill="var(--bg-surface, #ffffff)" stroke="#38bdf8" strokeWidth="2" />
-              <circle cx="375" cy="110" r="4" fill="var(--bg-surface, #ffffff)" stroke="#38bdf8" strokeWidth="2" />
-              <circle cx="500" cy="45" r="4.5" fill="#38bdf8" stroke="var(--bg-surface, #ffffff)" strokeWidth="1.5" />
+              {/* Real Data Points */}
+              {monthlyTrends.points.map((pt, idx) => {
+                const isHovered = hoveredMonthIdx === idx;
+                const isPeak = idx === monthlyTrends.peakIdx && monthlyTrends.maxTotal > 0;
+
+                return (
+                  <g
+                    key={idx}
+                    onMouseEnter={() => setHoveredMonthIdx(idx)}
+                    onMouseLeave={() => setHoveredMonthIdx(null)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={isHovered ? 6.5 : isPeak ? 5 : 4}
+                      fill={isPeak ? '#00f2fe' : 'var(--bg-surface, #0f172a)'}
+                      stroke="#38bdf8"
+                      strokeWidth={isPeak ? 2.5 : 2}
+                      style={{ transition: 'all 0.2s ease' }}
+                    />
+                    {isHovered && (
+                      <g>
+                        <rect
+                          x={Math.max(10, pt.x - 55)}
+                          y={Math.max(10, pt.y - 38)}
+                          width="110"
+                          height="26"
+                          rx="6"
+                          fill="rgba(15, 23, 42, 0.95)"
+                          stroke="rgba(0, 242, 254, 0.5)"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x={Math.max(10, pt.x - 55) + 55}
+                          y={Math.max(10, pt.y - 38) + 17}
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="10"
+                          fontWeight="700"
+                        >
+                          {formatCurrency(pt.total)}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
             </svg>
           </div>
 
+          {/* Dynamic Month Labels */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '14px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <span>May 2026</span>
-            <span>Jun 2026</span>
-            <span>Jul 2026</span>
-            <span>Aug 2026 ({t.dashboard.peakMonth})</span>
+            {monthlyTrends.months.map((m, idx) => {
+              const isPeak = idx === monthlyTrends.peakIdx && monthlyTrends.maxTotal > 0;
+              return (
+                <span
+                  key={idx}
+                  style={{
+                    color: isPeak ? (isLight ? '#0284c7' : '#00f2fe') : undefined,
+                    fontWeight: isPeak ? 700 : 500,
+                  }}
+                >
+                  {m.label} {isPeak ? `(${t.dashboard?.peakMonth || 'Peak'})` : ''}
+                </span>
+              );
+            })}
           </div>
         </div>
 
-        {/* Category Allocation Meter */}
+        {/* Dynamic Category Allocation Meter */}
         <div className="glass-panel" style={{ padding: '26px' }}>
           <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard.categoryBreakdown}</h3>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashboard?.categoryBreakdown || 'Category Allocation'}</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              {t.dashboard.topSegments}
+              {t.dashboard?.topSegments || 'Top spending segments'}
             </span>
           </div>
 
           {categoryEntries.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.86rem', textAlign: 'center', padding: '36px 0' }}>
-              {t.dashboard.noCategorizedExpenses}
+              {t.dashboard?.noCategorizedExpenses || 'No categorized expenses yet'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {categoryEntries.slice(0, 4).map(([cat, val], idx) => {
-                const pct = totalAmount > 0 ? Math.round((val / totalAmount) * 100) : 0;
-                const colors = ['#00f2fe', '#a855f7', '#10b981', '#f59e0b'];
+              {categoryEntries.slice(0, 5).map(([cat, val], idx) => {
+                const pct = totalAmount > 0 ? (val / totalAmount) * 100 : 0;
+                // If value exists, never show 0%; show <1% for tiny segments
+                const displayPct = val > 0 ? (pct < 1 ? '<1%' : `${Math.round(pct)}%`) : '0%';
+                // Always give a visible bar segment if value > 0
+                const barWidth = val > 0 ? Math.max(pct, 3.5) : 0;
+                const colors = ['#00f2fe', '#a855f7', '#10b981', '#f59e0b', '#ec4899'];
                 const currentColor = colors[idx % colors.length];
 
                 return (
                   <div key={cat}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
-                      <span style={{ fontWeight: 600 }}>{t.categories[cat] || cat}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                        {formatCurrency(val)} ({pct}%)
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: currentColor,
+                            boxShadow: `0 0 8px ${currentColor}80`,
+                            display: 'inline-block',
+                          }}
+                        />
+                        <span style={{ fontWeight: 600 }}>{t.categories?.[cat] || cat}</span>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                        {formatCurrency(val)} ({displayPct})
                       </span>
                     </div>
                     <div
@@ -618,11 +814,12 @@ export const DashboardView = () => {
                     >
                       <div
                         style={{
-                          width: `${pct}%`,
+                          width: `${barWidth}%`,
                           height: '100%',
                           background: currentColor,
                           borderRadius: '999px',
-                          transition: 'width 0.6s ease',
+                          boxShadow: `0 0 10px ${currentColor}55`,
+                          transition: 'width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
                         }}
                       />
                     </div>
