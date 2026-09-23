@@ -5,10 +5,12 @@ export const TiltCard = ({ children, className = '', style = {}, maxRotation = 3
   const cardRef = useRef(null);
   const [transform, setTransform] = useState('');
   const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const { settings } = useApp();
 
   const handleMouseMove = (e) => {
     if (!settings.enable3DTilt || !cardRef.current) return;
+    setIsHovered(true);
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -28,6 +30,7 @@ export const TiltCard = ({ children, className = '', style = {}, maxRotation = 3
   };
 
   const handleMouseLeave = () => {
+    setIsHovered(false);
     setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)');
     setGlare((prev) => ({ ...prev, opacity: 0 }));
   };
@@ -42,7 +45,9 @@ export const TiltCard = ({ children, className = '', style = {}, maxRotation = 3
       style={{
         ...style,
         transform: settings.enable3DTilt ? transform : 'none',
-        transition: 'transform 0.15s ease-out, box-shadow 0.2s ease',
+        transition: isHovered
+          ? 'transform 0.12s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.25s ease'
+          : 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
         position: 'relative',
       }}
     >

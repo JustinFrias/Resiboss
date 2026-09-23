@@ -253,7 +253,7 @@ export const DashboardView = () => {
 
           {isFilterOpen && (
             <div
-              className="glass-panel"
+              className="glass-panel liquid-popover-enter"
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
@@ -263,7 +263,7 @@ export const DashboardView = () => {
                 border: isLight ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.16)',
                 borderRadius: '14px',
                 padding: '6px',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
                 minWidth: '150px',
               }}
             >
@@ -579,6 +579,7 @@ export const DashboardView = () => {
                         pointerEvents: 'none',
                         textAlign: 'center',
                         backdropFilter: 'blur(8px)',
+                        animation: 'tooltipFloat 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                       }}
                     >
                       <div style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.68rem', marginBottom: '2px' }}>
@@ -610,9 +611,10 @@ export const DashboardView = () => {
                       boxShadow: hasData
                         ? (isHovered ? '0 0 16px rgba(0, 242, 254, 0.7)' : '0 0 8px rgba(0, 242, 254, 0.25)')
                         : 'none',
-                      transform: isHovered && hasData ? 'scaleY(1.05)' : 'none',
+                      transform: isHovered && hasData ? 'scaleY(1.06) translateY(-2px)' : 'none',
                       transformOrigin: 'bottom',
-                      transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      transition: 'height 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease',
+                      animation: `barRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 25}ms both`,
                       cursor: hasData ? 'pointer' : 'default',
                     }}
                   />
@@ -675,7 +677,7 @@ export const DashboardView = () => {
               <path
                 d={monthlyTrends.areaD}
                 fill="url(#areaGrad)"
-                style={{ transition: 'all 0.5s ease' }}
+                style={{ transition: 'd 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease' }}
               />
 
               {/* Clean Line */}
@@ -686,7 +688,10 @@ export const DashboardView = () => {
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                style={{ filter: 'drop-shadow(0 2px 8px rgba(56, 189, 248, 0.45))' }}
+                style={{
+                  filter: 'drop-shadow(0 2px 8px rgba(56, 189, 248, 0.45))',
+                  transition: 'd 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
               />
 
               {/* Real Data Points */}
@@ -708,10 +713,10 @@ export const DashboardView = () => {
                       fill={isPeak ? '#00f2fe' : 'var(--bg-surface, #0f172a)'}
                       stroke="#38bdf8"
                       strokeWidth={isPeak ? 2.5 : 2}
-                      style={{ transition: 'all 0.2s ease' }}
+                      style={{ transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
                     />
                     {isHovered && (
-                      <g>
+                      <g style={{ animation: 'tooltipFloat 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
                         <rect
                           x={Math.max(10, pt.x - 55)}
                           y={Math.max(10, pt.y - 38)}
@@ -819,7 +824,8 @@ export const DashboardView = () => {
                           background: currentColor,
                           borderRadius: '999px',
                           boxShadow: `0 0 10px ${currentColor}55`,
-                          transition: 'width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                          animation: `progressSlideOut 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 60}ms both`,
                         }}
                       />
                     </div>

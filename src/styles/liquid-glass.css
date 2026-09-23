@@ -457,9 +457,9 @@ html, body {
   border-radius: var(--radius-lg);
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-              box-shadow 0.3s ease,
-              border-color 0.3s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
 }
 
 .glass-panel::before {
@@ -516,7 +516,7 @@ html, body {
 }
 
 .tilt-card {
-  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
 
@@ -765,7 +765,11 @@ html, body {
   font-weight: 600;
   font-size: 0.92rem;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.2s ease,
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: left;
   position: relative;
   width: 100%;
@@ -1082,7 +1086,11 @@ html, body {
   color: var(--text-primary);
   box-shadow: var(--skeuo-btn-secondary-shadow);
   backdrop-filter: blur(16px);
-  transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.2s ease,
+              border-color 0.2s ease,
+              background 0.2s ease;
   position: relative;
   overflow: hidden;
   user-select: none;
@@ -1196,7 +1204,7 @@ input::-ms-clear {
 }
 
 .view-page {
-  animation: pageFadeIn 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pageFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
   width: 100%;
   will-change: opacity, transform;
 }
@@ -1204,11 +1212,71 @@ input::-ms-clear {
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.995);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+  }
+}
+
+/* Silky 3D Modals and Zoom Overlays Entrance */
+@keyframes pageFade3D {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Silky Floating Popovers & Dropdowns */
+@keyframes popoverFloat {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.liquid-popover-enter {
+  animation: popoverFloat 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top left;
+}
+
+/* Silky Hover Tooltip */
+@keyframes tooltipFloat {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Chart Bars Entrance */
+@keyframes barRise {
+  from {
+    transform: scaleY(0);
+    opacity: 0.3;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* Category Allocation Progress Bar Slide Out */
+@keyframes progressSlideOut {
+  from {
+    width: 0% !important;
   }
 }
 
