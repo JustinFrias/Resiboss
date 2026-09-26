@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { TiltCard } from '../components';
 import {
-  FolderArchive,
   Search,
-  Filter,
   Eye,
   Trash2,
   Receipt,
@@ -12,8 +9,6 @@ import {
   Calendar,
   Grid,
   List,
-  Sparkles,
-  ShieldCheck,
   CheckCircle2,
   Clock,
   Download,
@@ -22,41 +17,83 @@ import {
   Square,
   CloudOff,
   AlertCircle,
+  X,
+  ScanLine,
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 import { downloadReceiptsExcel } from '../utils/fileDownloader';
 import confetti from 'canvas-confetti';
 
+const CATEGORY_COLORS = {
+  Food: '#f59e0b', Groceries: '#10b981', Shopping: '#8b5cf6',
+  Transportation: '#3b82f6', Health: '#ef4444', Entertainment: '#ec4899',
+  Utilities: '#06b6d4', Education: '#6366f1', Other: '#94a3b8',
+};
+const getCatColor = (cat) => CATEGORY_COLORS[cat] || '#94a3b8';
+
+const CATEGORIES = ['Food', 'Groceries', 'Shopping', 'Transportation', 'Health', 'Entertainment', 'Utilities', 'Education', 'Other'];
+
 export const DocumentsView = () => {
-  const { documents, setInspectingDoc, deleteDocument, formatCurrency, t, theme, triggerManualSync } = useApp();
+  const { documents, setActiveTab, setInspectingDoc, deleteDocument, formatCurrency, t, theme, triggerManualSync } = useApp();
   const isLight = theme === 'light';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [selectedStatus, setSelectedStatus] = useState('ALL');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadNotice, setDownloadNotice] = useState(null);
   const [selectedDocIds, setSelectedDocIds] = useState([]);
+  const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, amount-desc
+  const [dateFilter, setDateFilter] = useState('ALL'); // ALL, THIS_MONTH, 30_DAYS, THIS_YEAR
 
-  // Filtering
-  const filteredDocs = documents.filter((doc) => {
+  const filteredDocs = useMemo(() => {
+    let result = [...documents];
+
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      (doc.merchant && doc.merchant.toLowerCase().includes(q)) ||
-      (doc.tin && doc.tin.includes(q)) ||
-      (doc.receiptNumber && doc.receiptNumber.toLowerCase().includes(q)) ||
-      (doc.invoiceNumber && doc.invoiceNumber.toLowerCase().includes(q)) ||
-      (doc.id && doc.id.toLowerCase().includes(q));
+    if (q) {
+      result = result.filter((doc) => {
+        const matchBasic =
+          (doc.merchant && doc.merchant.toLowerCase().includes(q)) ||
+          (doc.id && doc.id.toLowerCase().includes(q)) ||
+          (doc.date && String(doc.date).includes(q)) ||
+          (doc.category && doc.category.toLowerCase().includes(q)) ||
+          (doc.branch && doc.branch.toLowerCase().includes(q)) ||
+          (doc.receiptNumber && String(doc.receiptNumber).toLowerCase().includes(q));
 
-    const matchesCategory = selectedCategory === 'ALL' || doc.category === selectedCategory;
-    const matchesStatus = selectedStatus === 'ALL' || doc.status === selectedStatus;
+        if (matchBasic) return true;
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+        if (Array.isArray(doc.items)) {
+          return doc.items.some((it) => it?.name && it.name.toLowerCase().includes(q));
+        }
+        return false;
+      });
+    }
 
-  // Receipt Selection Handlers
+    if (selectedCategory !== 'ALL') {
+      result = result.filter((d) => d.category === selectedCategory);
+    }
+
+    if (dateFilter !== 'ALL') {
+      const now = new Date();
+      if (dateFilter === 'THIS_MONTH') {
+        const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        result = result.filter((d) => d.date && String(d.date).startsWith(currentYM));
+      } else if (dateFilter === '30_DAYS') {
+        const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        result = result.filter((d) => d.date && new Date(d.date) >= past30);
+      } else if (dateFilter === 'THIS_YEAR') {
+        const currentY = String(now.getFullYear());
+        result = result.filter((d) => d.date && String(d.date).startsWith(currentY));
+      }
+    }
+
+    if (sortBy === 'date-desc') result.sort((a, b) => new Date(b.date) - new Date(a.date));
+    else if (sortBy === 'date-asc') result.sort((a, b) => new Date(a.date) - new Date(b.date));
+    else if (sortBy === 'amount-desc') result.sort((a, b) => (b.total || 0) - (a.total || 0));
+
+    return result;
+  }, [documents, searchQuery, selectedCategory, sortBy, dateFilter]);
+
   const handleToggleDoc = (docId, e) => {
     e?.stopPropagation?.();
     soundFx?.playClick?.();
@@ -80,619 +117,395 @@ export const DocumentsView = () => {
         ? filteredDocs.filter((d) => selectedDocIds.includes(d.id))
         : filteredDocs;
 
-    if (docsToDownload.length === 0) {
-      alert('No receipts selected or available to download.');
-      return;
-    }
-
+    if (docsToDownload.length === 0) return;
     setIsDownloading(true);
     soundFx?.playLaserHum?.();
     try {
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `Resiboss_Receipts_${timestamp}.xlsx`;
-      const res = await downloadReceiptsExcel(docsToDownload, filename);
+      await downloadReceiptsExcel(docsToDownload, `Resiboss_Receipts_${timestamp}.xlsx`);
       soundFx?.playSuccessChime?.();
-      try {
-        confetti({
-          particleCount: 70,
-          spread: 75,
-          origin: { y: 0.65 },
-          colors: ['#00f2fe', '#3b82f6', '#10b981', '#ffffff'],
-        });
-      } catch (e) {}
-
-      const msg = res?.savedToDownloads
-        ? `Saved ${docsToDownload.length} receipt${docsToDownload.length > 1 ? 's' : ''} to Downloads!`
-        : `Downloaded ${docsToDownload.length} receipt${docsToDownload.length > 1 ? 's' : ''}!`;
-      setDownloadNotice(msg);
-      setTimeout(() => setDownloadNotice(null), 6000);
+      try { confetti({ particleCount: 60, spread: 70, origin: { y: 0.65 }, colors: ['#00f2fe', '#10b981', '#ffffff'] }); } catch (e) {}
+      setDownloadNotice(`Downloaded ${docsToDownload.length} receipt${docsToDownload.length > 1 ? 's' : ''}`);
+      setTimeout(() => setDownloadNotice(null), 5000);
     } catch (err) {
-      console.error('Download error:', err);
-      alert('Download failed. Please check device permissions and try again.');
+      alert('Download failed. Please try again.');
     } finally {
       setIsDownloading(false);
     }
   };
 
+  const totalSpend = filteredDocs.reduce((s, d) => s + (Number(d.total) || 0), 0);
+
   return (
-    <div className="" style={{ width: '100%', padding: '0 0 40px 0' }}>
-      {/* Title Header with Combined Controls at Top Right */}
-      <div
-        className="view-title-header"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          flexWrap: 'wrap',
-          gap: '16px',
-          marginBottom: '20px',
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--text-primary)', marginBottom: '4px', fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>
-            {t.documents.auditVaultTitle}
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
-            {t.documents.subtitle}
-          </p>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', paddingBottom: 100 }}>
 
-        {/* Combined Controls: Download + Categories + Status + View Toggle */}
-        <div
-          className="documents-top-controls"
-          style={{
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          {/* Download Action Button */}
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isDownloading || filteredDocs.length === 0}
-            className="liquid-btn"
-            style={{
-              background: isLight ? '#0284c7' : 'linear-gradient(135deg, #00f2fe, #38bdf8)',
-              color: isLight ? '#ffffff' : '#000000',
-              padding: '7px 16px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '10px',
-              border: 'none',
-              cursor: isDownloading ? 'wait' : 'pointer',
-              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              opacity: filteredDocs.length === 0 ? 0.5 : 1,
-              transition: 'all 0.2s ease',
-            }}
-            title={selectedDocIds.length > 0 ? `Download ${selectedDocIds.length} selected receipts` : "Download all receipts as Excel report"}
-          >
-            <Download size={15} />
-            <span>
-              {isDownloading
-                ? 'Downloading...'
-                : selectedDocIds.length > 0
-                ? `Download (${selectedDocIds.length})`
-                : 'Download'}
-            </span>
-          </button>
-
-          {/* Category Filter */}
-          <select
-            className="liquid-input"
-            style={{ width: 'auto', minWidth: '130px', cursor: 'pointer' }}
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="ALL" style={{ background: '#0a0a0a', color: '#fff' }}>
-              {t.documents.allCategories}
-            </option>
-            {Object.keys(t.categories).map((cat) => (
-              <option key={cat} value={cat} style={{ background: '#0a0a0a', color: '#fff' }}>
-                {t.categories[cat]}
-              </option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            className="liquid-input"
-            style={{ width: 'auto', minWidth: '120px', cursor: 'pointer' }}
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-          >
-            <option value="ALL" style={{ background: '#0a0a0a', color: '#fff' }}>
-              {t.documents.allStatus}
-            </option>
-            <option value="Verified" style={{ background: '#0a0a0a', color: '#fff' }}>
-              {t.dashboard.verified}
-            </option>
-            <option value="Pending" style={{ background: '#0a0a0a', color: '#fff' }}>
-              {t.dashboard.pending}
-            </option>
-          </select>
-
-          {/* View Mode Toggle */}
-          <div
-            style={{
-              display: 'flex',
-              background: isLight ? 'rgba(241, 245, 249, 0.8)' : 'rgba(14, 14, 14, 0.8)',
-              padding: '3px',
-              borderRadius: '10px',
-              border: '1px solid var(--glass-border)',
-            }}
-          >
-            <button
-              onClick={() => setViewMode('grid')}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '7px',
-                border: 'none',
-                background: viewMode === 'grid' ? 'rgba(0, 242, 254, 0.2)' : 'transparent',
-                color: viewMode === 'grid' ? '#00f2fe' : 'var(--text-secondary)',
-                cursor: 'pointer',
-              }}
-              title="Grid View"
-            >
-              <Grid size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '7px',
-                border: 'none',
-                background: viewMode === 'table' ? 'rgba(0, 242, 254, 0.2)' : 'transparent',
-                color: viewMode === 'table' ? '#00f2fe' : 'var(--text-secondary)',
-                cursor: 'pointer',
-              }}
-              title="Table View"
-            >
-              <List size={16} />
-            </button>
-          </div>
-        </div>
+      {/* ── PAGE HEADER ── */}
+      <div className="rb-page-header">
+        <h1 className="rb-page-title">My Receipts</h1>
+        <p className="rb-page-subtitle">
+          {documents.length === 0
+            ? 'Scan a receipt to start tracking your spending.'
+            : `${documents.length} receipt${documents.length !== 1 ? 's' : ''} saved · Total ${formatCurrency(documents.reduce((s, d) => s + (Number(d.total) || 0), 0))}`}
+        </p>
       </div>
 
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* Download Status Notification */}
-      {downloadNotice && (
-        <div
-          style={{
-            marginBottom: '16px',
-            padding: '10px 16px',
-            borderRadius: '12px',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            color: '#10b981',
-            fontSize: '0.88rem',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <CheckCircle2 size={16} />
-          <span>{downloadNotice}</span>
-        </div>
-      )}
-
-      {/* Standalone Search Bar + Selection Controls */}
-      <div
-        className="glass-panel resiboss-search-panel"
-        style={{
-          padding: '12px 18px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderRadius: '20px',
-          gap: '12px',
-          flexWrap: 'wrap',
-        }}
-      >
-        {/* Search Input */}
-        <div style={{ position: 'relative', width: '100%', maxWidth: '340px' }}>
-          <Search
-            size={17}
-            strokeWidth={2}
-            className="resiboss-search-icon"
-            style={{
-              position: 'absolute',
-              left: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              zIndex: 2,
-            }}
-          />
-          <input
-            className="resiboss-search-input"
-            type="text"
-            placeholder={t.documents?.searchPlaceholder || "Search vendor, doc number..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              style={{
-                position: 'absolute',
-                right: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--text-muted)',
-                fontSize: '14px',
-                lineHeight: 1,
-                padding: '4px',
-              }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        {/* Selection / Select All Controls */}
-        {filteredDocs.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={handleToggleSelectAll}
-              className="liquid-btn liquid-btn-secondary"
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                borderRadius: '8px',
-              }}
-            >
-              {selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? (
-                <>
-                  <CheckSquare size={15} color="var(--cyan-glow)" />
-                  <span>Deselect All</span>
-                </>
-              ) : (
-                <>
-                  <Square size={15} color="var(--text-muted)" />
-                  <span>Select All ({filteredDocs.length})</span>
-                </>
-              )}
-            </button>
+        {/* ── DOWNLOAD NOTICE ── */}
+        {downloadNotice && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 14px', borderRadius: 12,
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            fontSize: 13, fontWeight: 600, color: 'var(--emerald-glow)',
+            animation: 'rb-fade-up 0.2s ease',
+          }}>
+            <CheckCircle2 size={15} />
+            {downloadNotice}
           </div>
         )}
-      </div>
 
-      {/* Content Rendering: Grid vs Table */}
-      {filteredDocs.length === 0 ? (
-        <div
-          className="glass-panel"
-          style={{
-            padding: '60px 20px',
-            textAlign: 'center',
-            color: 'var(--text-muted)',
-          }}
-        >
-          <Receipt size={48} color="#00f2fe" style={{ opacity: 0.4, margin: '0 auto 16px auto' }} />
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '6px' }}>
-            {t.documents.noDocs}
-          </h3>
-          <p style={{ fontSize: '0.88rem' }}>Try clearing filters or scanning a new receipt.</p>
+        {/* ── SEARCH + SORT ── */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="rb-search-wrap" style={{ flex: 1 }}>
+            <Search size={15} className="rb-search-icon" />
+            <input
+              className="rb-search-input"
+              type="text"
+              placeholder="Search by store, date, ID…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center',
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <select
+            value={sortBy}
+            onChange={(e) => { soundFx?.playClick?.(); setSortBy(e.target.value); }}
+            style={{
+              background: 'var(--bg-surface)', border: '1px solid var(--glass-border)',
+              borderRadius: 10, color: 'var(--text-secondary)', padding: '9px 12px',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            <option value="date-desc">Newest</option>
+            <option value="date-asc">Oldest</option>
+            <option value="amount-desc">Highest</option>
+          </select>
+
+          {/* View toggle */}
+          <div style={{ display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: 3 }}>
+            {[{ m: 'list', icon: List }, { m: 'grid', icon: Grid }].map(({ m, icon: Icon }) => (
+              <button key={m} onClick={() => { soundFx?.playClick?.(); setViewMode(m); }}
+                style={{
+                  padding: '6px 9px', borderRadius: 7, border: 'none', cursor: 'pointer',
+                  background: viewMode === m ? 'var(--cyan-subtle)' : 'transparent',
+                  color: viewMode === m ? 'var(--cyan-glow)' : 'var(--text-muted)',
+                  transition: 'all 0.15s ease',
+                }}>
+                <Icon size={15} />
+              </button>
+            ))}
+          </div>
         </div>
-      ) : viewMode === 'grid' ? (
-        <div
-          className="documents-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
-            gap: '20px',
-          }}
-        >
-          {filteredDocs.map((doc) => {
-            const isChecked = selectedDocIds.includes(doc.id);
+
+        {/* ── CATEGORY FILTER PILLS ── */}
+        <div className="rb-filter-tabs">
+          {['ALL', ...CATEGORIES].map((cat) => {
+            const count = cat === 'ALL' ? documents.length : documents.filter(d => d.category === cat).length;
+            if (cat !== 'ALL' && count === 0) return null;
             return (
-              <TiltCard key={doc.id}>
-                <div
-                  className="glass-panel"
-                  style={{
-                    padding: '22px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                    border: isChecked
-                      ? (isLight ? '2px solid #0284c7' : '2px solid var(--cyan-glow)')
-                      : '1px solid var(--glass-border)',
-                    background: isChecked
-                      ? (isLight ? 'rgba(2, 132, 199, 0.05)' : 'rgba(0, 242, 254, 0.06)')
-                      : undefined,
-                    transition: 'all 0.2s ease',
-                    boxShadow: isChecked
-                      ? (isLight ? '0 4px 20px rgba(2, 132, 199, 0.18)' : '0 4px 20px rgba(0, 242, 254, 0.22)')
-                      : undefined,
-                  }}
-                >
-                  <div>
-                    {/* Top Header: Selection Checkbox + Category + Status Badges */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleDoc(doc.id, e)}
-                          style={{
-                            background: isChecked ? 'var(--cyan-glow)' : 'rgba(255, 255, 255, 0.08)',
-                            border: isChecked ? 'none' : '1.5px solid var(--glass-border-bright)',
-                            borderRadius: '6px',
-                            width: '22px',
-                            height: '22px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            padding: 0,
-                            transition: 'all 0.15s ease',
-                          }}
-                          title={isChecked ? 'Deselect receipt' : 'Select receipt for download'}
-                        >
-                          {isChecked && <Check size={13} color="#000000" strokeWidth={3} />}
-                        </button>
-                        <span className="liquid-badge liquid-badge-cyan" style={{ fontSize: '0.7rem' }}>
-                          <Tag size={11} /> {t.categories[doc.category] || doc.category}
-                        </span>
-                      </div>
+              <button key={cat}
+                className={`rb-filter-tab${selectedCategory === cat ? ' active' : ''}`}
+                onClick={() => { soundFx?.playClick?.(); setSelectedCategory(cat); }}
+              >
+                {cat === 'ALL' ? 'All' : cat}
+                <span style={{ opacity: 0.7, fontSize: 10 }}>·{count}</span>
+              </button>
+            );
+          })}
+        </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {/* ── DATE RANGE FILTER PILLS ── */}
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+          {[
+            { id: 'ALL', label: 'All Dates' },
+            { id: 'THIS_MONTH', label: 'This Month' },
+            { id: '30_DAYS', label: 'Last 30 Days' },
+            { id: 'THIS_YEAR', label: 'This Year' },
+          ].map((df) => (
+            <button
+              key={df.id}
+              onClick={() => { soundFx?.playClick?.(); setDateFilter(df.id); }}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '8px',
+                fontSize: 11,
+                fontWeight: 600,
+                border: '1px solid',
+                borderColor: dateFilter === df.id ? 'var(--cyan-glow)' : 'var(--glass-border)',
+                background: dateFilter === df.id ? 'var(--cyan-subtle)' : 'transparent',
+                color: dateFilter === df.id ? 'var(--cyan-glow)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {df.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── SELECTION TOOLBAR (visible when items selected) ── */}
+        {selectedDocIds.length > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 14px', borderRadius: 12,
+            background: 'var(--cyan-subtle)',
+            border: '1px solid rgba(0, 242, 254, 0.2)',
+            animation: 'rb-fade-in 0.15s ease',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={handleToggleSelectAll} className="rb-btn rb-btn-ghost rb-btn-sm" style={{ color: 'var(--cyan-glow)', padding: '4px 8px' }}>
+                {selectedDocIds.length === filteredDocs.length ? <CheckSquare size={14} /> : <Square size={14} />}
+              </button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                {selectedDocIds.length} selected
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={handleDownload} disabled={isDownloading} className="rb-btn rb-btn-primary rb-btn-sm">
+                <Download size={13} />
+                {isDownloading ? 'Downloading…' : 'Export'}
+              </button>
+              <button onClick={() => setSelectedDocIds([])} className="rb-btn rb-btn-ghost rb-btn-sm">
+                <X size={13} /> Clear
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── RESULTS SUMMARY ── */}
+        {filteredDocs.length > 0 && (searchQuery || selectedCategory !== 'ALL') && (
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
+            {filteredDocs.length} result{filteredDocs.length !== 1 ? 's' : ''} · {formatCurrency(totalSpend)}
+          </div>
+        )}
+
+        {/* ── EMPTY STATE ── */}
+        {documents.length === 0 ? (
+          <div className="rb-empty" style={{ marginTop: 24 }}>
+            <div className="rb-empty-icon">🧾</div>
+            <div className="rb-empty-title">No receipts yet</div>
+            <p className="rb-empty-body">
+              Scan your first receipt and Resiboss will organize your spending automatically.
+            </p>
+            <button onClick={() => { soundFx?.playClick?.(); setActiveTab('scanner'); }} className="rb-btn rb-btn-primary" style={{ marginTop: 8 }}>
+              <ScanLine size={16} /> Scan a Receipt
+            </button>
+          </div>
+        ) : filteredDocs.length === 0 ? (
+          <div className="rb-empty">
+            <div className="rb-empty-icon">🔍</div>
+            <div className="rb-empty-title">No results found</div>
+            <p className="rb-empty-body">Try a different search or clear the filters.</p>
+            <button onClick={() => { setSearchQuery(''); setSelectedCategory('ALL'); }} className="rb-btn rb-btn-secondary" style={{ marginTop: 8 }}>
+              Clear filters
+            </button>
+          </div>
+        ) : viewMode === 'list' ? (
+          /* ── LIST VIEW ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {filteredDocs.map((doc, i) => {
+              const isChecked = selectedDocIds.includes(doc.id);
+              const catColor = getCatColor(doc.category);
+              return (
+                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, animation: `rb-fade-up 0.25s ease ${i * 0.03}s both` }}>
+                  {/* Checkbox */}
+                  <button
+                    onClick={(e) => handleToggleDoc(doc.id, e)}
+                    style={{
+                      width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                      border: isChecked ? 'none' : '1.5px solid var(--glass-border)',
+                      background: isChecked ? 'var(--cyan-glow)' : 'transparent',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    {isChecked && <Check size={12} color="#000" strokeWidth={3} />}
+                  </button>
+
+                  {/* Main card */}
+                  <button
+                    className="rb-receipt-card"
+                    onClick={() => { soundFx?.playClick?.(); setInspectingDoc(doc); }}
+                    style={{
+                      flex: 1,
+                      borderColor: isChecked ? 'var(--cyan-glow)' : undefined,
+                    }}
+                  >
+                    <div className="rb-receipt-card-icon">
+                      <Receipt size={17} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="rb-receipt-card-merchant">{doc.merchant}</div>
+                      <div className="rb-receipt-card-meta">
+                        <Calendar size={11} />
+                        {doc.date}
+                        <span style={{ color: catColor, fontWeight: 700 }}>{doc.category}</span>
                         {doc.syncStatus === 'pending' && (
-                          <span
-                            className="liquid-badge liquid-badge-amber"
-                            style={{ fontSize: '0.68rem', gap: '4px' }}
-                            title="Stored offline — will automatically sync to cloud when connected"
-                          >
-                            <CloudOff size={10} /> Queued
-                          </span>
+                          <span title="Queued offline"><CloudOff size={11} color="#f59e0b" /></span>
                         )}
-                        {doc.syncStatus === 'failed' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              triggerManualSync?.();
-                            }}
-                            className="liquid-badge liquid-badge-rose"
-                            style={{ fontSize: '0.68rem', gap: '4px', cursor: 'pointer', border: 'none' }}
-                            title="Sync failed. Click to retry syncing."
-                          >
-                            <AlertCircle size={10} /> Retry Sync
-                          </button>
+                        {doc.status === 'Verified' && (
+                          <span title="Verified"><CheckCircle2 size={11} color="var(--emerald-glow)" /></span>
                         )}
-                        <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ fontSize: '0.7rem' }}>
-                          {doc.status === 'Verified' ? <CheckCircle2 size={11} /> : <Clock size={11} />}
-                          {doc.status}
-                        </span>
                       </div>
                     </div>
-
-                    {/* Merchant & Info */}
-                    <h3
-                      style={{
-                        fontSize: '1.12rem',
-                        fontWeight: 700,
-                        color: 'var(--text-primary)',
-                        marginBottom: '6px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {doc.merchant}
-                    </h3>
-
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                      TIN: {doc.tin || 'Not Detected'} • {doc.date}
-                    </div>
-
-                    {/* Items summary */}
-                    <div
-                      style={{
-                        background: 'var(--bg-surface)',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--glass-border)',
-                        marginBottom: '16px',
-                        fontSize: '0.75rem',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {(doc.items || []).slice(0, 2).map((it, idx) => {
-                        const qty = typeof it?.qty === 'number' ? it.qty : (parseInt(it?.qty ?? it?.quantity, 10) || 1);
-                        const name = it?.name || it?.description || 'Item';
-                        const rawTot = it?.total ?? it?.amount ?? ((Number(it?.price ?? it?.unitPrice ?? 0)) * qty);
-                        const num = typeof rawTot === 'number' ? rawTot : (parseFloat(rawTot) || 0);
-                        const safeTotal = Number.isFinite(num) ? num.toFixed(2) : '0.00';
-                        return (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                            <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {qty}x {name}
-                            </span>
-                            <span style={{ fontFamily: 'var(--font-mono)' }}>₱{safeTotal}</span>
-                          </div>
-                        );
-                      })}
-                      {(doc.items || []).length > 2 && (
-                        <div style={{ color: 'var(--cyan-glow)', fontSize: '0.7rem', marginTop: '2px' }}>
-                          +{(doc.items || []).length - 2} more items
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div className="rb-receipt-card-amount">{formatCurrency(doc.total)}</div>
+                      {doc.vat > 0 && (
+                        <div style={{ fontSize: 11, color: 'var(--emerald-glow)', fontWeight: 600 }}>
+                          VAT {formatCurrency(doc.vat)}
                         </div>
                       )}
                     </div>
+                    <Eye size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                  </button>
+
+                  {/* Delete */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); soundFx?.playClick?.(); deleteDocument(doc.id); }}
+                    style={{
+                      width: 36, height: 36, borderRadius: 9, border: '1px solid var(--glass-border)',
+                      background: 'transparent', cursor: 'pointer', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--text-muted)', transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                    title="Delete receipt"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* ── GRID VIEW ── */
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
+            gap: 14,
+          }}>
+            {filteredDocs.map((doc, i) => {
+              const isChecked = selectedDocIds.includes(doc.id);
+              const catColor = getCatColor(doc.category);
+              return (
+                <div key={doc.id}
+                  className="rb-card"
+                  style={{
+                    padding: 18,
+                    borderColor: isChecked ? 'var(--cyan-glow)' : undefined,
+                    animation: `rb-scale-in 0.25s ease ${i * 0.03}s both`,
+                  }}>
+                  {/* Top row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        onClick={(e) => handleToggleDoc(doc.id, e)}
+                        style={{
+                          width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                          border: isChecked ? 'none' : '1.5px solid var(--glass-border)',
+                          background: isChecked ? 'var(--cyan-glow)' : 'transparent',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        {isChecked && <Check size={12} color="#000" strokeWidth={3} />}
+                      </button>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 6,
+                        background: 'transparent', color: catColor, border: `1px solid ${catColor}33`,
+                      }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: catColor }} />
+                        {doc.category}
+                      </span>
+                    </div>
+                    {doc.status === 'Verified'
+                      ? <CheckCircle2 size={15} color="var(--emerald-glow)" />
+                      : <Clock size={15} color="var(--amber-glow)" />}
                   </div>
 
-                  {/* Bottom Row: Amount & Action Buttons */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '14px', paddingTop: '10px', borderTop: '1px solid var(--glass-border)' }}>
-                      <div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{t.documents.totalAmount}</div>
-                        <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
-                          {formatCurrency(doc.total)}
+                  {/* Merchant */}
+                  <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {doc.merchant}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>{doc.date}</div>
+
+                  {/* Items preview */}
+                  {doc.items && doc.items.length > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.6 }}>
+                      {doc.items.slice(0, 2).map((it, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>{it.name || 'Item'}</span>
+                          <span>₱{(it.total || 0).toFixed(2)}</span>
                         </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#34d399' }}>{t.documents.vatCredit}</div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-                          {formatCurrency(doc.vat)}
-                        </div>
+                      ))}
+                      {doc.items.length > 2 && (
+                        <div style={{ color: 'var(--cyan-glow)', fontSize: 11 }}>+{doc.items.length - 2} more</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Total + Actions */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid var(--glass-border)' }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Total</div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-primary)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                        {formatCurrency(doc.total)}
                       </div>
                     </div>
-
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => setInspectingDoc(doc)}
-                        className="liquid-btn liquid-btn-primary"
-                        style={{ flex: 1, padding: '8px 12px', fontSize: '0.82rem' }}
-                      >
-                        <Eye size={14} />
-                        <span>{t.documents.inspect3D}</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => { soundFx?.playClick?.(); setInspectingDoc(doc); }} className="rb-btn rb-btn-primary rb-btn-sm">
+                        <Eye size={13} /> View
                       </button>
-                      <button
-                        onClick={() => deleteDocument(doc.id)}
-                        className="liquid-btn liquid-btn-secondary"
-                        style={{ padding: '8px 12px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.25)' }}
-                        title={t.documents.delete}
-                      >
-                        <Trash2 size={14} />
+                      <button onClick={() => { soundFx?.playClick?.(); deleteDocument(doc.id); }} className="rb-btn rb-btn-danger rb-btn-sm">
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   </div>
                 </div>
-              </TiltCard>
-            );
-          })}
-        </div>
-      ) : (
-        /* Table View */
-        <div className="glass-panel documents-table-wrap" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', padding: '12px' }}>
-          <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>
-                <th style={{ padding: '14px 16px', width: '44px' }}>
-                  <button
-                    type="button"
-                    onClick={handleToggleSelectAll}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-                    title={selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? 'Deselect all' : 'Select all'}
-                  >
-                    {selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? (
-                      <CheckSquare size={16} color="var(--cyan-glow)" />
-                    ) : (
-                      <Square size={16} color="var(--text-muted)" />
-                    )}
-                  </button>
-                </th>
-                <th style={{ padding: '14px 16px' }}>{t.documents.tableId}</th>
-                <th style={{ padding: '14px 16px' }}>{t.documents.tableMerchant}</th>
-                <th style={{ padding: '14px 16px' }}>{t.documents.tableDate}</th>
-                <th style={{ padding: '14px 16px' }}>{t.documents.tableCategory}</th>
-                <th style={{ padding: '14px 16px' }}>{t.documents.tableStatus}</th>
-                <th style={{ padding: '14px 16px' }}>{t.documents.tableVat}</th>
-                <th style={{ padding: '14px 16px', textAlign: 'right' }}>{t.documents.tableTotal}</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>{t.documents.tableActions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDocs.map((doc) => {
-                const isChecked = selectedDocIds.includes(doc.id);
-                return (
-                  <tr
-                    key={doc.id}
-                    style={{
-                      borderBottom: '1px solid var(--glass-border)',
-                      background: isChecked
-                        ? (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(0, 242, 254, 0.08)')
-                        : 'transparent',
-                      transition: 'background 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = isChecked ? (isLight ? 'rgba(2, 132, 199, 0.12)' : 'rgba(0, 242, 254, 0.12)') : 'var(--cyan-subtle)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = isChecked ? (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(0, 242, 254, 0.08)') : 'transparent')}
-                  >
-                    <td style={{ padding: '14px 16px', width: '44px' }}>
-                      <div
-                        onClick={(e) => handleToggleDoc(doc.id, e)}
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '5px',
-                          border: isChecked ? 'none' : '1.5px solid var(--glass-border-bright)',
-                          background: isChecked ? 'var(--cyan-glow)' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                        }}
-                        title={isChecked ? 'Deselect receipt' : 'Select receipt for download'}
-                      >
-                        {isChecked && <Check size={13} color="#000000" strokeWidth={3} />}
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--cyan-glow)' }}>
-                      {doc.id}
-                    </td>
-                    <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {doc.merchant}
-                    </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
-                      {doc.date}
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span className="liquid-badge liquid-badge-cyan" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
-                        {t.categories[doc.category] || doc.category}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span className={`liquid-badge ${doc.status === 'Verified' ? 'liquid-badge-emerald' : 'liquid-badge-amber'}`} style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
-                        {doc.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px', color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-                      {formatCurrency(doc.vat)}
-                    </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
-                      {formatCurrency(doc.total)}
-                    </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
-                        <button
-                          onClick={() => setInspectingDoc(doc)}
-                          className="liquid-btn liquid-btn-secondary"
-                          style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                          title="View 3D Receipt"
-                        >
-                          <Eye size={13} />
-                        </button>
-                        <button
-                          onClick={() => deleteDocument(doc.id)}
-                          className="liquid-btn liquid-btn-secondary"
-                          style={{ padding: '6px 10px', fontSize: '0.75rem', color: '#f87171' }}
-                          title="Delete Receipt"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── DOWNLOAD FAB (when items exist, no selection) ── */}
+        {filteredDocs.length > 0 && selectedDocIds.length === 0 && (
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="rb-btn rb-btn-secondary"
+            style={{ alignSelf: 'flex-start', marginTop: 8 }}
+          >
+            <Download size={14} />
+            {isDownloading ? 'Exporting…' : `Export ${filteredDocs.length} receipt${filteredDocs.length > 1 ? 's' : ''}`}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

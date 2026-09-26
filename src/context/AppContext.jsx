@@ -341,7 +341,7 @@ export const AppProvider = ({ children }) => {
   const [activeTab, setActiveTabState] = useState(() => {
     try {
       const saved = sessionStorage.getItem('resiboss_active_tab_v1') || localStorage.getItem('resiboss_active_tab_v1');
-      if (saved && ['dashboard', 'scanner', 'documents', 'analytic', 'export', 'settings'].includes(saved)) {
+      if (saved && ['dashboard', 'scanner', 'documents', 'analytic', 'insights', 'shopping', 'ask', 'export', 'settings'].includes(saved)) {
         return saved;
       }
     } catch (e) {}

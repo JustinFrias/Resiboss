@@ -20,7 +20,7 @@ export const MobileBottomNav = () => {
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
-      {/* 1. Home Tab */}
+      {/* 1. Home */}
       <button
         type="button"
         onClick={() => handleTabClick('dashboard')}
@@ -33,7 +33,7 @@ export const MobileBottomNav = () => {
         <span className="mobile-nav-label">Home</span>
       </button>
 
-      {/* 2. Scan Tab */}
+      {/* 2. Scan */}
       <button
         type="button"
         onClick={() => handleTabClick('scanner')}
@@ -46,12 +46,12 @@ export const MobileBottomNav = () => {
         <span className="mobile-nav-label">Scan</span>
       </button>
 
-      {/* 3. Docs Tab */}
+      {/* 3. Receipts */}
       <button
         type="button"
         onClick={() => handleTabClick('documents')}
         className={`mobile-nav-item ${activeTab === 'documents' ? 'active' : ''}`}
-        aria-label="Docs"
+        aria-label="Receipts"
       >
         <div className="mobile-nav-icon-wrap" style={{ position: 'relative' }}>
           <FileText size={20} />
@@ -59,23 +59,23 @@ export const MobileBottomNav = () => {
             <span className="mobile-nav-badge">{documents.length}</span>
           )}
         </div>
-        <span className="mobile-nav-label">Docs</span>
+        <span className="mobile-nav-label">Receipts</span>
       </button>
 
-      {/* 4. Stats Tab */}
+      {/* 4. Insights */}
       <button
         type="button"
-        onClick={() => handleTabClick('analytic')}
-        className={`mobile-nav-item ${activeTab === 'analytic' ? 'active' : ''}`}
-        aria-label="Stats"
+        onClick={() => handleTabClick('insights')}
+        className={`mobile-nav-item ${activeTab === 'insights' ? 'active' : ''}`}
+        aria-label="Insights"
       >
         <div className="mobile-nav-icon-wrap">
           <BarChart3 size={20} />
         </div>
-        <span className="mobile-nav-label">Stats</span>
+        <span className="mobile-nav-label">Insights</span>
       </button>
 
-      {/* 5. Settings Tab */}
+      {/* 5. Settings */}
       <button
         type="button"
         onClick={() => handleTabClick('settings')}

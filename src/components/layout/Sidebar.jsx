@@ -21,6 +21,9 @@ import {
   FileText,
   Calendar,
   Clock,
+  TrendingUp,
+  ShoppingCart,
+  MessageSquare,
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
@@ -46,8 +49,11 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
 
   const navItems = [
     { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard },
-    { id: 'scanner', label: t.nav.scanner, icon: ScanLine, highlight: true },
+    { id: 'scanner', label: t.nav.scanner || 'Scan', icon: ScanLine, highlight: true },
     { id: 'documents', label: t.nav.documents, icon: FolderArchive, badge: documents.length },
+    { id: 'insights', label: 'Insights', icon: TrendingUp },
+    { id: 'shopping', label: 'Shopping List', icon: ShoppingCart },
+    { id: 'ask', label: 'Ask Resiboss', icon: MessageSquare },
     { id: 'analytic', label: t.nav.analytic, icon: BarChart3 },
   ];
 

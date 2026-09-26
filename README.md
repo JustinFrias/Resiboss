@@ -1,11 +1,13 @@
-# Resiboss 🧾✨
+# Resiboss 2.0 🧾✨
 
-> **Next-Generation 3D Liquid Glass Receipt Scanner & Financial Intelligence**  
-> Automated OCR, intelligent VAT computation, 3D interactive inspection, and seamless Microsoft Excel (`.xlsx`) export across Web and Native Mobile.
+> **AI-Powered Personal Spending Intelligence Platform**  
+> *Scan → Understand → Store → Analyze → Learn → Predict → Act*  
+> Automated OCR, intelligent VAT computation, purchase pattern detection, item price history, smart shopping list, and natural language financial insights across Web, PWA, and Native Android.
 
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8.2-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Gemini AI](https://img.shields.io/badge/Google%20Gemini-Vision%20%26%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8.5-119EFF?style=flat-square&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
 [![Three.js](https://img.shields.io/badge/Three.js-3D%20Graphics-000000?style=flat-square&logo=three.js&logoColor=white)](https://threejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
@@ -15,72 +17,72 @@
 
 ---
 
-## 🌟 Overview
+## 🌟 What is Resiboss 2.0?
 
-**Resiboss** transforms messy paper receipts and invoices into structured, auditable financial records. Built with modern web and mobile technologies, it features an immersive **3D Liquid Glassmorphism** interface, dual OCR recognition engines (Google ML Kit (Offline) & Google Gemini Vision AI), and an automated tax engine tailored for standard VAT and expense reporting.
+**Resiboss 2.0** elevates receipt tracking from a passive archive into an **AI-driven personal spending intelligence platform**. Instead of simply digitizing receipts, Resiboss helps you understand your money:
 
----
-
-## 🚀 Key Features
-
-### 📸 Dual-Engine Receipt Scanning & OCR
-- **ML Kit (Offline):** On-device neural text recognition that works completely offline with zero server dependencies.
-- **Google Gemini Vision AI (`gemini-1.5-flash` / `gemini-2.0-flash`):** High-precision AI vision extraction with multi-model fallback for complex thermal receipts, crumpled paper, and noisy backgrounds.
-- **Smart Financial Parser:** Automatically extracts and structures:
-  - Merchant / Vendor Name
-  - Transaction Date & Time
-  - Tax Identification Number (TIN) / OR Number
-  - 12% VAT Breakdown & Vatable Subtotal
-  - Payment Method (Cash, Card, GCash, Maya, etc.)
-  - Line-by-line itemized items with quantities and unit prices
-
-### 🎮 Immersive 3D Liquid Glass UI
-- **TiltCard 3D Interactivity:** Gyroscope and cursor-reactive 3D depth tilt on cards and panels.
-- **3D Receipt Inspector (`ReceiptViewer3D`):** Full 360-degree interactive rotation, flip to examine back annotations, and zoom controls.
-- **Dynamic Haptic Sound FX:** Synthesized audio feedback for scans, laser interactions, button clicks, and celebrations.
-
-### 📊 Financial Dashboard & Audit Vault
-- **Visual Analytics:** Real-time charts showing monthly expenses, category distribution, top vendors, and VAT deductible credits.
-- **Document Audit Vault:** Search by merchant, TIN, or ID; filter by category and verification status (`Verified`, `Pending`).
-
-### 📥 Unblockable Microsoft Excel (`.xlsx`) & CSV Export
-- **Automated Excel Generation:** Creates professional, multi-sheet Excel workbooks with:
-  1. *Purchases & Expenses Journal* (monthly ledger with VAT tax columns)
-  2. *Itemized Breakdown* (line-by-line descriptions, quantities, and totals)
-- **Zero-Wait Synchronous Trigger:** Solves mobile browser popup and download blocker issues (Chrome/Safari/WebView) by triggering downloads directly inside the active user interaction tick.
-- **Android Native Save / Share Sheet:** Integrated with `@capacitor/filesystem` (Scoped Storage safe) and `@capacitor/share` for saving directly to device storage or opening in Google Sheets / Excel.
-- **One-Tap Direct Download Fallback:** Interactive in-app notification button for guaranteed one-tap downloads on any restrictive browser or in-app webview.
-
-### 🔔 Interactive Notification & Budget Threshold Engine
-- **In-App Real-Time Alerts (`InAppToast`):** Floating glassmorphism banner popups with procedural Web Audio synthesizer chimes, countdown progress bars, and one-tap navigation to affected tabs.
-- **Spending Threshold Alerts:** Automated expense budget monitor that tracks all receipts against a customizable monthly budget limit (with quick presets for ₱10k, ₱25k, ₱50k, ₱100k), live visual spending meter with color-coded progress bars (Green < 75%, Amber 75-99%, Red ≥ 100%), and automatic alerts upon budget exceedance.
-- **Email Alerts & Digest Dispatcher:** Configurable notification recipient routing with instant "Send Test Email Digest" simulation for receipt summaries and threshold breach warnings.
-- **Centralized & Persistent:** All alert preferences auto-persist in local storage and synchronize across the global `AppContext`.
-
-### 📱 Universal Mobile Support (Android APK & Apple iOS PWA)
-- **Direct Android APK Distribution:** Integrated 1-tap download for native Android APK (`resiboss.apk`) with Capacitor 8 runtime.
-- **Apple iOS PWA Ready:** Standalone web app manifest, Apple mobile web app capability, and tailored "Add to Home Screen" guidance for iPhone and iPad Safari users.
-- **Intelligent Mobile Gatekeeper (`MobileAppGatekeeper`):** Automatically detects user operating system (Android vs. iOS vs. Desktop) and presents the optimal native installation or mobile experience.
-
-### ☁️ Cloud Sync & Security
-- **Supabase Backend:** PostgreSQL storage with Row Level Security (RLS) policies.
-- **Authentication:** Google OAuth and email/password login with secure session persistence.
-- **Cross-Device Continuity:** Instant data synchronization across desktop browsers, mobile web, and the native Android app.
+* **What did I spend?** Instant mathematical breakdown of line items, VAT, and discounts.
+* **What did Resiboss notice?** Proactive detection of price changes, spending spikes, and store habits.
+* **What do I need to buy?** Intelligent purchase cycle predictions and automated shopping suggestions.
+* **How can I ask questions?** DB-first conversational AI that gives deterministic, factual financial answers with zero hallucination.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Resiboss 2.0 Key Features
+
+### 🧠 1. Spending Intelligence Engine (`spendingIntelligence.js`)
+* **Month-over-Month Delta Analysis:** Tracks spending shifts across monthly periods in clear, neutral language.
+* **Category & Store Intelligence:** Aggregates spending totals, visit frequencies, and average receipt values per vendor.
+* **Item-Level Price History:** Traces unit price evolution per item across different stores and purchase dates.
+* **Purchase Pattern Recognition:** Computes recurring intervals for products purchased $3+$ times, identifying typical cycles and overdue restocks.
+
+### 🤖 2. Ask Resiboss (`AskResibossView.jsx`)
+* **DB-First Architecture:** Financial computations are evaluated deterministically against stored records before passing to Google Gemini 2.0 Flash for natural language formatting.
+* **Controlled Query Routing:** Supports natural questions such as:
+  * *"How much did I spend this month?"*
+  * *"What is my top spending category?"*
+  * *"Which store do I visit the most?"*
+  * *"What was my most expensive purchase?"*
+* **Persistent Chat Threads:** Conversation history syncs across sessions and devices.
+
+### 🛒 3. Smart Shopping List (`ShoppingListView.jsx`)
+* **Predictive Restock Suggestions:** Automatically surfaces items due or overdue for purchase based on learned intervals.
+* **One-Tap Addition:** Add suggestions straight to your active grocery checklist.
+* **Interactive Checklist:** Inline editing, completion toggles, batch cleanup, and cloud synchronization.
+
+### 📸 4. Next-Gen Receipt Scanner (`ScannerView.jsx`)
+* **Dual-Engine Vision Pipeline:**
+  * **Google Gemini 2.0 Flash Vision:** High-precision extraction of line items, quantities, VAT, and discounts.
+  * **On-Device Fallback:** Tesseract.js and ML Kit OCR for offline capabilities.
+* **Duplicate Receipt Detection:** Identifies candidate duplicate receipts before saving based on store, date, total amount, and receipt number matches.
+* **Mathematical Consistency Check:** Cross-validates line item sums, VAT, and discounts against the extracted total due.
+* **Extended Metadata:** Captures Branch/Location, Invoice/Reference Number, and item-by-item verification flags.
+
+### 🗄️ 5. Enhanced Receipts Vault (`DocumentsView.jsx`)
+* **Item-Level Search:** Search receipts by vendor, receipt number, date, category, or individual item name.
+* **Date Range Filtering:** Quick filtering by *All Dates*, *This Month*, *Last 30 Days*, and *This Year*.
+* **Interactive 3D Receipt Inspector (`ReceiptViewer3D`):** 360-degree rotation, flip controls, and texture zoom.
+* **Export to Excel (`.xlsx`):** Multi-sheet financial ledgers compatible with Microsoft Excel and Google Sheets.
+
+### 🔒 6. Security, Privacy & RLS Hardening
+* **Supabase Row Level Security:** Strict `auth.uid() = user_id` isolation across all user tables.
+* **Philippine DPA & GDPR Compliance:** Built-in bilingual (English & Filipino) Terms of Service and Privacy Policy modals (`TermsModal.jsx`, `PrivacyPolicyModal.jsx`).
+* **Permanent Data Purge:** One-click account and receipt deletion RPC (`delete_user_account`).
+
+---
+
+## 🛠️ Technology Stack
 
 | Layer | Technology |
 |---|---|
 | **Frontend Framework** | React 19, Vite 8 |
-| **Styling & Design System** | Custom Liquid Glass CSS, Cyber Neon design tokens, Google Fonts (*Outfit*, *JetBrains Mono*, *Plus Jakarta Sans*) |
-| **3D Rendering** | Three.js, Canvas Confetti |
-| **Mobile Runtime** | Capacitor 8 (`@capacitor/core`, `@capacitor/android`, `@capacitor/filesystem`, `@capacitor/share`, `@capacitor/browser`, `@capacitor/app`) |
-| **Database & Auth** | Supabase (`@supabase/supabase-js`) |
-| **OCR & AI** | Google ML Kit (Offline), Google Gemini Vision API (Cloud AI) |
-| **Spreadsheet Generation**| SheetJS (`xlsx`) |
-| **Icons** | Lucide React |
+| **Styling & Design System** | Vanilla CSS, Cyber Neon Glassmorphism (`liquid-glass.css`, `resiboss2.css`), Google Fonts (*Outfit*, *JetBrains Mono*, *Plus Jakarta Sans*) |
+| **3D Rendering** | Three.js |
+| **Database & Auth** | Supabase PostgreSQL, Supabase Realtime, Row Level Security |
+| **AI & Vision** | Google Gemini 2.0 Flash Vision, Google ML Kit (Android), Tesseract.js |
+| **Mobile Runtime** | Capacitor 8 (Android Native APK, iOS PWA) |
+| **Export Formats** | Excel (`.xlsx`), CSV via SheetJS |
+| **Icons & Audio** | Lucide React, Procedural Web Audio API Sound FX |
 
 ---
 
@@ -88,47 +90,51 @@
 
 ```
 Resiboss/
-├── android/                         # Capacitor Native Android project
-│   ├── app/src/main/
-│   │   ├── AndroidManifest.xml      # App permissions & FileProvider
-│   │   └── res/xml/file_paths.xml   # File sharing storage paths
-├── public/                          # Static assets, manifest.json & resiboss.apk
+├── android/                         # Native Android Capacitor workspace
+├── public/                          # Static assets, PWA icons, manifest.json
 ├── src/
-│   ├── assets/                      # Bundled images and media
 │   ├── components/                  # Reusable UI components
 │   │   ├── auth/                    # Auth cards & modal forms
-│   │   ├── canvas/                  # Three.js 3D background canvas
-│   │   ├── layout/                  # Navbar, Sidebar, TopBar
-│   │   ├── legal/                   # Terms, Privacy, Cookie modals
-│   │   ├── mobile/                  # Bottom nav & MobileAppGatekeeper
-│   │   ├── modals/                  # ReceiptViewer3D inspector, AI config modal
-│   │   └── ui/                      # TiltCard, InAppToast, liquid buttons, badges
+│   │   ├── canvas/                  # Three.js 3D liquid background canvas
+│   │   ├── layout/                  # Sidebar, TopBar, MobileBottomNav
+│   │   ├── legal/                   # TermsModal, PrivacyPolicyModal, CookieConsent
+│   │   ├── modals/                  # ReceiptViewer3D inspector
+│   │   └── ui/                      # TiltCard, InAppToast, badges
+│   ├── config/                      # Feature flags & settings
 │   ├── context/
-│   │   └── AppContext.jsx           # Global state (documents, auth, notifications, settings)
+│   │   └── AppContext.jsx           # Unified application state & Supabase data store
 │   ├── lib/
-│   │   └── supabaseClient.js        # Supabase client initialization
-│   ├── styles/                      # CSS variables, glassmorphism utilities
+│   │   └── supabase.js              # Supabase client, queries, and CRUD helpers
+│   ├── styles/
+│   │   ├── index.css                # Global design system
+│   │   ├── liquid-glass.css         # Glassmorphism aesthetic tokens
+│   │   └── resiboss2.css            # Resiboss 2.0 layout & component styles
 │   ├── utils/
-│   │   ├── fileDownloader.js        # Cross-platform Excel/CSV unblockable exporter
-│   │   ├── geminiOcr.js             # Google Gemini Vision AI OCR client
-│   │   ├── i18n.js                  # English & Tagalog translations
-│   │   ├── receiptOcrParser.js      # Financial parser (regex, TIN, VAT, items)
-│   │   └── soundEffects.js          # Web Audio API sound synthesis
-│   ├── views/                       # Main application views
-│   │   ├── AnalyticView.jsx         # Charts & financial metrics
-│   │   ├── AuthView.jsx             # Sign-in & registration
-│   │   ├── DashboardView.jsx        # Overview & recent activity
-│   │   ├── DocumentsView.jsx        # Vault table & card views
-│   │   ├── ExportView.jsx           # Multi-receipt selection & Excel export
-│   │   ├── ScannerView.jsx          # Camera capture, file upload & OCR scanner
-│   │   └── SettingsView.jsx         # Profile, theme, audio, and account controls
-│   ├── App.jsx                      # Route management & layout wrapper
-│   ├── index.css                    # Core design system & glass styles
-│   └── main.jsx                     # Application entry point
+│   │   ├── fileDownloader.js        # Excel (.xlsx) / CSV generator
+│   │   ├── geminiOcr.js             # Gemini 2.0 Flash Vision client
+│   │   ├── receiptOcrParser.js      # Text normalization & financial auditing
+│   │   ├── soundEffects.js          # Web Audio API sound synthesizer
+│   │   └── spendingIntelligence.js  # Resiboss 2.0 intelligence & pattern engine
+│   ├── views/                       # Resiboss 2.0 views
+│   │   ├── AnalyticView.jsx         # Historical financial charts
+│   │   ├── AskResibossView.jsx      # Conversational AI spending assistant
+│   │   ├── AuthView.jsx             # Login & Registration screen
+│   │   ├── DashboardView.jsx        # Resiboss 2.0 overview & daily spend
+│   │   ├── DocumentsView.jsx        # Receipt Vault with item-level search
+│   │   ├── ExportView.jsx           # Excel ledger export manager
+│   │   ├── InsightsView.jsx         # Spending trends, MoM delta & price tracking
+│   │   ├── ScannerView.jsx          # Camera / upload OCR scanner with duplicate check
+│   │   ├── SettingsView.jsx         # User profile, thresholds, and audio settings
+│   │   └── ShoppingListView.jsx     # Smart shopping list with AI suggestions
+│   ├── App.jsx                      # Shell & tab routing
+│   └── main.jsx                     # Entry point
+├── supabase/                        # Database migrations & edge functions
+│   ├── functions/                   # Supabase edge functions
+│   └── migrations/                  # Versioned schema migrations
+├── supabase_migrations_v2.sql       # Resiboss 2.0 database upgrade script
 ├── capacitor.config.json            # Capacitor mobile configuration
 ├── package.json
-├── supabase_schema.sql              # Supabase database schema & RLS policies
-└── vite.config.js                   # Vite build configuration
+└── vite.config.js                   # Vite configuration (port 3000)
 ```
 
 ---
@@ -138,44 +144,50 @@ Resiboss/
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm** or **pnpm**
-- **Android Studio** (optional, only for building local Android APK)
+- **Supabase Account** (free tier supported)
+- **Google Gemini API Key** (optional for cloud AI OCR)
 
-### 1. Clone the Repository
+### 1. Clone & Install
 ```bash
 git clone https://github.com/JustinFrias/Resiboss.git
 cd Resiboss
-```
-
-### 2. Install Dependencies
-```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 2. Configure Environment
 Create a `.env` file in the root directory:
 ```env
 # Supabase Configuration
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 
-# Optional: Google Gemini Vision API Key (can also be configured inside the app settings)
+# Optional: Google Gemini Vision API Key (can also be entered directly in app settings)
 VITE_GEMINI_API_KEY=your-gemini-api-key
 ```
 
-### 4. Run Development Server
+### 3. Run Development Server
 ```bash
 npm run dev
 ```
-Open your browser at `http://localhost:5173`.
+Open your browser at `http://localhost:3000`.
 
-### 5. Build for Production
+### 4. Build for Production
 ```bash
 npm run build
 ```
 
 ---
 
-## 📱 Mobile App (Capacitor Android)
+## 🗄️ Database Setup (Supabase)
+
+1. Open your project on the [Supabase Dashboard](https://supabase.com/dashboard).
+2. Go to the **SQL Editor**.
+3. Open [`supabase_migrations_v2.sql`](supabase_migrations_v2.sql) (or run the versioned script in `supabase/migrations/`).
+4. Click **Run** to provision the hardened RLS policies, new columns (`branch`, `receipt_number`, `discount`, `notes`), and support tables (`shopping_list_items`, `ai_conversations`).
+
+---
+
+## 📱 Mobile Distribution (Android Native)
 
 ### Sync Web Assets to Android
 ```bash
@@ -186,15 +198,16 @@ npx cap sync android
 ```bash
 npx cap open android
 ```
-From Android Studio, click **Run** to launch on a connected device or emulator, or build an APK via **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+Build an APK via **Build > Build Bundle(s) / APK(s) > Build APK(s)** or click **Run** to debug on a connected device.
 
 ---
 
 ## 🔒 Security & Privacy
 
-- **Row Level Security (RLS):** Users can strictly only read and write their own financial receipts in Supabase.
-- **Local OCR Privacy:** Receipts scanned via Tesseract.js are processed locally in-browser/on-device without leaving the client.
-- **Credential Storage:** Sensitive API keys (e.g. Gemini Vision API keys) can be stored locally in browser `localStorage` or device sandbox.
+* **Zero Public Access:** Anonymous access to receipts is revoked; all queries enforce Row Level Security (`auth.uid()::text = user_id`).
+* **Non-Hallucinating AI:** The AI layer never fabricates transaction values. Spending answers are calculated directly from user data before natural language rendering.
+* **Local Processing Options:** On-device OCR (ML Kit & Tesseract.js) enables receipt reading without sending image data over the network.
+* **Right to Be Forgotten:** Complete account deletion function cascades through receipts, shopping items, AI conversations, and auth identities.
 
 ---
 

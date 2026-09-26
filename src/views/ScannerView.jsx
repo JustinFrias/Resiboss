@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { extractReceiptWithOCR } from '../utils/receiptOcrParser';
 import { soundFx } from '../utils/soundEffects';
 import { getActiveGeminiKey, saveGeminiKey, testGeminiApiKey } from '../utils/geminiOcr';
+import { detectDuplicate } from '../utils/spendingIntelligence';
 import {
   Camera,
   FileText,
@@ -33,7 +34,7 @@ import {
 } from 'lucide-react';
 
 export const ScannerView = () => {
-  const { addDocument, addNotification, formatCurrency, t, theme, isOnline } = useApp();
+  const { addDocument, addNotification, formatCurrency, t, theme, isOnline, documents } = useApp();
   const isLight = theme === 'light';
 
   // Mode: 'idle' (Clean Scan Buddy) | 'camera' (taking live photo) | 'scanned' (extracted results)
@@ -64,6 +65,26 @@ export const ScannerView = () => {
   // Choice dropdown menu for scanning another receipt (Camera vs Upload)
   const [showScanAnotherMenu, setShowScanAnotherMenu] = useState(false);
   const scanAnotherMenuRef = useRef(null);
+
+  // Resiboss 2.0: Duplicate Detection
+  const duplicateCheck = useMemo(() => {
+    if (!currentReceipt || !documents?.length) return { isDuplicate: false };
+    return detectDuplicate(currentReceipt, documents);
+  }, [currentReceipt, documents]);
+
+  // Resiboss 2.0: Mathematical Consistency Check
+  const consistencyCheck = useMemo(() => {
+    if (!currentReceipt || !currentReceipt.items?.length) return null;
+    const itemsSum = currentReceipt.items.reduce((s, it) => s + (Number(it.total) || 0), 0);
+    const subtotal = Number(currentReceipt.subtotal) || itemsSum;
+    const vat = Number(currentReceipt.vat) || 0;
+    const discount = Number(currentReceipt.discount) || 0;
+    const total = Number(currentReceipt.total) || 0;
+    const calculated = +(subtotal + (subtotal === itemsSum ? vat : 0) - discount).toFixed(2);
+    const diff = Math.abs(calculated - total);
+    const hasMismatch = total > 0 && diff > 1.0;
+    return { itemsSum, calculated, diff, hasMismatch };
+  }, [currentReceipt]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -1719,19 +1740,32 @@ export const ScannerView = () => {
                       </div>
                     )}
 
-                    {/* Vendor Field */}
-                    <div>
-                      <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                        {t.scanner.vendor}
-                      </label>
-                      <input
-                        className="liquid-input"
-                        value={currentReceipt.merchant || ''}
-                        onChange={(e) => setCurrentReceipt({ ...currentReceipt, merchant: e.target.value })}
-                      />
+                    {/* Vendor & Branch Fields */}
+                    <div className="scanner-form-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                          {t.scanner.vendor}
+                        </label>
+                        <input
+                          className="liquid-input"
+                          value={currentReceipt.merchant || ''}
+                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, merchant: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                          Branch / Location
+                        </label>
+                        <input
+                          className="liquid-input"
+                          placeholder="e.g. SM North, Makati"
+                          value={currentReceipt.branch || ''}
+                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, branch: e.target.value })}
+                        />
+                      </div>
                     </div>
 
-                    {/* Date & TIN */}
+                    {/* Date & Ref / TIN */}
                     <div className="scanner-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
@@ -1746,13 +1780,18 @@ export const ScannerView = () => {
                       </div>
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                          {t.scanner.invoiceNo}
+                          Receipt / Ref #
                         </label>
                         <input
                           className="liquid-input"
-                          placeholder="Not Detected"
-                          value={currentReceipt.tin || ''}
-                          onChange={(e) => setCurrentReceipt({ ...currentReceipt, tin: e.target.value })}
+                          placeholder="e.g. OR-98124"
+                          value={currentReceipt.receiptNumber || currentReceipt.receipt_number || currentReceipt.tin || ''}
+                          onChange={(e) => setCurrentReceipt({
+                            ...currentReceipt,
+                            receiptNumber: e.target.value,
+                            receipt_number: e.target.value,
+                            tin: e.target.value,
+                          })}
                         />
                       </div>
                     </div>
@@ -2032,6 +2071,30 @@ export const ScannerView = () => {
                             onChange={(e) => handleVatChange(e.target.value)}
                             title="Edit VAT"
                           />
+                          <span style={{ opacity: 0.5 }}>•</span>
+                          <span>Discount:</span>
+                          <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                            {currentReceipt.currency === 'USD' ? '$' : '₱'}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            style={{
+                              width: '60px',
+                              background: 'rgba(255, 255, 255, 0.06)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              borderRadius: '4px',
+                              color: 'var(--text-primary)',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '0.76rem',
+                              padding: '2px 4px',
+                              outline: 'none',
+                            }}
+                            value={currentReceipt.discount !== undefined && currentReceipt.discount !== null ? currentReceipt.discount : ''}
+                            placeholder="0.00"
+                            onChange={(e) => setCurrentReceipt({ ...currentReceipt, discount: parseFloat(e.target.value) || 0 })}
+                            title="Edit discount"
+                          />
                         </div>
 
                         {/* Editable Total Due */}
@@ -2078,6 +2141,50 @@ export const ScannerView = () => {
                         </span>
                       </div>
                     </div>
+                    {/* Resiboss 2.0 Duplicate Warning */}
+                    {duplicateCheck.isDuplicate && (
+                      <div style={{
+                        padding: '12px 14px',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                        borderRadius: '10px',
+                        marginTop: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '0.82rem',
+                        color: '#f59e0b',
+                      }}>
+                        <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <strong>Duplicate Warning:</strong> You previously saved a receipt from{' '}
+                          <strong>{duplicateCheck.match?.merchant || 'this merchant'}</strong> on{' '}
+                          <strong>{duplicateCheck.match?.date || 'this date'}</strong> for{' '}
+                          <strong>{formatCurrency(duplicateCheck.match?.total)}</strong>.
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Resiboss 2.0 Consistency Check Alert */}
+                    {consistencyCheck?.hasMismatch && (
+                      <div style={{
+                        padding: '10px 14px',
+                        background: 'rgba(0, 242, 254, 0.08)',
+                        border: '1px solid rgba(0, 242, 254, 0.25)',
+                        borderRadius: '10px',
+                        marginTop: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '0.78rem',
+                        color: 'var(--cyan-glow)',
+                      }}>
+                        <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                        <span>
+                          <strong>Math Check:</strong> Sum of items + VAT (₱{consistencyCheck.calculated}) differs slightly from Total Due (₱{currentReceipt.total}). Double check before saving.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div style={{ color: 'var(--text-secondary)', padding: '20px', textAlign: 'center' }}>

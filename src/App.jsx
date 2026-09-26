@@ -25,8 +25,12 @@ import { AnalyticView } from './views/AnalyticView';
 import { ExportView } from './views/ExportView';
 import { SettingsView } from './views/SettingsView';
 import { AuthView } from './views/AuthView';
+import { InsightsView } from './views/InsightsView';
+import { ShoppingListView } from './views/ShoppingListView';
+import { AskResibossView } from './views/AskResibossView';
 
 import './styles/liquid-glass.css';
+import './styles/resiboss2.css';
 
 const MainLayout = () => {
   const { activeTab, sidebarCollapsed, userProfile, isAuthResolving } = useApp();
@@ -82,6 +86,12 @@ const MainLayout = () => {
         return <DocumentsView />;
       case 'analytic':
         return <AnalyticView />;
+      case 'insights':
+        return <InsightsView />;
+      case 'shopping':
+        return <ShoppingListView />;
+      case 'ask':
+        return <AskResibossView />;
       case 'export':
         return <ExportView />;
       case 'settings':
@@ -151,6 +161,7 @@ export default function App() {
       </MobileAppGatekeeper>
       <InAppToast />
       <PrivacyPolicyModal />
+      <TermsModal />
       <CookieConsentBanner />
     </AppProvider>
   );
