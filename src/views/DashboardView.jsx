@@ -20,6 +20,7 @@ import {
   ArrowDownRight,
   Repeat,
   MessageSquare,
+  Camera,
 } from 'lucide-react';
 import {
   getMonthOverMonthSpend,
@@ -141,9 +142,11 @@ export const DashboardView = () => {
 
   const cardStyle = {
     borderRadius: 'var(--radius-xl)',
-    background: isLight ? '#ffffff' : 'rgba(12, 12, 12, 0.85)',
-    border: isLight ? '1px solid rgba(203,213,225,0.8)' : '1px solid rgba(255,255,255,0.1)',
-    boxShadow: isLight ? '0 4px 20px rgba(15,23,42,0.05)' : '0 8px 28px rgba(0,0,0,0.4)',
+    background: isLight ? '#ffffff' : 'rgba(15, 23, 42, 0.72)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: isLight ? '1px solid rgba(203,213,225,0.8)' : '1px solid rgba(148, 163, 184, 0.12)',
+    boxShadow: isLight ? '0 4px 20px rgba(15,23,42,0.05)' : '0 8px 28px rgba(0,0,0,0.5)',
   };
 
   const navigateTo = (tab) => {
@@ -151,18 +154,18 @@ export const DashboardView = () => {
     setActiveTab(tab);
   };
 
-  const firstName = userProfile?.firstName || 'there';
+  const firstName = userProfile?.firstName || '';
 
   return (
-    <div style={{ padding: '0 0 100px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <div style={{ padding: '0 0 100px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
       {/* ── GREETING HEADER ── */}
-      <div style={{ padding: '24px 20px 0' }}>
+      <div style={{ padding: '6px 20px 0' }}>
         <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', fontFamily: 'var(--font-display)', margin: 0, letterSpacing: '-0.02em' }}>
-          {getGreeting()}, {firstName} 👋
+          {getGreeting()} {firstName ? `${firstName} ` : ''}👋
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
-          Here's what's happening with your spending.
+          Here's what Resiboss noticed about your spending.
         </p>
       </div>
 
@@ -172,8 +175,8 @@ export const DashboardView = () => {
           {/* Header row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-                {timeRange === 'month' ? 'This Month' : timeRange === '30days' ? 'Last 30 Days' : timeRange === 'year' ? 'This Year' : 'All Time'}
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                {timeRange === 'month' ? 'THIS MONTH' : timeRange === '30days' ? 'LAST 30 DAYS' : timeRange === 'year' ? 'THIS YEAR' : 'ALL TIME'}
               </div>
               <div style={{ fontSize: 36, fontWeight: 900, color: 'var(--text-primary)', fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1 }}>
                 {formatCompact(totalAmount)}
@@ -187,7 +190,7 @@ export const DashboardView = () => {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '7px 12px', borderRadius: 12,
-                  background: isLight ? '#f1f5f9' : 'rgba(255,255,255,0.08)',
+                  background: isLight ? '#f1f5f9' : 'rgba(255,255,255,0.06)',
                   border: '1px solid var(--glass-border)',
                   color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 }}
@@ -198,18 +201,19 @@ export const DashboardView = () => {
               {isFilterOpen && (
                 <div style={{
                   position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50,
-                  background: isLight ? '#fff' : 'rgba(14,14,14,0.96)',
+                  background: isLight ? '#fff' : 'rgba(15,23,42,0.96)',
+                  backdropFilter: 'blur(16px)',
                   border: '1px solid var(--glass-border)', borderRadius: 12,
                   padding: 6, minWidth: 140,
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.25)',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
                 }}>
                   {[{ id: 'month', label: 'This Month' }, { id: '30days', label: 'Last 30 Days' }, { id: 'year', label: 'This Year' }, { id: 'all', label: 'All Time' }].map((opt) => (
                     <button key={opt.id} onClick={() => { setTimeRange(opt.id); setIsFilterOpen(false); soundFx?.playClick?.(); }}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         width: '100%', padding: '8px 12px', borderRadius: 9, border: 'none',
-                        background: timeRange === opt.id ? 'var(--cyan-subtle)' : 'transparent',
-                        color: timeRange === opt.id ? 'var(--cyan-glow)' : 'var(--text-primary)',
+                        background: timeRange === opt.id ? 'var(--primary-subtle)' : 'transparent',
+                        color: timeRange === opt.id ? '#818CF8' : 'var(--text-primary)',
                         fontSize: 13, fontWeight: timeRange === opt.id ? 700 : 500, cursor: 'pointer',
                       }}
                     >
@@ -226,11 +230,11 @@ export const DashboardView = () => {
           {mom.previous > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
               {mom.delta > 0
-                ? <ArrowUpRight size={15} color="#f59e0b" />
+                ? <ArrowUpRight size={15} color="#FBBF24" />
                 : <ArrowDownRight size={15} color="var(--emerald-glow)" />}
               <span style={{
                 fontSize: 13, fontWeight: 700,
-                color: mom.delta > 0 ? '#f59e0b' : 'var(--emerald-glow)',
+                color: mom.delta > 0 ? '#FBBF24' : 'var(--emerald-glow)',
               }}>
                 {mom.delta > 0 ? '+' : ''}{mom.deltaPercent}% vs last month
               </span>
@@ -260,10 +264,10 @@ export const DashboardView = () => {
                   <div style={{
                     width: '100%', height: `${h}%`, minHeight: 3, borderRadius: '2px 2px 0 0',
                     background: day.total > 0
-                      ? (day.isToday ? 'var(--cyan-glow)' : isLight ? 'rgba(2,132,199,0.6)' : 'rgba(0,242,254,0.5)')
+                      ? (day.isToday ? '#38BDF8' : isLight ? 'rgba(99,102,241,0.65)' : 'rgba(56,189,248,0.55)')
                       : 'var(--track-bg)',
                     transition: 'height 0.4s ease',
-                    boxShadow: isH && day.total > 0 ? '0 0 8px rgba(0,242,254,0.5)' : 'none',
+                    boxShadow: isH && day.total > 0 ? '0 0 8px rgba(56,189,248,0.5)' : 'none',
                   }} />
                 </div>
               );
@@ -271,7 +275,7 @@ export const DashboardView = () => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 10, color: 'var(--text-muted)' }}>
             <span>{dailyHistory[0]?.monthShort} {dailyHistory[0]?.dayNum}</span>
-            <span style={{ color: 'var(--cyan-glow)', fontWeight: 700 }}>Today</span>
+            <span style={{ color: '#38BDF8', fontWeight: 700 }}>Today</span>
           </div>
 
           {/* Stat row */}
@@ -296,81 +300,108 @@ export const DashboardView = () => {
         </div>
       </div>
 
-      {/* ── RESIBOSS NOTICED (Insight Card) ── */}
-      {documents.length >= 3 && (
-        <div style={{ padding: '0 20px' }}>
-          <div style={{
-            ...cardStyle, padding: '16px 20px',
-            background: isLight ? 'rgba(2,132,199,0.06)' : 'rgba(0,242,254,0.06)',
-            border: `1px solid ${isLight ? 'rgba(2,132,199,0.2)' : 'rgba(0,242,254,0.2)'}`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                background: 'var(--cyan-subtle)', border: '1px solid var(--glass-border-glow)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Sparkles size={16} color="var(--cyan-glow)" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--cyan-glow)', marginBottom: 4 }}>Resiboss noticed</div>
-                {mom.deltaPercent && Number(mom.deltaPercent) > 10 ? (
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    Your spending this month is <strong>{mom.deltaPercent}% higher</strong> than last month.
-                  </div>
-                ) : categories[0] ? (
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    <strong>{categories[0].category}</strong> is your biggest spending category — <strong>{formatCurrency(categories[0].total)}</strong> so far.
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    You have <strong>{documents.length}</strong> receipts saved. Scan more to see insights.
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => navigateTo('insights')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}
-              >
-                <ChevronRight size={16} />
-              </button>
+      {/* ── ✦ RESIBOSS INTELLIGENCE CARD ── */}
+      <div style={{ padding: '0 20px' }}>
+        <div style={{
+          ...cardStyle, padding: '18px 20px',
+          background: isLight ? 'rgba(167, 139, 250, 0.08)' : 'rgba(167, 139, 250, 0.06)',
+          border: '1px solid rgba(167, 139, 250, 0.25)',
+          boxShadow: '0 4px 20px rgba(167, 139, 250, 0.12)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+              background: 'rgba(167, 139, 250, 0.15)', border: '1px solid rgba(167, 139, 250, 0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Sparkles size={18} color="#A78BFA" />
             </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#A78BFA', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span>✦</span> RESIBOSS INTELLIGENCE
+              </div>
+              {documents.length === 0 ? (
+                <div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, fontWeight: 500 }}>
+                    Your intelligence layer is still learning. Keep scanning receipts and Resiboss will start recognizing your spending patterns.
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    Turn everyday receipts into smarter spending decisions
+                  </div>
+                </div>
+              ) : mom.deltaPercent && Number(mom.deltaPercent) > 10 ? (
+                <div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, fontWeight: 500 }}>
+                    Your spending is higher than your usual monthly average.
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    Based on {documents.length} receipt{documents.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+              ) : categories[0] ? (
+                <div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, fontWeight: 500 }}>
+                    Your <strong>{categories[0].category}</strong> spending is higher than other categories this month.
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    Based on {documents.length} receipt{documents.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, fontWeight: 500 }}>
+                    Resiboss noticed <strong>{documents.length}</strong> verified receipt{documents.length > 1 ? 's' : ''} saved in your memory.
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    Based on your history
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => navigateTo('insights')}
+              title="View Insights"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A78BFA', padding: 4 }}
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ── PURCHASE PATTERN NUDGES ── */}
+      {/* ── PURCHASE PATTERN CARD ── */}
       {dueSoonPatterns.length > 0 && (
         <div style={{ padding: '0 20px' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
-            <Repeat size={11} style={{ marginRight: 5 }} />
-            Your usual purchase window
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Repeat size={12} color="#818CF8" />
+            <span>PURCHASE PATTERN</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {dueSoonPatterns.map((p) => (
               <div key={p.name} style={{
-                ...cardStyle, padding: '12px 16px',
+                ...cardStyle, padding: '14px 16px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                border: `1px solid ${p.isOverdue ? 'rgba(245,158,11,0.35)' : 'var(--glass-border)'}`,
+                border: `1px solid ${p.isOverdue ? 'rgba(251,191,36,0.35)' : 'var(--glass-border)'}`,
               }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{p.displayName}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{p.displayName}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                    Usually every {p.avgIntervalDays} days
+                    Every {p.avgIntervalDays} days · Based on {p.count || 'your'} purchases · Confidence: Medium
                   </div>
                 </div>
                 <span style={{
-                  fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-                  background: p.isOverdue ? 'rgba(245,158,11,0.15)' : 'var(--emerald-subtle)',
-                  color: p.isOverdue ? '#f59e0b' : 'var(--emerald-glow)',
+                  fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 8,
+                  background: p.isOverdue ? 'rgba(251,191,36,0.15)' : 'rgba(52,211,153,0.15)',
+                  color: p.isOverdue ? '#FBBF24' : 'var(--emerald-glow)',
                 }}>
-                  {p.isOverdue ? `${Math.abs(p.daysUntilNext)}d overdue` : p.daysUntilNext === 0 ? 'Today' : `In ${p.daysUntilNext}d`}
+                  {p.isOverdue ? `${Math.abs(p.daysUntilNext)}d overdue` : p.daysUntilNext === 0 ? 'Due Today' : `In ${p.daysUntilNext}d`}
                 </span>
               </div>
             ))}
           </div>
         </div>
       )}
+
 
       {/* ── CATEGORY MINI BARS ── */}
       {categories.length > 0 && (
@@ -442,15 +473,20 @@ export const DashboardView = () => {
 
         {recentDocs.length === 0 ? (
           <div style={{ ...cardStyle, padding: '36px 20px', textAlign: 'center' }}>
-            <Receipt size={36} color="var(--text-muted)" style={{ marginBottom: 12, opacity: 0.4 }} />
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>No receipts yet</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>Scan your first receipt to get started.</div>
+            <Receipt size={36} color="#818CF8" style={{ marginBottom: 12, opacity: 0.6 }} />
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>No receipts yet</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 18, maxWidth: 300, margin: '0 auto 18px' }}>
+              Scan your first receipt and Resiboss will start building your purchase memory.
+            </div>
             <button onClick={() => navigateTo('scanner')} style={{
-              padding: '10px 24px', borderRadius: 12,
-              background: 'var(--cyan-glow)', border: 'none', color: '#000',
+              padding: '11px 26px', borderRadius: 12,
+              background: 'linear-gradient(135deg, #818CF8 0%, #6366F1 55%, #4F46E5 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#ffffff',
               fontWeight: 700, fontSize: 13, cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
             }}>
-              Scan a Receipt
+              Scan Receipt
             </button>
           </div>
         ) : (
@@ -458,29 +494,29 @@ export const DashboardView = () => {
             {recentDocs.map((doc) => (
               <button key={doc.id} onClick={() => { soundFx?.playClick?.(); setInspectingDoc(doc); }}
                 style={{
-                  ...cardStyle, padding: '12px 16px', width: '100%', textAlign: 'left',
+                  ...cardStyle, padding: '14px 16px', width: '100%', textAlign: 'left',
                   display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--glass-border-bright)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = isLight ? 'rgba(203,213,225,0.8)' : 'rgba(255,255,255,0.1)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = isLight ? 'rgba(203,213,225,0.8)' : 'rgba(148, 163, 184, 0.12)'; }}
               >
                 <div style={{
                   width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                  background: 'var(--cyan-subtle)', border: '1px solid var(--glass-border)',
+                  background: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.25)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <Receipt size={17} color="var(--cyan-glow)" />
+                  <Receipt size={18} color="#818CF8" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {doc.merchant}
+                    {doc.merchant || 'Store'}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {doc.date} · <span style={{ color: getCatColor(doc.category) }}>{doc.category}</span>
+                    {doc.date || 'Today'} · <span style={{ color: getCatColor(doc.category) }}>{doc.category || 'General'}</span>
                   </div>
                 </div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', flexShrink: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
                   {formatCurrency(doc.total)}
                 </div>
                 <Eye size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
@@ -495,22 +531,21 @@ export const DashboardView = () => {
         <button
           onClick={() => navigateTo('scanner')}
           style={{
-            width: '100%', padding: '18px 24px',
+            width: '100%', padding: '16px 24px',
             borderRadius: 'var(--radius-xl)',
-            background: isLight
-              ? 'linear-gradient(135deg, #0284c7, #06b6d4)'
-              : 'linear-gradient(135deg, #00f2fe, #0ea5e9)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-            boxShadow: '0 8px 24px rgba(0,242,254,0.25)',
+            background: 'linear-gradient(135deg, #818CF8 0%, #6366F1 55%, #4F46E5 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
             transition: 'all 0.2s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,242,254,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,242,254,0.25)'; e.currentTarget.style.transform = 'none'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 12px 32px rgba(99, 102, 241, 0.55)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.4)'; e.currentTarget.style.transform = 'none'; }}
         >
-          <ScanLine size={22} color="#000" strokeWidth={2.5} />
-          <span style={{ fontSize: 17, fontWeight: 800, color: '#000', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
-            Scan Receipt
+          <Camera size={20} color="#ffffff" strokeWidth={2.4} />
+          <span style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+            + Scan Receipt
           </span>
         </button>
       </div>

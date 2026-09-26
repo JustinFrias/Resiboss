@@ -2,10 +2,10 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import {
   LayoutGrid,
-  ScanLine,
   FileText,
-  BarChart3,
-  Settings,
+  Camera,
+  TrendingUp,
+  MoreHorizontal,
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
@@ -33,20 +33,7 @@ export const MobileBottomNav = () => {
         <span className="mobile-nav-label">Home</span>
       </button>
 
-      {/* 2. Scan */}
-      <button
-        type="button"
-        onClick={() => handleTabClick('scanner')}
-        className={`mobile-nav-item ${activeTab === 'scanner' ? 'active' : ''}`}
-        aria-label="Scan"
-      >
-        <div className="mobile-nav-icon-wrap">
-          <ScanLine size={20} />
-        </div>
-        <span className="mobile-nav-label">Scan</span>
-      </button>
-
-      {/* 3. Receipts */}
+      {/* 2. Receipts */}
       <button
         type="button"
         onClick={() => handleTabClick('documents')}
@@ -62,6 +49,21 @@ export const MobileBottomNav = () => {
         <span className="mobile-nav-label">Receipts</span>
       </button>
 
+      {/* 3. Hero Center Scan Action */}
+      <button
+        type="button"
+        onClick={() => handleTabClick('scanner')}
+        className={`mobile-nav-hero-btn ${activeTab === 'scanner' ? 'active' : ''}`}
+        aria-label="Scan Receipt"
+      >
+        <div className="mobile-nav-hero-circle">
+          <Camera size={24} strokeWidth={2.4} />
+        </div>
+        <span className="mobile-nav-label" style={{ marginTop: '2px', fontWeight: 700, color: activeTab === 'scanner' ? '#818CF8' : 'var(--text-secondary)' }}>
+          Scan
+        </span>
+      </button>
+
       {/* 4. Insights */}
       <button
         type="button"
@@ -70,22 +72,22 @@ export const MobileBottomNav = () => {
         aria-label="Insights"
       >
         <div className="mobile-nav-icon-wrap">
-          <BarChart3 size={20} />
+          <TrendingUp size={20} />
         </div>
         <span className="mobile-nav-label">Insights</span>
       </button>
 
-      {/* 5. Settings */}
+      {/* 5. More (Settings & Preferences) */}
       <button
         type="button"
         onClick={() => handleTabClick('settings')}
         className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-        aria-label="Settings"
+        aria-label="More"
       >
         <div className="mobile-nav-icon-wrap">
-          <Settings size={20} />
+          <MoreHorizontal size={20} />
         </div>
-        <span className="mobile-nav-label">Settings</span>
+        <span className="mobile-nav-label">More</span>
       </button>
     </nav>
   );

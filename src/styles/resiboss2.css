@@ -128,8 +128,8 @@
 
 /* Accent cards */
 .rb-card-cyan {
-  background: var(--cyan-subtle);
-  border-color: rgba(0, 242, 254, 0.2);
+  background: var(--cyan-subtle, rgba(56, 189, 248, 0.08));
+  border-color: rgba(56, 189, 248, 0.25);
 }
 
 [data-theme="light"] .rb-card-cyan {
@@ -138,8 +138,9 @@
 }
 
 .rb-card-violet {
-  background: var(--violet-subtle);
-  border-color: rgba(168, 85, 247, 0.2);
+  background: var(--ai-subtle, rgba(167, 139, 250, 0.08));
+  border-color: rgba(167, 139, 250, 0.28);
+  box-shadow: 0 4px 20px rgba(167, 139, 250, 0.08);
 }
 
 [data-theme="light"] .rb-card-violet {
@@ -148,8 +149,8 @@
 }
 
 .rb-card-amber {
-  background: var(--amber-subtle);
-  border-color: rgba(245, 158, 11, 0.25);
+  background: var(--amber-subtle, rgba(251, 191, 36, 0.08));
+  border-color: rgba(251, 191, 36, 0.25);
 }
 
 [data-theme="light"] .rb-card-amber {
@@ -184,29 +185,31 @@
 }
 
 .rb-btn-primary {
-  background: var(--cyan-glow);
-  color: #000;
+  background: linear-gradient(135deg, #818CF8 0%, #6366F1 55%, #4F46E5 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
 }
 
 .rb-btn-primary:hover:not(:disabled) {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3);
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.55);
 }
 
 .rb-btn-primary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
 
 [data-theme="light"] .rb-btn-primary {
-  background: #0284c7;
-  color: #fff;
+  background: linear-gradient(135deg, #818CF8 0%, #6366F1 55%, #4F46E5 100%);
+  color: #ffffff;
 }
 
 [data-theme="light"] .rb-btn-primary:hover:not(:disabled) {
-  background: #0369a1;
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.25);
+  filter: brightness(1.06);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
 }
 
 .rb-btn-secondary {

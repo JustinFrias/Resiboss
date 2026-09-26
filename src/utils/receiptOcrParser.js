@@ -561,14 +561,14 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     // =========================================================================
     if (useGemini) {
       try {
-        onProgress(10, 'Preparing image for AI analysis...');
+        onProgress(15, '◌ Reading your receipt...');
         const geminiImage = await preprocessForGemini(imageUri);
 
-        onProgress(30, 'Sending to Gemini AI Vision OCR...');
+        onProgress(40, '◌ Identifying items...');
         const raw = await extractWithGemini(geminiImage, GEMINI_API_KEY);
 
         if (raw) {
-          onProgress(75, 'Normalizing AI extraction results...');
+          onProgress(75, '✓ Checking the totals...');
           const normalized = normalizeGeminiResult(raw, parseAmount);
 
           const hasMerchant = Boolean(
@@ -579,7 +579,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
           const hasUsableData = Boolean(normalized && (hasMerchant || hasItems || (normalized.total && normalized.total > 0)));
 
           if (hasUsableData) {
-            onProgress(92, 'Finalizing receipt data...');
+            onProgress(92, '✓ Checking the totals...');
 
             // Apply brand normalization over what Gemini detected
             let merchant = normalized.merchant;
@@ -601,7 +601,7 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
             const lowConfCount = normalized.lowConfidenceFields?.length || 0;
             const confidenceScore = Math.max(88, 98 - (lowConfCount * 3));
 
-            onProgress(100, 'AI Optical Extraction Complete!');
+            onProgress(100, '✓ Receipt detected');
 
             return {
               isValid: true,
@@ -669,12 +669,10 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
         console.warn('[OCR] On native platform, ML Kit returned no text; bypassing Tesseract web worker to prevent WebView freeze.');
       } else {
         activeEngine = 'tesseract';
-        onProgress(useGemini ? 15 : 10, useGemini
-          ? 'AI unavailable — switching to local OCR...'
-          : 'Enhancing image for OCR recognition...');
+        onProgress(15, '◌ Reading your receipt...');
 
         const processedImageUri = await preprocessForTesseract(imageUri);
-        onProgress(25, 'Running optical character recognition...');
+        onProgress(35, '◌ Identifying items...');
 
         try {
           const runTesseract = async () => {
@@ -686,8 +684,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
                 gzip: false,
                 logger: (m) => {
                   if (m.status === 'recognizing text') {
-                    const pct = Math.floor(25 + (m.progress || 0) * 65);
-                    onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+                    const pct = Math.floor(35 + (m.progress || 0) * 45);
+                    onProgress(pct, pct < 60 ? '◌ Identifying items...' : '✓ Checking the totals...');
                   }
                 },
               });
@@ -695,8 +693,8 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
               worker = await Tesseract.createWorker('eng', 1, {
                 logger: (m) => {
                   if (m.status === 'recognizing text') {
-                    const pct = Math.floor(25 + (m.progress || 0) * 65);
-                    onProgress(pct, `Extracting receipt characters (${Math.floor((m.progress || 0) * 100)}%)...`);
+                    const pct = Math.floor(35 + (m.progress || 0) * 45);
+                    onProgress(pct, pct < 60 ? '◌ Identifying items...' : '✓ Checking the totals...');
                   }
                 },
               });
@@ -733,21 +731,21 @@ export const extractReceiptWithOCR = async (imageUri, onProgress = () => {}) => 
     if (!fullText || fullText.trim().length < 3) {
       return {
         isValid: false,
-        errorReason: 'Could not extract readable text from this receipt. Please ensure the receipt is well-lit, flat, and in clear focus.',
+        errorReason: "We couldn't read some parts of this receipt. Please ensure it is clearly visible and flat.",
         rawOcrText: fullText || '',
         confidence: 0,
       };
     }
 
-    onProgress(92, 'Analyzing itemized breakdown, taxes, and vendor...');
+    onProgress(90, '✓ Checking the totals...');
     const parsed = parseReceiptFromText(fullText, activeEngine, confidenceVal);
-    onProgress(100, 'Optical Extraction Complete!');
+    onProgress(100, '✓ Receipt detected');
     return parsed;
   } catch (error) {
     console.error('OCR Extraction error:', error);
     return {
       isValid: false,
-      errorReason: 'Receipt scanning was interrupted or timed out. Please try capturing a clearer, brighter photo.',
+      errorReason: "We couldn't read some parts of this receipt. Please capture a clear, well-lit photo.",
       rawOcrText: '',
       confidence: 0,
     };

@@ -64,6 +64,7 @@ export const ScannerView = () => {
 
   // Choice dropdown menu for scanning another receipt (Camera vs Upload)
   const [showScanAnotherMenu, setShowScanAnotherMenu] = useState(false);
+  const [scanAnotherMenuAlign, setScanAnotherMenuAlign] = useState('right');
   const scanAnotherMenuRef = useRef(null);
 
   // Resiboss 2.0: Duplicate Detection
@@ -87,16 +88,32 @@ export const ScannerView = () => {
   }, [currentReceipt]);
 
   useEffect(() => {
+    const updatePlacement = () => {
+      if (scanAnotherMenuRef.current) {
+        const rect = scanAnotherMenuRef.current.getBoundingClientRect();
+        // If button is within 250px of left edge of viewport, align to left so it never clips off-screen
+        if (rect.left < 250) {
+          setScanAnotherMenuAlign('left');
+        } else {
+          setScanAnotherMenuAlign('right');
+        }
+      }
+    };
+
     const handleClickOutside = (e) => {
       if (scanAnotherMenuRef.current && !scanAnotherMenuRef.current.contains(e.target)) {
         setShowScanAnotherMenu(false);
       }
     };
+
     if (showScanAnotherMenu) {
+      updatePlacement();
+      window.addEventListener('resize', updatePlacement);
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
     }
     return () => {
+      window.removeEventListener('resize', updatePlacement);
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
@@ -446,6 +463,14 @@ export const ScannerView = () => {
 
   const handleScanAnother = () => {
     soundFx.playClick();
+    if (!showScanAnotherMenu && scanAnotherMenuRef.current) {
+      const rect = scanAnotherMenuRef.current.getBoundingClientRect();
+      if (rect.left < 250) {
+        setScanAnotherMenuAlign('left');
+      } else {
+        setScanAnotherMenuAlign('right');
+      }
+    }
     setShowScanAnotherMenu((prev) => !prev);
   };
 
@@ -515,15 +540,15 @@ export const ScannerView = () => {
     if (addNotification) {
       if (!isOnline) {
         addNotification({
-          title: 'Saved Offline',
+          title: 'Receipt saved offline',
           desc: `${saved?.merchant || 'Receipt'} (${saved?.id || 'Doc'}) queued locally — will sync when connected.`,
           type: 'scanner',
           targetTab: 'documents',
         });
       } else {
         addNotification({
-          title: 'Receipt Saved to Vault',
-          desc: `${saved?.merchant || 'Receipt'} (${saved?.id || 'Doc'}) has been saved.`,
+          title: 'Receipt saved',
+          desc: `${saved?.merchant || 'Receipt'} has been saved to your purchase memory.`,
           type: 'scanner',
           targetTab: 'documents',
         });
@@ -1079,7 +1104,20 @@ export const ScannerView = () => {
                   <span>AI Engine</span>
                 </button>
                 {selectedFileName && (
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--text-secondary)',
+                      fontFamily: 'var(--font-mono)',
+                      maxWidth: '180px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      verticalAlign: 'middle',
+                    }}
+                    title={selectedFileName}
+                  >
                     {selectedFileName}
                   </span>
                 )}
@@ -1120,9 +1158,11 @@ export const ScannerView = () => {
                   <div
                     style={{
                       position: 'absolute',
-                      right: 0,
                       top: 'calc(100% + 8px)',
-                      width: '235px',
+                      ...(scanAnotherMenuAlign === 'left' ? { left: 0, right: 'auto' } : { right: 0, left: 'auto' }),
+                      width: '240px',
+                      maxWidth: 'calc(100vw - 32px)',
+                      boxSizing: 'border-box',
                       background: isLight ? 'rgba(255, 255, 255, 0.98)' : 'rgba(10, 16, 32, 0.96)',
                       border: isLight ? '1px solid rgba(203, 213, 225, 0.95)' : '1px solid rgba(0, 242, 254, 0.35)',
                       borderRadius: '14px',

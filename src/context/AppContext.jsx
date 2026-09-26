@@ -441,9 +441,9 @@ export const AppProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('resiboss_theme_v2');
       if (saved === 'dark' || saved === 'light') return saved;
-      return 'light';
+      return 'dark';
     } catch (e) {
-      return 'light';
+      return 'dark';
     }
   });
 
@@ -458,7 +458,7 @@ export const AppProvider = ({ children }) => {
       document.documentElement.setAttribute('data-theme', theme);
       const metaThemeColor = document.querySelector('meta[name="theme-color"]');
       if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', theme === 'light' ? '#f8fafc' : '#000000');
+        metaThemeColor.setAttribute('content', theme === 'light' ? '#f8fafc' : '#070A12');
       }
       if (theme === 'light') {
         document.body.classList.add('light-mode');

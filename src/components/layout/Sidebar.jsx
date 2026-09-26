@@ -24,6 +24,7 @@ import {
   TrendingUp,
   ShoppingCart,
   MessageSquare,
+  Camera,
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
@@ -48,13 +49,12 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
   const isLight = theme === 'light';
 
   const navItems = [
-    { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard },
-    { id: 'scanner', label: t.nav.scanner || 'Scan', icon: ScanLine, highlight: true },
-    { id: 'documents', label: t.nav.documents, icon: FolderArchive, badge: documents.length },
+    { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+    { id: 'documents', label: 'Receipts', icon: FolderArchive, badge: documents.length },
     { id: 'insights', label: 'Insights', icon: TrendingUp },
-    { id: 'shopping', label: 'Shopping List', icon: ShoppingCart },
+    { id: 'shopping', label: 'Shopping', icon: ShoppingCart },
     { id: 'ask', label: 'Ask Resiboss', icon: MessageSquare },
-    { id: 'analytic', label: t.nav.analytic, icon: BarChart3 },
+    { id: 'analytic', label: 'Analytics', icon: BarChart3 },
   ];
 
   // Live Date & Time for sidebar widget
@@ -254,6 +254,59 @@ export const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
               </div>
             </div>
           )}
+
+          {/* Primary Action: + Scan Receipt */}
+          <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
+            {sidebarCollapsed ? (
+              <button
+                type="button"
+                onClick={() => handleNavClick('scanner')}
+                title="Scan Receipt"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #818CF8 0%, #6366F1 55%, #4F46E5 100%)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 4px 16px rgba(99, 102, 241, 0.45)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                }}
+              >
+                <Camera size={20} strokeWidth={2.4} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleNavClick('scanner')}
+                style={{
+                  width: '100%',
+                  padding: '11px 16px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #818CF8 0%, #6366F1 55%, #4F46E5 100%)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 4px 18px rgba(99, 102, 241, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.92rem',
+                  letterSpacing: '0.01em',
+                  cursor: 'pointer',
+                  transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                }}
+              >
+                <Camera size={18} strokeWidth={2.4} />
+                <span>+ Scan Receipt</span>
+              </button>
+            )}
+          </div>
 
           {/* Navigation Items (Vertical Stack) */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
