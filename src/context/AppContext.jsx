@@ -1252,6 +1252,10 @@ export const AppProvider = ({ children }) => {
       options: {
         redirectTo,
         skipBrowserRedirect: isNative,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        },
       },
     });
 
