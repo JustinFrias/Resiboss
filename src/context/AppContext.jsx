@@ -224,26 +224,65 @@ export const AppProvider = ({ children }) => {
       }
     } catch (e) {}
 
+    // Check for guest or legacy cached receipts on this device and migrate them to this user
+    const legacyKeys = ['resiboss_receipts_guest_v1', 'resiboss_receipts_v1'];
+    legacyKeys.forEach((key) => {
+      try {
+        const legacySaved = localStorage.getItem(key);
+        if (legacySaved) {
+          const parsed = JSON.parse(legacySaved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const currentIds = new Set(cached.map((c) => c.id));
+            const newMigrated = parsed
+              .filter((d) => d && d.id && !DEMO_RECEIPT_IDS.has(d.id) && !currentIds.has(d.id))
+              .map((d) => ({
+                ...d,
+                userId: userProfile.id,
+                userEmail: userProfile.email,
+              }));
+            if (newMigrated.length > 0) {
+              cached = [...cached, ...newMigrated];
+            }
+          }
+        }
+      } catch (_) {}
+    });
+
     setDocuments(cached);
 
     if (supabase && isSupabaseConfigured) {
-      fetchReceiptsFromSupabase(userProfile).then(({ data }) => {
+      fetchReceiptsFromSupabase(userProfile).then(async ({ data }) => {
         if (Array.isArray(data)) {
           const liveDocs = data.map(mapSupabaseToDoc);
-          // Preserve local pending offline queue items that haven't synced to Supabase yet
-          const offlineQueue = getOfflineQueue();
-          const pendingOffline = offlineQueue.filter(
-            (it) => it.syncStatus === 'pending' || it.syncStatus === 'failed'
-          );
           const liveIds = new Set(liveDocs.map((d) => d.id));
-          const mergedDocs = [
-            ...pendingOffline.filter((p) => !liveIds.has(p.id)),
-            ...liveDocs,
-          ];
+
+          // Identify local receipts on this device that have not yet reached Supabase cloud
+          const unsyncedLocalDocs = cached.filter((d) => d && d.id && !liveIds.has(d.id));
+
+          // Merge local and cloud receipts seamlessly
+          const mergedDocs = [...unsyncedLocalDocs, ...liveDocs];
           setDocuments(mergedDocs);
+
           try {
             localStorage.setItem(storageKey, JSON.stringify(mergedDocs));
           } catch (e) {}
+
+          // Automatically push any unsynced local receipts to Supabase cloud
+          // so other devices and browsers will instantly have access to them
+          if (unsyncedLocalDocs.length > 0) {
+            for (const doc of unsyncedLocalDocs) {
+              try {
+                const completeDoc = {
+                  ...doc,
+                  userId: userProfile.id,
+                  userEmail: userProfile.email,
+                };
+                await syncReceiptToSupabase(completeDoc, userProfile);
+              } catch (syncErr) {
+                console.warn('[Resiboss] Cloud auto-sync notice for doc:', doc.id, syncErr);
+              }
+            }
+          }
         }
       });
     }
@@ -630,20 +669,34 @@ export const AppProvider = ({ children }) => {
         const { data } = await fetchReceiptsFromSupabase(userProfile);
         if (Array.isArray(data)) {
           const liveDocs = data.map(mapSupabaseToDoc);
+          const liveIds = new Set(liveDocs.map((d) => d.id));
           const offlineQueue = getOfflineQueue();
           const pendingOffline = offlineQueue.filter(
             (it) => it.syncStatus === 'pending' || it.syncStatus === 'failed'
           );
-          const liveIds = new Set(liveDocs.map((d) => d.id));
-          const mergedDocs = [
+          const unsyncedLocalDocs = documents.filter((d) => d && d.id && !liveIds.has(d.id));
+          const combinedLocal = [
             ...pendingOffline.filter((p) => !liveIds.has(p.id)),
-            ...liveDocs,
+            ...unsyncedLocalDocs.filter((p) => !liveIds.has(p.id)),
           ];
+          const localMap = new Map();
+          combinedLocal.forEach((doc) => localMap.set(doc.id, doc));
+          const mergedDocs = [...localMap.values(), ...liveDocs];
+
           setDocuments(mergedDocs);
           const storageKey = getUserReceiptsStorageKey(userProfile);
           try {
             localStorage.setItem(storageKey, JSON.stringify(mergedDocs));
           } catch (e) {}
+
+          // Push any remaining local receipts up to Supabase
+          if (unsyncedLocalDocs.length > 0) {
+            for (const doc of unsyncedLocalDocs) {
+              try {
+                await syncReceiptToSupabase(doc, userProfile);
+              } catch (_) {}
+            }
+          }
         }
 
         await handleTriggerSync();

@@ -31,39 +31,49 @@ export const supabase = isSupabaseConfigured
 /**
  * Maps a Supabase receipts row to the frontend receipt document model.
  */
-export const mapSupabaseToDoc = (row) => ({
-  id: row.id,
-  merchant: row.merchant,
-  date: row.date,
-  time: row.time || '12:00 PM',
-  tin: row.tin || '',
-  branch: row.branch || null,
-  receiptNumber: row.receipt_number || null,
-  category: row.category || 'Food',
-  paymentMethod: row.payment_method || 'Cash',
-  subtotal: Number(row.subtotal) || 0,
-  vat: Number(row.vat) || 0,
-  discount: Number(row.discount) || 0,
-  total: Number(row.total) || 0,
-  currency: row.currency || 'PHP',
-  confidence: row.confidence !== undefined && row.confidence !== null ? Number(row.confidence) : null,
-  rawOcrText: row.raw_ocr_text || '',
-  items: Array.isArray(row.items) ? row.items : [],
-  status: row.status || 'Verified',
-  imageUri: row.image_uri || null,
-  notes: row.notes || null,
-  userId: row.user_id || null,
-  userEmail: row.user_email || null,
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-});
+export const mapSupabaseToDoc = (row) => {
+  let extraMeta = {};
+  if (Array.isArray(row.items)) {
+    const metaItem = row.items.find((it) => it && typeof it === 'object' && it.__resiboss_meta === true);
+    if (metaItem) {
+      extraMeta = metaItem;
+    }
+  }
+
+  return {
+    id: row.id,
+    merchant: row.merchant,
+    date: row.date,
+    time: row.time || '12:00 PM',
+    tin: row.tin || '',
+    branch: row.branch || extraMeta.branch || null,
+    receiptNumber: row.receipt_number || extraMeta.receiptNumber || null,
+    category: row.category || 'Food',
+    paymentMethod: row.payment_method || 'Cash',
+    subtotal: Number(row.subtotal) || 0,
+    vat: Number(row.vat) || 0,
+    discount: Number(row.discount !== undefined ? row.discount : extraMeta.discount) || 0,
+    total: Number(row.total) || 0,
+    currency: row.currency || 'PHP',
+    confidence: row.confidence !== undefined && row.confidence !== null ? Number(row.confidence) : null,
+    rawOcrText: row.raw_ocr_text || '',
+    items: Array.isArray(row.items) ? row.items.filter((it) => !it || !it.__resiboss_meta) : [],
+    status: row.status || 'Verified',
+    imageUri: row.image_uri || null,
+    notes: row.notes || extraMeta.notes || null,
+    userId: row.user_id || null,
+    userEmail: row.user_email || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+};
 
 // ==============================================================================
 // RECEIPT CRUD
 // ==============================================================================
 
 /**
- * Upserts a receipt document to Supabase with user isolation.
+ * Upserts a receipt document to Supabase with user isolation and adaptive schema fallback.
  */
 export const syncReceiptToSupabase = async (receiptDoc, userProfile) => {
   if (!supabase || !isSupabaseConfigured) {
@@ -73,7 +83,7 @@ export const syncReceiptToSupabase = async (receiptDoc, userProfile) => {
   const userId = userProfile?.id || receiptDoc.userId || null;
   const userEmail = (userProfile?.email || receiptDoc.userEmail || '').trim().toLowerCase() || null;
 
-  const payload = {
+  const fullPayload = {
     id: receiptDoc.id,
     merchant: receiptDoc.merchant,
     date: receiptDoc.date,
@@ -102,15 +112,74 @@ export const syncReceiptToSupabase = async (receiptDoc, userProfile) => {
   try {
     const { data, error } = await supabase
       .from('receipts')
-      .upsert([payload], { onConflict: 'id' })
+      .upsert([fullPayload], { onConflict: 'id' })
       .select();
 
-    if (error) {
-      console.warn('[Resiboss] Supabase sync error:', error.message);
-      return { data: null, error };
+    if (!error) {
+      return { data, error: null };
     }
 
-    return { data, error: null };
+    // If error is caused by missing columns in database schema (e.g. branch, discount, notes, receipt_number)
+    const isColumnError = error.code === 'PGRST204' ||
+      (typeof error.message === 'string' && (
+        error.message.includes('column') ||
+        error.message.includes('schema cache') ||
+        error.message.includes('branch') ||
+        error.message.includes('receipt_number') ||
+        error.message.includes('discount') ||
+        error.message.includes('notes')
+      ));
+
+    if (isColumnError) {
+      const metaObj = {
+        __resiboss_meta: true,
+        branch: receiptDoc.branch || null,
+        receiptNumber: receiptDoc.receiptNumber || null,
+        discount: receiptDoc.discount || 0,
+        notes: receiptDoc.notes || null,
+      };
+
+      const safeItems = Array.isArray(receiptDoc.items)
+        ? [...receiptDoc.items.filter((it) => !it || !it.__resiboss_meta), metaObj]
+        : [metaObj];
+
+      const basePayload = {
+        id: receiptDoc.id,
+        merchant: receiptDoc.merchant,
+        date: receiptDoc.date,
+        time: receiptDoc.time,
+        tin: receiptDoc.tin,
+        category: receiptDoc.category,
+        payment_method: receiptDoc.paymentMethod,
+        subtotal: receiptDoc.subtotal,
+        vat: receiptDoc.vat,
+        total: receiptDoc.total,
+        currency: receiptDoc.currency || 'PHP',
+        confidence: receiptDoc.confidence,
+        raw_ocr_text: receiptDoc.rawOcrText,
+        items: safeItems,
+        status: receiptDoc.status || 'Verified',
+        image_uri: receiptDoc.imageUri || null,
+        user_id: userId,
+        user_email: userEmail,
+        updated_at: new Date().toISOString(),
+      };
+
+      const fallbackResult = await supabase
+        .from('receipts')
+        .upsert([basePayload], { onConflict: 'id' })
+        .select();
+
+      if (!fallbackResult.error) {
+        return { data: fallbackResult.data, error: null };
+      }
+
+      console.warn('[Resiboss] Adaptive fallback sync failed:', fallbackResult.error.message);
+      return { data: null, error: fallbackResult.error };
+    }
+
+    console.warn('[Resiboss] Supabase sync error:', error.message);
+    return { data: null, error };
   } catch (err) {
     console.error('[Resiboss] Unexpected Supabase error:', err);
     return { data: null, error: err };

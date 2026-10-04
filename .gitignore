@@ -34,3 +34,6 @@ local.properties
 **/local.properties
 .gradle/
 **/build/
+
+# Nested zip extraction artifact
+Resiboss-main/
